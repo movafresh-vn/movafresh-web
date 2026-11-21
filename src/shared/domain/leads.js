@@ -16,3 +16,10 @@ export function normalizeContact(raw) {
 }
 
 export const contactKey = (c) => `${c.type}:${c.value}`;
+
+/** Số điện thoại/email đã chuẩn hóa → định danh gửi Supabase Auth OTP (điện thoại dạng E.164: 0908123456 → +84908123456). */
+export function otpIdentity(raw) {
+  const c = normalizeContact(raw);
+  if (!c) return null;
+  return c.type === 'email' ? c.value : `+84${c.value.slice(1)}`;
+}

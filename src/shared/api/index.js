@@ -5,7 +5,8 @@ import { getServer } from '../mock-server/server';
 import { cutoffAtFor } from '../domain/delivery';
 import { applyOrderStatus, applySubstitution, upsertLot } from '../domain/opsEvents';
 import { dishItemGrams, emptyFactory, shortageGrams } from '../domain/factory';
-import { createCustomerApi } from './customer';
+import { createCustomerApi as createMockCustomerApi } from './customer';
+import { createCustomerApi } from './customerApi';
 import { createOpsFactoryApi } from './opsFactory';
 import { createProcurementApi } from './opsProcurement';
 import { createLogisticsApi } from './opsLogistics';
@@ -105,7 +106,7 @@ export function createApi(server = getServer()) {
     },
 
     // ---------- App khách (khớp api-contract.json; phần thêm cho phễu /plans xem docs/contract-changes.md) ----------
-    customer: createCustomerApi(server, cfg),
+    customer: createMockCustomerApi(server, cfg),
 
     // ---------- App vận hành (đã lọc theo vai trò) ----------
     ops: {
@@ -308,4 +309,6 @@ export function createApi(server = getServer()) {
 /** Mốc "xe về kho phụ" dùng cho bảng demo: đúng giờ cấu hình của ngày giao D. */
 const hubJumpAt = (day) => atDay(day, BUSINESS.logistics.demoHubJump.hour, BUSINESS.logistics.demoHubJump.min);
 
-export const api = createApi();
+// App khách dùng backend thật (async, qua http.js). `createApi(server)` còn dựng bản giả lập cho app vận hành và các bài test của nó đến C28.
+const mockApi = createApi();
+export const api = { ...mockApi, customer: createCustomerApi() };

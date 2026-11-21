@@ -61,8 +61,8 @@ const handleKeydown = (e) => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
-  // Nạp dữ liệu tài khoản (nếu có khách) và chạy job tới hạn định kỳ như một máy chủ thật
-  store.refresh();
+  // Nạp dữ liệu tài khoản (nếu đã đăng nhập) và tải lại định kỳ (tab đang ẩn thì bỏ qua)
+  void store.refresh();
   store.startPolling();
 });
 

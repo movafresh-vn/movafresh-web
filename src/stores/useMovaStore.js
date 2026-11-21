@@ -1,38 +1,21 @@
 import { defineStore } from 'pinia';
 import { api } from '../shared/api';
-import { usePlanFlowStore } from './usePlanFlowStore';
+import { otpIdentity } from '../shared/domain/leads';
+import { getAccessToken, requestOtp, signOut, verifyOtp } from '../services/supabase';
 
 // Store của phần tài khoản (/account) và các thành phần dùng chung toàn app (toast, modal, ngăn thông báo).
-// Mọi dữ liệu tài khoản lấy từ src/shared/api (đơn và gói do phễu /plans tạo ra), không còn dữ liệu demo riêng.
-//
-// "Khách hiện tại": ưu tiên khách vừa đăng ký ở phễu /plans (mã khách nằm trong result của store phễu);
-// nếu khách tự đăng nhập bằng SĐT / email đã dùng khi đăng ký (không mật khẩu, bản demo) thì dùng khách đó.
-const SESSION_KEY = 'mova_account_session_v2';
+// Danh tính khách là phiên Supabase (đăng nhập bằng mã OTP gửi về số điện thoại). Mọi dữ liệu tài khoản đến từ backend thật qua
+// api.customer; web không giữ dữ liệu tài khoản nào ngoài bản sao để hiển thị. Mỗi lần gọi đều chờ (await) kết quả.
 const POLL_MS = 20000;
-
-function readSession() {
-  try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function writeSession(s) {
-  try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(s));
-  } catch {
-    // chế độ riêng tư: bỏ qua
-  }
-}
 
 export const useMovaStore = defineStore('mova', {
   state: () => ({
-    customerId: null,
+    customerId: null, // mã người dùng của phiên đăng nhập (chỉ để giao diện biết "đã đăng nhập"; máy chủ tự biết khách là ai từ token)
     account: null, // kết quả api.customer.getAccount
     authUser: null,
     notifications: [],
     loaded: false,
+    refreshing: false,
     version: 0, // tăng mỗi lần dữ liệu tải lại; các tab theo dõi để tự cập nhật
 
     // Trạng thái giao diện tạm thời
@@ -57,6 +40,11 @@ export const useMovaStore = defineStore('mova', {
   actions: {
     setAuthUser(user) {
       this.authUser = user;
+      this.customerId = user ? user.id : null;
+      if (!user) {
+        this.account = null;
+        this.notifications = [];
+      }
     },
 
     toast(msg) {
@@ -77,51 +65,41 @@ export const useMovaStore = defineStore('mova', {
       this.activeModal = null;
     },
 
-    /** Xác định khách hiện tại từ phiên đăng nhập hoặc từ phễu /plans. */
-    resolveCustomer() {
-      const session = readSession();
-      let flowId = null;
+    /** Tải lại tổng quan và thông báo. Trả false nếu chưa đăng nhập hoặc phiên đã hết hạn. */
+    async refresh() {
+      if (this.refreshing) return Boolean(this.account);
+      this.refreshing = true;
       try {
-        flowId = usePlanFlowStore().result?.customer_id || null;
-      } catch {
-        flowId = null;
-      }
-      // Khách vừa đăng ký xong ở phễu thì chuyển sang khách đó (một lần cho mỗi khách mới)
-      if (flowId && flowId !== session.flowSeen) {
-        session.customerId = flowId;
-        session.flowSeen = flowId;
-        writeSession(session);
-      }
-      this.customerId = session.customerId || null;
-      return this.customerId;
-    },
-
-    /** Chạy job tới hạn, rồi tải lại tổng quan và thông báo. Trả false nếu chưa có khách / dữ liệu đã bị đặt lại. */
-    refresh() {
-      if (!this.customerId && !this.resolveCustomer()) {
-        this.account = null;
-        this.notifications = [];
+        const token = await getAccessToken().catch(() => null);
+        if (!token) {
+          this.account = null;
+          this.notifications = [];
+          this.loaded = true;
+          return false;
+        }
+        const res = await api.customer.getAccount();
+        if (res.status === 'error') {
+          // Phiên hết hạn hoặc tài khoản chưa có hồ sơ: coi như chưa đăng nhập
+          if (['UNAUTHORIZED', 'AUTH_REQUIRED', 'PROFILE_NOT_FOUND'].includes(res.error.code) || res.error.status === 401) await this.logout(true);
+          this.loaded = true;
+          return false;
+        }
+        this.account = res.data;
+        this.notifications = await api.customer.notifications();
         this.loaded = true;
-        return false;
+        this.version += 1;
+        return true;
+      } finally {
+        this.refreshing = false;
       }
-      api.customer.tick();
-      const res = api.customer.getAccount(this.customerId);
-      if (res.status === 'error') {
-        // Dữ liệu dùng chung đã bị đặt lại: bỏ phiên cũ
-        this.logout(true);
-        this.loaded = true;
-        return false;
-      }
-      this.account = res.data;
-      this.notifications = api.customer.notifications(this.customerId);
-      this.loaded = true;
-      this.version += 1;
-      return true;
     },
 
     startPolling() {
       this.stopPolling();
-      this._poll = setInterval(() => this.refresh(), POLL_MS);
+      this._poll = setInterval(() => {
+        if (typeof document !== 'undefined' && document.hidden) return;
+        void this.refresh();
+      }, POLL_MS);
     },
 
     stopPolling() {
@@ -129,36 +107,52 @@ export const useMovaStore = defineStore('mova', {
       this._poll = null;
     },
 
-    loginWithContact(text) {
-      const res = api.customer.findCustomerByContact(text);
-      if (res.status === 'error') return res.error.message;
-      this.loginAs(res.data.customer_id);
+    /** Gửi mã OTP về số điện thoại / email. Trả '' nếu gửi được, nếu không trả lời nhắc cho khách. */
+    async requestOtp(contact) {
+      const id = otpIdentity(contact);
+      if (!id) return 'Nhập số điện thoại (ví dụ 0908 123 456) hoặc email hợp lệ.';
+      try {
+        await requestOtp(id);
+        return '';
+      } catch (e) {
+        return e instanceof Error ? e.message : 'Không gửi được mã OTP.';
+      }
+    },
+
+    /** Xác thực mã OTP, vào tài khoản và tải dữ liệu. Trả '' nếu thành công. */
+    async verifyOtp(contact, code) {
+      const id = otpIdentity(contact);
+      if (!id) return 'Nhập số điện thoại hoặc email hợp lệ.';
+      try {
+        const user = await verifyOtp(id, String(code || '').trim());
+        this.setAuthUser(user);
+      } catch (e) {
+        return e instanceof Error ? e.message : 'Mã OTP không đúng.';
+      }
+      await this.refresh();
+      this.toast(this.userName ? `Đã vào tài khoản ${this.userName}` : 'Đăng nhập MOVA thành công.');
+      this.closeModal();
       return '';
     },
 
-    loginAs(customerId) {
-      const session = readSession();
-      writeSession({ ...session, customerId });
-      this.customerId = customerId;
-      this.refresh();
-      this.toast(`Đã vào tài khoản ${this.userName}`);
-      this.closeModal();
-    },
-
-    logout(silent = false) {
-      const session = readSession();
-      writeSession({ flowSeen: session.flowSeen, customerId: null });
-      this.customerId = null;
-      this.account = null;
-      this.notifications = [];
+    async logout(silent = false) {
+      this.stopPolling();
+      try {
+        await signOut();
+      } catch {
+        // đăng xuất phía máy chủ lỗi: vẫn xóa dữ liệu ở máy này
+      }
+      api.customer.reset();
+      this.setAuthUser(null);
+      this.loaded = true;
       if (!silent) this.toast('Đã đăng xuất');
     },
 
-    markAllNotifsRead() {
+    async markAllNotifsRead() {
       if (!this.customerId) return;
-      api.customer.markNotificationsRead(this.customerId);
-      this.notifications = api.customer.notifications(this.customerId);
-      this.refresh();
+      await api.customer.markNotificationsRead();
+      this.notifications = await api.customer.notifications();
+      await this.refresh();
     }
   }
 });
