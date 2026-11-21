@@ -106,23 +106,23 @@ const fallbackNotice = ref(!store.chefMenuApplied && !hasAiConfig
 const behaviorTrackingEnabled = ref(false);
 const trackedSwapCount = ref(0);
 
-function useSuggestedMenu(reason = 'Bếp trưởng chưa tạo được thực đơn đầy đủ; đang dùng thực đơn MOVA gợi ý theo khảo sát.') {
-  if (!store.useSuggestedMenu()) return;
+async function useSuggestedMenu(reason = 'Bếp trưởng chưa tạo được thực đơn đầy đủ; đang dùng thực đơn MOVA gợi ý theo khảo sát.') {
+  if (!(await store.useSuggestedMenu())) return;
   menuReady.value = true;
   fallbackNotice.value = reason;
 }
 
-function applyChefMenu(chefPlan) {
+async function applyChefMenu(chefPlan) {
   store.error = '';
   menuReady.value = false;
   store.setChefMenuApplied(false);
 
   if (!plan.value || !Array.isArray(chefPlan?.meals) || chefPlan.meals.length !== plan.value.meals.length) {
-    useSuggestedMenu('Bếp trưởng chưa tạo đủ số bữa an toàn; đang dùng thực đơn MOVA gợi ý theo khảo sát.');
+    await useSuggestedMenu('Bếp trưởng chưa tạo đủ số bữa an toàn; đang dùng thực đơn MOVA gợi ý theo khảo sát.');
     return;
   }
   if (!chefPlan.meals.every((meal, index) => meal?.meal_index === plan.value.meals[index].meal_index)) {
-    useSuggestedMenu('Kết quả Bếp trưởng chưa khớp với thực đơn MOVA; đang dùng thực đơn gợi ý theo khảo sát.');
+    await useSuggestedMenu('Kết quả Bếp trưởng chưa khớp với thực đơn MOVA; đang dùng thực đơn gợi ý theo khảo sát.');
     return;
   }
 
@@ -137,9 +137,9 @@ function applyChefMenu(chefPlan) {
       dessert: meal.meal_structure?.dessert?.dish_id
     }
   }));
-  if (!store.applyChefMenu(meals)) {
+  if (!(await store.applyChefMenu(meals))) {
     const reason = store.error || 'Món Bếp trưởng chọn chưa khớp danh mục MOVA.';
-    useSuggestedMenu(`${reason} Đang dùng thực đơn MOVA gợi ý theo khảo sát.`);
+    await useSuggestedMenu(`${reason} Đang dùng thực đơn MOVA gợi ý theo khảo sát.`);
     return;
   }
   fallbackNotice.value = '';
@@ -150,7 +150,7 @@ async function onSwap(mealIndex, kind, dishId) {
   const meal = plan.value?.meals.find((item) => item.meal_index === mealIndex);
   const partName = { protein: 'protein_dish', veg: 'veggie_dish', soup: 'soup_dish', carb: 'carb_dish' }[kind];
   const previousDishId = partName ? meal?.meal_structure?.[partName]?.dish_id : null;
-  const changed = store.swap(mealIndex, kind, dishId);
+  const changed = await store.swap(mealIndex, kind, dishId);
   if (!changed || !behaviorTrackingEnabled.value || !previousDishId || previousDishId === dishId) return;
 
   try {

@@ -9,46 +9,6 @@
         chia đều theo từng tuần. Bắt đầu ngay, không cần mật khẩu rườm rà.
       </p>
 
-      <!-- Nút tiếp tục nhanh MXH chuẩn Shopee / Grab / Notion -->
-      <div class="social-fast-actions">
-        <!-- Hàng 1: Nút Zalo chính toàn chiều rộng -->
-        <button type="button" class="social-btn zalo-primary" @click="quickSocialLogin('Zalo')">
-          <div class="social-btn-content">
-            <svg class="social-icon zalo-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect width="24" height="24" rx="5" fill="#FFFFFF"/>
-              <text x="12" y="15.8" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="900" fill="#0068FF" letter-spacing="-0.3px">Zalo</text>
-            </svg>
-            <span class="btn-text">Tiếp tục với Zalo</span>
-          </div>
-          <span class="rec-badge">Khuyên dùng</span>
-        </button>
-
-        <!-- Hàng 2: Lưới 2 cột Google & Facebook -->
-        <div class="social-grid">
-          <button type="button" class="social-btn google-btn" @click="quickSocialLogin('Google')">
-            <svg class="social-icon" width="20" height="20" viewBox="0 0 24 24">
-              <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.3 9 5 12 5z"/>
-              <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7-2.9c2.2-2 3.7-5 3.7-8.8z"/>
-              <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 10.8 0 12.5s.7 2.8 1.9 5.2l3.7-2.9z"/>
-              <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.3-6.4-5.2L1.9 17C3.7 20.7 7.5 24 12 24z"/>
-            </svg>
-            <span class="btn-text">Google</span>
-          </button>
-
-          <button type="button" class="social-btn facebook-btn" @click="quickSocialLogin('Facebook')">
-            <svg class="social-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="12" fill="#1877F2"/>
-              <path d="M16 12.3h-2.5v7.7h-3.2v-7.7H8.5V9.6h1.8V7.5c0-2.3 1.4-3.5 3.5-3.5 1 0 1.9.1 2.2.1v2.5h-1.5c-1.1 0-1.3.5-1.3 1.3v1.7H16l-.4 2.7z" fill="#FFFFFF"/>
-            </svg>
-            <span class="btn-text">Facebook</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="divider">
-        <span>Hoặc nhập Email / Số điện thoại</span>
-      </div>
-
       <form class="pl-stack" @submit.prevent="saveContact">
         <label class="pl-label" for="plContact">Số điện thoại hoặc Email</label>
         <input
@@ -488,7 +448,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PeopleStepper from './PeopleStepper.vue';
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
@@ -509,7 +469,17 @@ const q = computed(() => {
 });
 
 const contactInput = ref(store.contact);
-const districts = api.customer.serviceAreas().flatMap((z) => z.districts).filter((d) => d !== 'TP. Thủ Đức');
+// Danh sách quận lấy từ cấu hình khu giao trước (hiện ngay), rồi thay bằng danh sách của máy chủ khi tải xong.
+const districts = ref(BUSINESS.zones.flatMap((z) => z.districts).filter((d) => d !== 'TP. Thủ Đức'));
+onMounted(async () => {
+  try {
+    const areas = await api.customer.serviceAreas();
+    const fromServer = areas.flatMap((z) => z.districts).filter((d) => d !== 'TP. Thủ Đức');
+    if (fromServer.length) districts.value = fromServer;
+  } catch {
+    // mất mạng: giữ danh sách có sẵn
+  }
+});
 const customOpen = ref(false);
 const customText = ref('');
 const outOfZone = ref(false);
@@ -942,7 +912,7 @@ const canNext = computed(() => {
 watch(
   () => store.answers.district,
   (d) => {
-    if (d && !districts.includes(d)) {
+    if (d && !districts.value.includes(d)) {
       customOpen.value = true;
       customText.value = d;
     }
@@ -954,14 +924,8 @@ function go(n) {
   router.push({ path: '/plans', query: { step: '1', q: String(Math.max(0, n)) } });
 }
 
-function quickSocialLogin(provider) {
-  const mockEmail = `khach.${provider.toLowerCase()}@movafresh.vn`;
-  contactInput.value = mockEmail;
-  if (store.saveContact(mockEmail)) go(1);
-}
-
-function saveContact() {
-  if (store.saveContact(contactInput.value)) go(1);
+async function saveContact() {
+  if (await store.saveContact(contactInput.value)) go(1);
 }
 
 function pickDistrict(d) {
@@ -977,15 +941,15 @@ function chooseOther() {
   store.setAnswer('district', '');
 }
 
-function joinWaitlist() {
-  store.joinWaitlist();
+async function joinWaitlist() {
+  await store.joinWaitlist();
 }
 
-function next() {
+async function next() {
   if (q.value === 1 && customOpen.value) {
     const text = customText.value.trim();
     store.setAnswer('district', text);
-    if (!api.customer.checkArea(text).served) {
+    if (!(await api.customer.checkArea(text)).served) {
       outOfZone.value = true;
       return;
     }
@@ -993,7 +957,7 @@ function next() {
   go(q.value + 1);
 }
 
-function finish() {
+async function finish() {
   if (isCustomBudget.value) {
     let val = customBudgetValue.value || 0;
     if (val < MIN_BUDGET) val = MIN_BUDGET;
@@ -1002,7 +966,7 @@ function finish() {
     customBudgetText.value = fmt(val);
     store.setAnswer('budget', val);
   }
-  const r = store.submitProfile();
+  const r = await store.submitProfile();
   if (r === 'ok') router.push({ path: '/plans', query: { step: '2' } });
   else if (r === 'out_of_zone') {
     outOfZone.value = true;
@@ -1468,88 +1432,6 @@ function clearBudgetAndFinish() {
 }
 
 /* Social & Form styles */
-.social-fast-actions {
-  display: grid;
-  gap: 12px;
-  margin: 18px 0;
-}
-.social-btn {
-  height: 48px;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  user-select: none;
-}
-.social-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
-}
-.social-btn:active {
-  transform: scale(0.99);
-}
-.social-btn.zalo-primary {
-  width: 100%;
-  background: #0068FF;
-  border: none;
-  color: #FFFFFF;
-  padding: 0 16px;
-  position: relative;
-  justify-content: space-between;
-}
-.social-btn.zalo-primary:hover {
-  background: #0056D6;
-  box-shadow: 0 4px 14px rgba(0, 104, 255, 0.35);
-}
-.social-btn-content {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-.rec-badge {
-  background: rgba(255, 255, 255, 0.22);
-  color: #FFFFFF;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-  letter-spacing: 0.02em;
-}
-
-.social-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  height: 48px;
-}
-.social-btn.google-btn,
-.social-btn.facebook-btn {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  color: #1E293B;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
-  padding: 0 16px;
-}
-.social-btn.google-btn:hover,
-.social-btn.facebook-btn:hover {
-  background: #F8FAFC;
-  border-color: #CBD5E1;
-}
-
-.social-icon {
-  flex-shrink: 0;
-  display: block;
-}
-.btn-text {
-  font-size: 15px;
-  font-weight: 600;
-}
 .divider {
   display: flex;
   align-items: center;

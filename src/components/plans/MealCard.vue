@@ -174,14 +174,14 @@ const parts = computed(() => {
   return list;
 });
 
-function toggle(kind) {
+async function toggle(kind) {
   if (open.value === kind) {
     open.value = '';
     return;
   }
   searchQuery.value = '';
   showAllDishes.value = false;
-  const res = api.customer.swapOptions({ plan_id: props.planId, meal_index: props.meal.meal_index, kind });
+  const res = await api.customer.swapOptions({ plan_id: props.planId, meal_index: props.meal.meal_index, kind });
   options.value = res.status === 'success' ? res.data.options : [];
   open.value = kind;
 }

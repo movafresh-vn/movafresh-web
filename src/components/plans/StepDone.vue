@@ -37,7 +37,7 @@
         Bạn bè đăng ký gói đầu tiên, bạn nhận <b class="num">{{ fmt(rewards.referrer) }}</b> Fresh Credit
         và bạn bè nhận <b class="num">{{ fmt(rewards.referee) }}</b>.
       </p>
-      <button class="pl-btn" type="button" @click="invite">{{ copied ? 'Đã sao chép liên kết' : 'Mời bạn bè' }}</button>
+      <button class="pl-btn" type="button" :disabled="!r.referral_code" @click="invite">{{ copied ? 'Đã sao chép liên kết' : 'Mời bạn bè' }}</button>
     </section>
 
     <div class="go">
@@ -51,7 +51,6 @@
 import { computed, ref } from 'vue';
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
 import { BUSINESS } from '../../shared/config/business';
-import { referralCodeFor } from '../../shared/domain/rewards';
 import { fmt } from '../../shared/utils/formatters';
 import { fmtDay, fmtDeadline } from '../../shared/utils/time';
 
@@ -65,7 +64,9 @@ const METHODS = { fresh_credit: 'Nạp Fresh Credit', bank_transfer_4w: 'Chuyể
 const methodLabel = computed(() => METHODS[r.value.payment_method] || '');
 
 async function invite() {
-  const url = `${location.origin}/plans?${new URLSearchParams({ ref: referralCodeFor(r.value.customer_id) })}`;
+  const code = r.value.referral_code;
+  if (!code) return;
+  const url = `${location.origin}/plans?${new URLSearchParams({ ref: code })}`;
   const text = 'Mình đang dùng MOVA Fresh: nguyên liệu sơ chế sẵn từ Đắk Lắk, nấu cơm nhà 15 phút. Đăng ký qua link này nhé:';
   try {
     if (navigator.share) {

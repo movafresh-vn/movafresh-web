@@ -28,8 +28,12 @@ const router = useRouter();
 // Link mời: /plans?ref=MOVA-0007
 if (route.query.ref) store.setRef(route.query.ref);
 
-// Tải lại trang: thực đơn lấy lại từ dữ liệu dùng chung. Dữ liệu đã bị đặt lại thì bắt đầu lại từ đầu.
-if (store.planId && !store.reloadPlan() && !store.result) store.reset();
+// Tải lại trang: bản nháp thực đơn lấy lại từ bộ nhớ trình duyệt. Không còn bản nháp thì bắt đầu lại từ đầu.
+if (store.planId) {
+  void store.reloadPlan().then((ok) => {
+    if (!ok && !store.result) store.reset();
+  });
+}
 
 const step = computed(() => {
   const n = Number(route.query.step);

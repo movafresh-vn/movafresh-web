@@ -62,55 +62,34 @@ describe('V2.3 UX Polish & Legal Pages Tests', () => {
   });
 
   describe('StepCheckout: Hướng dẫn giao hàng lạnh & Lịch cố định', () => {
-    it('mặc định hướng dẫn giao lạnh là Gọi điện trước 15 phút khi tới', () => {
+    it('mặc định hướng dẫn giao lạnh là để ở lễ tân và shipper chụp ảnh', () => {
       const store = usePlanFlowStore();
-      expect(store.checkout.deliveryInstruction).toBe('Gọi điện trước 15 phút khi tới');
-      expect(store.checkout.customInstruction).toBe('');
+      expect(store.checkout.instruction).toMatchObject({ mode: 'leave_at_reception', photo_required: true });
     });
 
-    it('hàm scheduleRequest gắn đúng delivery_instruction tiêu chuẩn', () => {
+    it('hàm scheduleRequest gắn delivery_instruction có cấu trúc (mode, photo_required, note) và phường tùy chọn', () => {
       const store = usePlanFlowStore();
       store.options = {
         province: 'TP. Hồ Chí Minh',
         districts: ['Quận 7'],
         options: [
-          { preferred_days: ['tuesday'], slots: [{ slot_id: 'evening_18_21', label: '18:00 - 21:00' }] }
+          { preferred_days: ['tuesday'], first_dates: { tuesday: '2026-12-01' }, slots: [{ slot_id: 'evening_18_21', label: '18:00 - 21:00' }] }
         ]
       };
       store.checkout.optionIndex = 0;
       store.checkout.slotId = 'evening_18_21';
       store.checkout.street = '12 Nguyễn Văn Linh';
+      store.checkout.ward = 'Tân Phong';
       store.checkout.district = 'Quận 7';
       store.checkout.name = 'Chị Lan';
       store.checkout.phone = '0987654321';
-      store.checkout.deliveryInstruction = 'Gửi lễ tân / bảo vệ chung cư (thùng giữ lạnh 6 giờ)';
+      store.checkout.instruction = { mode: 'leave_at_door', photo_required: true, note: 'Bấm chuông lầu 3 căn 302' };
 
       const req = store.scheduleRequest();
       expect(req).not.toBeNull();
-      expect(req.shipping_address.delivery_instruction).toBe('Gửi lễ tân / bảo vệ chung cư (thùng giữ lạnh 6 giờ)');
-    });
-
-    it('hàm scheduleRequest định dạng đúng khi chọn Ghi chú riêng...', () => {
-      const store = usePlanFlowStore();
-      store.options = {
-        province: 'TP. Hồ Chí Minh',
-        districts: ['Quận 7'],
-        options: [
-          { preferred_days: ['friday'], slots: [{ slot_id: 'morning_08_12', label: '08:00 - 12:00' }] }
-        ]
-      };
-      store.checkout.optionIndex = 0;
-      store.checkout.slotId = 'morning_08_12';
-      store.checkout.street = '45 Lê Duẩn';
-      store.checkout.district = 'Quận 1';
-      store.checkout.name = 'Anh Tuấn';
-      store.checkout.phone = '0912345678';
-      store.checkout.deliveryInstruction = 'other';
-      store.checkout.customInstruction = 'Bấm chuông lầu 3 căn 302';
-
-      const req = store.scheduleRequest();
-      expect(req).not.toBeNull();
-      expect(req.shipping_address.delivery_instruction).toBe('Ghi chú: Bấm chuông lầu 3 căn 302');
+      expect(req.delivery_instruction).toEqual({ mode: 'leave_at_door', photo_required: true, note: 'Bấm chuông lầu 3 căn 302' });
+      expect(req.shipping_address.ward).toBe('Tân Phong');
+      expect(req.first_dates).toEqual({ tuesday: '2026-12-01' });
     });
   });
 

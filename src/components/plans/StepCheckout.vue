@@ -59,25 +59,37 @@
         </div>
         <p class="pl-note">MOVA báo khung giờ giao chính xác cho bạn trước {{ options.lead_time_notice_hours }} giờ.</p>
 
-        <!-- Hướng dẫn giao hàng lạnh -->
-        <div class="delivery-instruct-wrap">
-          <label class="pl-label" for="coDeliveryInstruct">Hướng dẫn khi giao hàng lạnh</label>
-          <select id="coDeliveryInstruct" v-model="c.deliveryInstruction" class="pl-input" @change="save">
-            <option value="Gọi điện trước 15 phút khi tới">Gọi điện trước 15 phút khi tới</option>
-            <option value="Gửi lễ tân / bảo vệ chung cư (thùng giữ lạnh 6 giờ)">Gửi lễ tân / bảo vệ chung cư (thùng giữ lạnh 6 giờ)</option>
-            <option value="Để trước cửa căn hộ &amp; chụp ảnh xác nhận">Để trước cửa căn hộ &amp; chụp ảnh xác nhận</option>
-            <option value="other">Ghi chú riêng...</option>
-          </select>
-          <div v-if="c.deliveryInstruction === 'other'" class="custom-instruction-box">
-            <input
-              v-model="c.customInstruction"
-              type="text"
-              class="pl-input"
-              placeholder="Nhập ghi chú riêng cho shipper xe lạnh..."
-              @input="save"
-            />
-          </div>
+        <!-- Sức chứa còn lại của từng ngày giao (máy chủ tính: nhỏ nhất của khung giờ, nhà máy, xe lạnh, nguồn cung) -->
+        <div v-if="capacityRows.length" class="capacity" data-testid="capacity" aria-label="Số chỗ còn lại theo ngày giao">
+          <p class="pl-label">Số chỗ còn lại theo từng ngày giao</p>
+          <ul class="cap-list">
+            <li v-for="d in capacityRows" :key="d.date" :class="{ full: d.full, low: d.low }" :data-date="d.date">
+              <span>{{ fmtDay(d.date) }}</span>
+              <b class="num">{{ d.full ? 'Hết chỗ' : 'Còn ' + d.effective_remaining + ' chỗ' }}</b>
+            </li>
+          </ul>
+          <p v-if="hasFullDate" class="pl-error" role="alert" data-testid="capacity-full">
+            Có ngày giao đã hết chỗ. Bạn chọn khung giờ hoặc ngày giao khác để tiếp tục.
+          </p>
         </div>
+
+        <!-- Hướng dẫn giao hàng lạnh: BẮT BUỘC chọn, mặc định "để ở lễ tân + shipper chụp ảnh" -->
+        <fieldset class="delivery-instruct-wrap" data-testid="instruction">
+          <legend class="pl-label">Hướng dẫn khi giao hàng lạnh <span class="req">(bắt buộc)</span></legend>
+          <label v-for="m in INSTRUCTION_MODES" :key="m.mode" class="instr" :class="{ on: c.instruction.mode === m.mode }">
+            <input type="radio" name="coInstruction" :value="m.mode" :checked="c.instruction.mode === m.mode" @change="setInstruction(m)" />
+            <span>{{ m.label }}</span>
+          </label>
+          <p v-if="c.instruction.photo_required" class="pl-note">Hàng lạnh để lại nơi nhận thì shipper luôn chụp ảnh làm bằng chứng và gửi vào tuần giao của bạn.</p>
+          <input
+            v-model="c.instruction.note"
+            type="text"
+            class="pl-input"
+            maxlength="200"
+            placeholder="Ghi chú thêm cho shipper (không bắt buộc), ví dụ: gửi bảo vệ tòa B"
+            @input="save"
+          />
+        </fieldset>
 
         <!-- Dòng nhắc lịch giao cố định -->
         <p class="fixed-delivery-reminder">
@@ -128,6 +140,10 @@
           <label class="pl-label" for="coStreet">Số nhà, tên đường, phường</label>
           <input id="coStreet" v-model="c.street" class="pl-input" type="text" autocomplete="street-address" placeholder="Ví dụ 12 Nguyễn Văn Linh, P. Tân Phong" @change="save" />
         </div>
+        <div>
+          <label class="pl-label" for="coWard">Phường/xã <span class="muted">(không bắt buộc, giúp MOVA gom tuyến giao nhanh hơn)</span></label>
+          <input id="coWard" v-model="c.ward" class="pl-input" type="text" maxlength="60" autocomplete="address-level3" placeholder="Ví dụ Tân Phong" data-testid="ward" @change="save" />
+        </div>
         <div v-if="options">
           <label class="pl-label" for="coArea">Quận/huyện</label>
           <select id="coArea" v-model="c.district" class="pl-input" @change="save">
@@ -140,19 +156,27 @@
     <!-- 3. Thanh toán -->
     <section class="pl-card sec">
       <h2 class="pl-h2">3. Thanh toán</h2>
-      <p v-if="!preview" class="pl-note">Chọn ngày và khung giờ giao để xem số tiền chi tiết.</p>
+      <p v-if="needsAuth" class="pl-panel warn" role="status" data-testid="needs-auth">
+        Xác thực số điện thoại ở mục 2 để MOVA tính số tiền chính xác cho bạn (giá, ưu đãi và lịch trừ tiền do hệ thống tính, không ước lượng).
+      </p>
+      <p v-else-if="!preview && store.error" class="pl-error" role="alert">{{ store.error }}</p>
+      <p v-else-if="!preview" class="pl-note">Chọn ngày và khung giờ giao để xem số tiền chi tiết.</p>
 
       <div v-else class="methods" role="radiogroup" aria-label="Hình thức thanh toán">
         <!-- a. Fresh Credit -->
         <div class="method" :class="{ on: c.method === 'fresh_credit' }">
           <button type="button" role="radio" :aria-checked="c.method === 'fresh_credit'" class="m-head" @click="setMethod('fresh_credit')">
             <span class="radio" :class="{ on: c.method === 'fresh_credit' }"></span>
-            <span class="m-title">Gói Suất ăn trả trước (Fresh Credit) <span class="pl-pill">Ưu đãi chiết khấu 10%</span></span>
+            <span class="m-title">Gói Suất ăn trả trước (Fresh Credit) <span class="pl-pill">Ưu đãi chiết khấu khi mua gói</span></span>
           </button>
           <div v-if="c.method === 'fresh_credit'" class="m-body">
-            <div class="offers" role="radiogroup" aria-label="Gói suất ăn trả trước">
-              <button type="button" role="radio" :aria-checked="c.packId === 'exact'" class="offer" :class="{ on: c.packId === 'exact' }" @click="setPack('exact')">
-                <span class="offer-n">Gói 4 tuần chuẩn ({{ (mealsCount || 5) * 4 }} bữa ~ {{ (mealsCount || 5) * 4 * (householdSize || 2) }} suất)</span>
+            <p v-if="fc.covered" class="pl-panel good" data-testid="credit-covered">
+              Fresh Credit hiện có <b class="num">{{ fmt(fc.balance_vnd) }}</b> đủ trả cho cả gói. Bạn không cần mua thêm.
+            </p>
+            <div v-else class="offers" role="radiogroup" aria-label="Gói suất ăn trả trước">
+              <p class="pl-note">Fresh Credit hiện có {{ fmt(fc.balance_vnd) }}, cần thêm {{ fmt(fc.need_vnd) }} để trả cho cả gói.</p>
+              <button v-if="fc.pack_id" type="button" role="radio" :aria-checked="c.packId === 'exact'" class="offer" :class="{ on: c.packId === 'exact' }" @click="setPack('exact')">
+                <span class="offer-n">{{ exactLabel }}</span>
                 <span class="offer-get num">Nhận {{ fmt(fc.credit_received_vnd) }}</span>
                 <span class="offer-pay num">Trả {{ fmt(fc.pay_vnd) }}</span>
               </button>
@@ -161,12 +185,16 @@
                 <span class="offer-get num">Nhận {{ fmt(p.credit_received_vnd) }}</span>
                 <span class="offer-pay num">Trả {{ fmt(p.pay_vnd) }}</span>
               </button>
+              <p v-if="!fc.pack_id" class="pl-error" role="alert">Chưa có Gói Suất ăn trả trước đủ giá trị cho gói này. Hãy chọn cách trả khác.</p>
             </div>
             <p class="pl-note">
               Fresh Credit là điểm bữa ăn trả trước, chỉ dùng để đổi suất ăn tại MOVA Fresh; không rút tiền mặt trực tiếp và không chuyển nhượng.
               Tuần 1 trừ ngay, các tuần sau tự trừ trước giờ giao {{ chargeHours }} giờ (72 tiếng).
             </p>
-            <p v-if="fc.capped" class="pl-note">Ưu đãi chiết khấu chu kỳ đầu đã được điều chỉnh theo mức ưu đãi tối đa của chương trình.</p>
+            <div v-if="packOrder" class="pl-panel warn" role="status" data-testid="pack-order">
+              <b>Chuyển khoản để mua gói</b>
+              <p>Chuyển đúng <b class="num">{{ fmt(packOrder.pay_vnd) }}</b> với nội dung <b class="ref">{{ packOrder.transfer_content }}</b>. Khi tiền về, MOVA cộng {{ fmt(packOrder.credit_received_vnd) }} vào Fresh Credit, rồi bạn bấm kích hoạt gói lại.</p>
+            </div>
           </div>
         </div>
 
@@ -177,11 +205,12 @@
             <span class="m-title">Chuyển khoản VietQR một lần cho cả {{ preview.cycle_weeks.length }} tuần</span>
           </button>
           <div v-if="c.method === 'bank_transfer_4w'" class="m-body bank">
-            <div class="qr"><VietQrSvg :seed="qrSeed" /></div>
+            <div v-if="preview.payment_ref" class="qr"><VietQrSvg :seed="qrSeed" /></div>
             <div class="bank-info">
               <p>Số tiền: <b class="num big">{{ fmt(preview.bank_transfer_4w.pay_vnd) }}</b></p>
-              <p>Nội dung chuyển khoản: <b class="ref">{{ preview.payment_ref }}</b></p>
-              <p class="pl-note">Giữ nguyên nội dung này để MOVA khớp khoản chuyển với gói của bạn.</p>
+              <p v-if="preview.payment_ref">Nội dung chuyển khoản: <b class="ref">{{ preview.payment_ref }}</b></p>
+              <p v-else class="pl-note">Mã chuyển khoản của bạn hiện ngay sau khi bạn bấm đăng ký gói.</p>
+              <p class="pl-note">Giữ nguyên nội dung này để MOVA khớp khoản chuyển với gói của bạn. Gói bắt đầu khi ngân hàng báo tiền về.</p>
             </div>
           </div>
         </div>
@@ -219,7 +248,7 @@
           v-model="voucherInput"
           class="pl-input num voucher-input"
           type="text"
-          placeholder="Nhập mã (THEQUATANG, MOVA20, FREESHIP...)"
+          placeholder="Nhập mã giới thiệu MOVA-XXXX hoặc THEQUATANG"
           style="text-transform: uppercase;"
           :disabled="Boolean(appliedVoucher)"
           @keyup.enter="applyVoucher"
@@ -321,14 +350,10 @@
 
     <!-- Nút trả tiền -->
     <section class="pay-bar">
-      <div v-if="preview" class="pay-breakdown">
-        <div v-if="slotDiscountVnd > 0" class="pay-line green">
-          <span>Ưu đãi khung giờ xanh (06h - 08h):</span>
-          <b class="num">-{{ fmt(slotDiscountVnd) }}</b>
-        </div>
-        <div v-if="voucherDiscountVnd > 0" class="pay-line green">
-          <span>Ưu đãi voucher ({{ appliedVoucher.code }}):</span>
-          <b class="num">-{{ fmt(voucherDiscountVnd) }}</b>
+      <div v-if="preview" class="pay-breakdown" data-testid="pay-breakdown">
+        <div v-if="otherDiscountVnd > 0" class="pay-line green">
+          <span>Ưu đãi của gói (thẻ quà tặng, khung giờ xanh):</span>
+          <b class="num">-{{ fmt(otherDiscountVnd) }}</b>
         </div>
         <div v-if="referralDiscountVnd > 0" class="pay-line green">
           <span>Ưu đãi người quen giới thiệu ({{ activeRefCode }}):</span>
@@ -349,18 +374,19 @@
       <div class="otp-modal">
         <button class="mclose" type="button" aria-label="Đóng" @click="showOtpModal = false">×</button>
         <h3 class="otp-title">Xác thực số điện thoại</h3>
-        <p class="pl-note">Mã OTP đã được gửi đến số <b>{{ c.phone }}</b>.<br /><span class="demo-hint">(Mã OTP demo: <b>1234</b>)</span></p>
+        <p class="pl-note">MOVA vừa gửi mã OTP đến số <b>{{ c.phone }}</b>. Nhập mã để xác nhận số này là của bạn.</p>
         <div class="otp-form">
           <input
             v-model="otpInput"
             class="pl-input num otp-input"
             type="text"
             inputmode="numeric"
-            maxlength="6"
-            placeholder="1234"
+            autocomplete="one-time-code"
+            maxlength="10"
+            placeholder="Mã OTP"
             @keyup.enter="verifyOtp"
           />
-          <button class="pl-btn primary" type="button" @click="verifyOtp">Xác nhận OTP</button>
+          <button class="pl-btn primary" type="button" :disabled="otpBusy" @click="verifyOtp">{{ otpBusy ? 'Đang xác nhận…' : 'Xác nhận OTP' }}</button>
         </div>
         <p v-if="otpError" class="pl-error" style="margin-top: 6px;">{{ otpError }}</p>
       </div>
@@ -372,13 +398,16 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import VietQrSvg from '../common/VietQrSvg.vue';
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
+import { useMovaStore } from '../../stores/useMovaStore';
 import { BUSINESS } from '../../shared/config/business';
+import { INSTRUCTION_MODES } from '../../shared/api/adapters/checkout';
 import { fmt, hash } from '../../shared/utils/formatters';
-import { fmtDeadline } from '../../shared/utils/time';
+import { fmtDay, fmtDeadline } from '../../shared/utils/time';
 import { normalizeContact } from '../../shared/domain/leads';
 
 const emit = defineEmits(['done']);
 const store = usePlanFlowStore();
+const account = useMovaStore();
 const c = store.checkout;
 const options = computed(() => store.options);
 const preview = computed(() => store.preview);
@@ -390,6 +419,8 @@ const chargeHours = BUSINESS.timings.chargeBeforeDeliveryHours;
 const showOtpModal = ref(false);
 const otpInput = ref('');
 const otpError = ref('');
+const otpBusy = ref(false);
+const packOrder = ref(null);
 const phoneErr = ref('');
 const showTerms = ref(false);
 
@@ -447,33 +478,16 @@ const activeRefCode = computed(() => {
   return store.refCode || (appliedVoucher.value?.code?.startsWith('MOVA-') ? appliedVoucher.value.code : '');
 });
 
-const referralDiscountVnd = computed(() => {
-  return activeRefCode.value ? 100000 : 0;
-});
+const referralDiscountVnd = computed(() => (preview.value && preview.value.referral ? preview.value.referral.referee_bonus_vnd : 0));
+const otherDiscountVnd = computed(() => (preview.value ? Math.max(0, preview.value.gift_total_vnd - referralDiscountVnd.value) : 0));
 
-const slotDiscountVnd = computed(() => {
-  return c.slotId === 'early_morning_06_08' ? 15000 : 0;
-});
-
-const voucherDiscountVnd = computed(() => {
-  if (!appliedVoucher.value) return 0;
-  return appliedVoucher.value.discountVnd;
-});
-
-const totalDiscountsTodayVnd = computed(() => {
-  return slotDiscountVnd.value + voucherDiscountVnd.value + referralDiscountVnd.value;
-});
-
-const rawPayToday = computed(() => {
+// Số tiền phải trả hôm nay: toàn bộ do máy chủ tính (gói trả trước, chuyển khoản trọn gói, hoặc tuần đầu khi trừ thẻ).
+const payToday = computed(() => {
   const p = preview.value;
   if (!p) return 0;
   if (c.method === 'bank_transfer_4w') return p.bank_transfer_4w.pay_vnd;
   if (c.method === 'card') return p.card.charge_now_vnd;
   return store.selectedTopupPay();
-});
-
-const payToday = computed(() => {
-  return Math.max(0, rawPayToday.value - totalDiscountsTodayVnd.value);
 });
 
 const mealPayToday = computed(() => {
@@ -494,9 +508,21 @@ const payLabel = computed(() => {
   return `Thanh toán ${fmt(payToday.value)} và kích hoạt gói`;
 });
 
+const needsAuth = computed(() => !account.authUser && store.errorCode === 'AUTH_REQUIRED');
+const exactLabel = computed(() => `Gói ${BUSINESS.subscription.defaultWeeks} tuần phù hợp (${(mealsCount.value || 5) * 4} bữa ~ ${(mealsCount.value || 5) * 4 * (householdSize.value || 2)} suất)`);
+
+// Sức chứa từng ngày giao: chỉ các ngày thuộc gói (ngày đầu tiên + các tuần sau theo thứ đã chọn)
+const capacityRows = computed(() => (store.capacity || []).map((d) => ({ ...d, full: d.effective_remaining <= 0, low: d.effective_remaining > 0 && d.effective_remaining <= 3 })));
+const hasFullDate = computed(() => {
+  const full = new Set([...(preview.value ? preview.value.full_dates : []), ...store.fullDates]);
+  const dates = preview.value ? preview.value.deliveries.map((x) => x.delivery_date) : [];
+  return dates.length ? dates.some((d) => full.has(d)) : full.size > 0;
+});
+
 const problems = computed(() => {
   const list = [];
   if (!c.slotId) list.push('ngày và khung giờ giao');
+  if (hasFullDate.value) list.push('ngày giao còn chỗ');
   if (c.name.trim().length < 2) list.push('tên người nhận');
   const cleanPhone = c.phone.replace(/[\s.\-]/g, '');
   if (!/^0\d{9}$/.test(cleanPhone)) {
@@ -515,7 +541,7 @@ function onPhoneChange() {
   save();
 }
 
-function openOtpModal() {
+async function openOtpModal() {
   phoneErr.value = '';
   const cleanPhone = c.phone.replace(/[\s.\-]/g, '');
   if (!/^0\d{9}$/.test(cleanPhone)) {
@@ -524,63 +550,71 @@ function openOtpModal() {
   }
   otpInput.value = '';
   otpError.value = '';
+  otpBusy.value = true;
+  const err = await account.requestOtp(cleanPhone);
+  otpBusy.value = false;
+  if (err) {
+    phoneErr.value = err;
+    return;
+  }
   showOtpModal.value = true;
 }
 
-function verifyOtp() {
-  if (otpInput.value.trim() === '1234') {
-    c.phoneVerified = true;
-    showOtpModal.value = false;
-    otpError.value = '';
-    save();
-  } else {
-    otpError.value = 'Mã OTP không đúng. Nhập mã demo: 1234';
+async function verifyOtp() {
+  if (otpBusy.value) return;
+  otpBusy.value = true;
+  otpError.value = '';
+  const err = await account.verifyOtp(c.phone, otpInput.value);
+  otpBusy.value = false;
+  if (err) {
+    otpError.value = err;
+    return;
   }
+  c.phoneVerified = true;
+  showOtpModal.value = false;
+  save();
+  await refresh();
 }
 
-function applyVoucher() {
+function setInstruction(m) {
+  c.instruction.mode = m.mode;
+  c.instruction.photo_required = m.photo_required;
+  save();
+}
+
+async function applyVoucher() {
   voucherMsg.value = '';
   const code = voucherInput.value.trim().toUpperCase();
   if (!code) {
     voucherMsg.value = 'Vui lòng nhập mã ưu đãi';
     return;
   }
-  if (code === 'THEQUATANG') {
-    appliedVoucher.value = {
-      code: 'THEQUATANG',
-      name: 'Thẻ quà tặng MOVA Fresh (trải đều 4 tuần)',
-      discountVnd: 0
-    };
-    c.voucherCode = 'THEQUATANG';
-    voucherMsg.value = '✓ Đã kích hoạt thẻ quà tặng 4 tuần!';
-  } else if (code.startsWith('MOVA-')) {
-    store.setRef(code);
-    appliedVoucher.value = {
-      code,
-      name: `Ưu đãi người quen giới thiệu (${code})`,
-      discountVnd: 0
-    };
+  if (code === BUSINESS.incentives.giftCardCode) {
+    appliedVoucher.value = { code, name: 'Thẻ quà tặng MOVA Fresh (trải đều 4 tuần)' };
     c.voucherCode = code;
-    voucherMsg.value = `✓ Áp dụng mã giới thiệu ${code}: Giảm ngay 100.000đ vào đơn đầu!`;
-  } else if (code === 'MOVA20') {
-    appliedVoucher.value = {
-      code: 'MOVA20',
-      name: 'Ưu đãi MOVA20 - Giảm 20.000đ',
-      discountVnd: 20000
-    };
-    c.voucherCode = 'MOVA20';
-    voucherMsg.value = '✓ Áp dụng thành công: Giảm 20.000đ';
-  } else if (code === 'FREESHIP') {
-    appliedVoucher.value = {
-      code: 'FREESHIP',
-      name: 'Ưu đãi FREESHIP - Miễn phí giao 25.000đ',
-      discountVnd: 25000
-    };
-    c.voucherCode = 'FREESHIP';
-    voucherMsg.value = '✓ Áp dụng thành công: Giảm 25.000đ';
-  } else {
-    voucherMsg.value = 'Mã ưu đãi không hợp lệ hoặc đã hết hạn';
+    voucherMsg.value = '✓ Đã kích hoạt thẻ quà tặng 4 tuần!';
+    save();
+    return;
   }
+  if (!code.startsWith('MOVA-')) {
+    voucherMsg.value = 'Mã ưu đãi không hợp lệ hoặc đã hết hạn';
+    return;
+  }
+  // Mã giới thiệu do máy chủ kiểm tra (mã sai, tự giới thiệu, khách không còn là khách mới) khi tính lại giá.
+  const prevRef = store.refCode;
+  const prevCode = c.voucherCode;
+  store.setRef(code);
+  c.voucherCode = code;
+  await store.loadPreview();
+  if (store.errorCode === 'REFERRAL_INVALID' || store.errorCode === 'REFERRAL_NOT_ELIGIBLE') {
+    voucherMsg.value = store.error;
+    store.setRef(prevRef);
+    c.voucherCode = prevCode;
+    await store.loadPreview();
+    return;
+  }
+  appliedVoucher.value = { code, name: `Ưu đãi người quen giới thiệu (${code})` };
+  voucherMsg.value = preview.value && preview.value.referral ? `✓ Áp dụng mã giới thiệu ${code}: giảm ${fmt(preview.value.referral.referee_bonus_vnd)} vào đơn đầu` : `✓ Đã ghi nhận mã giới thiệu ${code}`;
   save();
 }
 
@@ -599,39 +633,40 @@ function save() {
   store.persist();
 }
 
-function refresh() {
-  store.loadPreview();
+async function refresh() {
+  await Promise.all([store.loadPreview(), store.loadCapacity()]);
   store.persist();
 }
 
-function setFrequency(f) {
+async function setFrequency(f) {
   c.frequency = f;
   c.optionIndex = 0;
   c.slotId = '';
-  store.loadOptions();
+  await store.loadOptions();
   autoPick();
-  refresh();
+  await refresh();
 }
 
-function pickOption(i) {
+async function pickOption(i) {
   c.optionIndex = i;
   const list = options.value.options[i].slots;
   if (!list.some((s) => s.slot_id === c.slotId)) c.slotId = list.length ? list[0].slot_id : '';
-  refresh();
+  await refresh();
 }
 
-function pickSlot(id) {
+async function pickSlot(id) {
   c.slotId = id;
-  refresh();
+  await refresh();
 }
 
-function setMethod(m) {
+async function setMethod(m) {
   c.method = m;
-  refresh();
+  await refresh();
 }
 
 function setPack(id) {
   c.packId = id;
+  packOrder.value = null;
   save();
 }
 
@@ -642,37 +677,54 @@ function autoPick() {
 
 async function pay() {
   message.value = '';
+  packOrder.value = null;
   busy.value = true;
-  const r = store.submitOrder();
+  const r = await store.submitOrder();
   busy.value = false;
   if (r.ok) {
     emit('done');
     return;
   }
-  if (['SLOT_FULL', 'SLOT_NOT_AVAILABLE', 'DAY_NOT_AVAILABLE'].includes(r.kind)) {
+  if (['SLOT_FULL', 'CYCLE_FULL', 'SLOT_NOT_AVAILABLE', 'DAY_NOT_AVAILABLE'].includes(r.kind)) {
     c.slotId = '';
-    store.loadOptions();
+    await store.loadOptions();
     autoPick();
-    refresh();
-    message.value = 'Khung giờ bạn chọn vừa kín chỗ. Mời chọn khung giờ khác.';
+    await refresh();
+    message.value = r.kind === 'CYCLE_FULL'
+      ? 'Năng lực giao của một ngày trong gói vừa hết. Mời chọn ngày hoặc khung giờ khác.'
+      : 'Khung giờ bạn chọn vừa kín chỗ. Mời chọn khung giờ khác.';
+  } else if (r.kind === 'INSUFFICIENT_CREDIT') {
+    // Fresh Credit chưa đủ: tạo lệnh mua Gói Suất ăn trả trước để khách chuyển khoản.
+    const o = await store.orderSelectedPack();
+    if (o.ok) {
+      packOrder.value = o.order;
+      message.value = 'Fresh Credit chưa đủ cho tuần đầu. Hãy chuyển khoản mua gói bên dưới, khi tiền về bạn bấm kích hoạt lại.';
+    } else {
+      message.value = o.message;
+    }
+  } else if (r.kind === 'AUTH_REQUIRED') {
+    message.value = 'Hãy xác thực số điện thoại trước khi trả tiền.';
   } else {
     message.value = r.message;
   }
 }
 
-onMounted(() => {
-  store.loadOptions();
+onMounted(async () => {
+  await store.loadOptions();
   const contact = normalizeContact(store.contact);
   if (!c.phone && contact && contact.type === 'phone') c.phone = contact.value;
+  // Đã đăng nhập (OTP) bằng số này rồi thì không bắt xác thực lại
+  const authPhone = account.authUser && account.authUser.phone ? `0${String(account.authUser.phone).replace(/^\+?84/, '')}` : '';
+  if (authPhone && c.phone && authPhone === c.phone.replace(/[\s.\-]/g, '')) c.phoneVerified = true;
   if (c.voucherCode) {
     voucherInput.value = c.voucherCode;
-    applyVoucher();
+    await applyVoucher();
   } else if (store.refCode) {
     voucherInput.value = store.refCode;
-    applyVoucher();
+    await applyVoucher();
   }
   autoPick();
-  refresh();
+  await refresh();
 });
 
 watch(() => c.packId, save);
@@ -737,6 +789,15 @@ watch(() => c.packId, save);
 .applied-voucher { display: flex; justify-content: space-between; align-items: center; background: var(--green-soft); color: var(--green-d); padding: 8px 12px; border-radius: 8px; font-size: 15px; font-weight: 700; }
 .v-amt { font-size: 16px; }
 .v-success { color: var(--green-d); font-weight: 600; }
+.req { font-weight: 600; color: var(--orange-ink); font-size: 14px; }
+.instr { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 12px; margin-bottom: 8px; font-size: 16px; }
+.instr.on { border-color: var(--green); background: var(--green-soft); }
+fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
+.cap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.cap-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px; border-radius: 10px; background: var(--green-soft); font-size: 15px; }
+.cap-list li.low { background: var(--butter); }
+.cap-list li.full { background: #FBE5E2; color: var(--red); }
+.pl-panel.good { background: var(--green-soft); }
 .rate-note { font-size: 13px; font-weight: 600; color: var(--green-d); margin-left: 4px; }
 
 .terms-toggle-bar {
