@@ -131,9 +131,9 @@ async function load() {
   try {
     pos.value = await api.ops.hub.receivable(ctx.value);
     receipts.value = await api.ops.hub.receipts(ctx.value, { limit: 8 });
-    // Danh sách lô để gán cho SKU bắt buộc có lô. Kho phụ chưa có quyền đọc sổ lô (chỉ xưởng và admin): khi đó nhập mã lô bằng tay.
+    // Danh sách lô để gán cho SKU bắt buộc có lô: lấy từ sổ truy xuất của kho phụ (hubOps đọc được). Lỗi thì nhập mã lô bằng tay.
     try {
-      lotList.value = (await api.ops.listLots(ctx.value)).map((l) => ({ sku: l.sku, lotCode: l.qr_code }));
+      lotList.value = (await api.ops.hub.traceLots(ctx.value)).filter((l) => l.sku).map((l) => ({ sku: l.sku, lotCode: l.lotCode }));
     } catch {
       lotList.value = [];
     }

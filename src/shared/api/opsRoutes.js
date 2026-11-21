@@ -74,7 +74,24 @@ export const OPS_ROUTES = {
   // Kho phụ: nhận hàng theo PO
   hubReceivable: ['GET', '/ops/hub/receivable'],
   hubReceive: ['POST', '/ops/hub/receipts'],
-  hubReceipts: ['GET', '/ops/hub/receipts']
+  hubReceipts: ['GET', '/ops/hub/receipts'],
+
+  // Kho phụ: tồn kho theo lô (FEFO), truy xuất, thu hồi (C15)
+  hubStock: ['GET', '/ops/hub/stock'],
+  hubFefo: ['GET', '/ops/hub/stock/fefo'],
+  hubIssue: ['POST', '/ops/hub/stock/issue'],
+  hubWaste: ['POST', '/ops/hub/stock/waste'],
+  hubCount: ['POST', '/ops/hub/stock/count'],
+  hubTraceLots: ['GET', '/ops/hub/trace/lots'],
+  hubTraceLookup: ['GET', '/ops/hub/trace/lookup'],
+  hubRecalls: ['GET', '/ops/hub/recalls'],
+  hubRecallCreate: ['POST', '/ops/hub/recalls'],
+  hubRecall: ['GET', '/ops/hub/recalls/:id'],
+  hubRecallHold: ['POST', '/ops/hub/recalls/:id/hold'],
+  hubRecallNotify: ['POST', '/ops/hub/recalls/:id/notify'],
+  hubRecallCompensate: ['POST', '/ops/hub/recalls/:id/compensate'],
+  hubRecallWasteHeld: ['POST', '/ops/hub/recalls/:id/waste-held'],
+  hubRecallClose: ['POST', '/ops/hub/recalls/:id/close']
 };
 
 // Cổng nhà cung cấp: nằm ngoài /ops. Nhà cung cấp luôn bị ép về chính mình; admin xem thử bằng ?as_supplier_id=.

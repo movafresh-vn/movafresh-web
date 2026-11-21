@@ -1,7 +1,7 @@
 // api.ops phần chạy trên backend thật (async, qua http.js). Tên hàm giữ như bản giả lập để màn hình đổi ít nhất:
 // tham số đầu `ctx` còn đó cho khỏi sửa chỗ gọi nhưng KHÔNG dùng nữa (danh tính và vai trò lấy từ token Supabase).
 // Khác app khách: lỗi ném HttpError { code, status, details } (không có phong bì {status:'error'}).
-// Nhóm chưa chuyển (kho phụ tồn/thu hồi/nhận xe, logistics, tài chính, demo) vẫn ở bản giả lập trong index.js.
+// Nhóm chưa chuyển (kho phụ nhận xe/ghép hải sản/chia tuyến, logistics, tài chính, demo) vẫn ở bản giả lập trong index.js.
 import { http as sharedHttp } from './http';
 import { fillPath } from './routes';
 import { OPS_ROUTES, SUPPLIER_ROUTES } from './opsRoutes';
@@ -214,14 +214,38 @@ export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
       saveSettings: (_ctx, input) => call('procSaveSettings', { body: input })
     },
 
-    /** Kho phụ: phần nhận hàng theo PO chạy thật; tồn kho, FEFO, thu hồi... còn ở bản giả lập (C15). */
+    /** Kho phụ: nhận hàng theo PO, tồn kho FEFO, truy xuất và thu hồi chạy thật; nhận xe, ghép hải sản, chia tuyến, xuất kho còn ở bản giả lập (C16). */
     hub: {
       receivable: () => call('hubReceivable'),
       async receive(_ctx, { poId, lines, photo = null, note = '' }) {
         const p = await photoPath(photo, 'receipt');
         return call('hubReceive', { body: { poId, lines: lines.map(dropEmpty), ...(p ? { photo: p } : {}), ...(note ? { note } : {}) } });
       },
-      receipts: (_ctx, { limit = 30 } = {}) => call('hubReceipts', { query: { limit } })
+      receipts: (_ctx, { limit = 30 } = {}) => call('hubReceipts', { query: { limit } }),
+
+      // ---- Tồn kho theo lô (FEFO), sổ di chuyển chỉ thêm (C15)
+      stock: () => call('hubStock'),
+      fefoPlan: (_ctx, { sku, qty }) => call('hubFefo', { query: { sku, qty } }),
+      issue: (_ctx, { sku, qty, reason = '', ref = '' }) => call('hubIssue', { body: dropEmpty({ sku, qty, reason, ref }) }),
+      waste: (_ctx, { stockId, qty, reason, note = '' }) => call('hubWaste', { body: dropEmpty({ stockId, qty, reason, note }) }),
+      count: (_ctx, { counted, reason }) => call('hubCount', { body: { counted, reason } }),
+
+      // ---- Truy xuất ngược một lô. Nhận chuỗi mã hoặc { input }; máy chủ hiểu mã lô, mã mẻ hoặc đường dẫn /q/<mã>.
+      traceLots: () => call('hubTraceLots'),
+      trace: (_ctx, input) => call('hubTraceLookup', { query: { input: String(input && typeof input === 'object' ? input.input : input ?? '').trim() } }),
+
+      // ---- Thu hồi lô. Đơn nhận diện bằng mã đơn (order_code); bù Fresh Credit chỉ mua hàng / admin (máy chủ kiểm).
+      recalls: () => call('hubRecalls'),
+      createRecall: (_ctx, { lotCode, reason }) => call('hubRecallCreate', { body: { lotCode, reason } }),
+      recall: (_ctx, recallId) => call('hubRecall', { params: { id: recallId } }),
+      holdOrders: (_ctx, { recallId, orderIds = null }) => call('hubRecallHold', { params: { id: recallId }, body: orderIds ? { orderIds } : {} }),
+      notifyCustomers: (_ctx, { recallId, orderIds = null }) => call('hubRecallNotify', { params: { id: recallId }, body: orderIds ? { orderIds } : {} }),
+      compensate: (_ctx, { recallId, orderIds = null, amountVnd = null }) =>
+        call('hubRecallCompensate', { params: { id: recallId }, body: { ...(orderIds ? { orderIds } : {}), ...(amountVnd !== null && amountVnd !== undefined ? { amountVnd } : {}) } }),
+      wasteHeldStock: (_ctx, { recallId }) => call('hubRecallWasteHeld', { params: { id: recallId }, body: {} }),
+      /** Mặc định tồn kho bị giữ vẫn giữ (an toàn thực phẩm); `releaseStock: true` chỉ khi đã xác nhận lô an toàn. */
+      closeRecall: (_ctx, { recallId, note = '', releaseStock = false }) =>
+        call('hubRecallClose', { params: { id: recallId }, body: { ...(note ? { note } : {}), ...(releaseStock ? { releaseStock: true } : {}) } })
     },
 
     /** Cổng nhà cung cấp (C14): mọi lệnh bị ép về chính nhà cung cấp đăng nhập; asSupplierId chỉ có tác dụng với admin. */
