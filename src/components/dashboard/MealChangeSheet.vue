@@ -137,7 +137,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -153,11 +153,19 @@ const props = defineProps({
 const emit = defineEmits(['close', 'done']);
 const store = useMovaStore();
 
-const base = { customer_id: store.customerId, week_index: props.week.week_index, meal_index: props.target.meal.meal_index, kind: props.target.dish.kind };
-const res = api.customer.mealOptions(base);
-const loadError = ref(res.status === 'error' ? res.error.message : '');
-const options = ref(res.status === 'success' ? res.data.options : []);
-const deadline = res.status === 'success' ? res.data.deadline_label : '';
+const base = { week_index: props.week.week_index, meal_index: props.target.meal.meal_index, kind: props.target.dish.kind };
+const loadError = ref('');
+const options = ref([]);
+const deadline = ref('');
+onMounted(async () => {
+  const res = await api.customer.mealOptions(base);
+  if (res.status === 'success') {
+    options.value = res.data.options;
+    deadline.value = res.data.deadline_label;
+  } else {
+    loadError.value = res.error.message;
+  }
+});
 const preview = ref(null);
 const error = ref('');
 const busy = ref(false);
@@ -166,10 +174,10 @@ const showFactoryModal = ref(false);
 const selectedDishDetail = ref(null);
 let picked = null;
 
-function onFactorySelect(dish) {
+async function onFactorySelect(dish) {
   showFactoryModal.value = false;
   const o = options.value.find((x) => x.dish_id === dish.id) || { dish_id: dish.id, name: dish.name };
-  choose(o);
+  await choose(o);
 }
 
 const deltaText = (v) => (v === 0 ? 'Cùng giá' : `${v > 0 ? '+' : '−'}${fmt(Math.abs(v))}`);
@@ -203,10 +211,10 @@ const filteredOptions = computed(() => {
   });
 });
 
-function choose(o) {
+async function choose(o) {
   error.value = '';
   picked = o;
-  const p = api.customer.previewMealChange({ ...base, dish_id: o.dish_id });
+  const p = await api.customer.previewMealChange({ ...base, dish_id: o.dish_id });
   if (p.status === 'error') error.value = p.error.message;
   else preview.value = p.data;
 }
@@ -227,15 +235,15 @@ function chooseFromDetail(dish) {
   if (o) choose(o);
 }
 
-function confirm() {
+async function confirm() {
   busy.value = true;
-  const r = api.customer.changeMeal({ ...base, dish_id: picked.dish_id });
+  const r = await api.customer.changeMeal({ ...base, dish_id: picked.dish_id });
   busy.value = false;
   if (r.status === 'error') {
     error.value = r.error.message;
     return;
   }
-  store.refresh();
+  await store.refresh();
   store.toast(`Đã đổi sang ${picked.name}`);
   emit('done');
 }

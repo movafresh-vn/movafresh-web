@@ -37,7 +37,6 @@
           <ProfileTab v-else />
         </div>
 
-        <DemoTools v-if="demo" />
       </template>
     </div>
   </div>
@@ -53,7 +52,6 @@ import WeeksTab from '../components/dashboard/WeeksTab.vue';
 import CreditTab from '../components/dashboard/CreditTab.vue';
 import RewardsTab from '../components/dashboard/RewardsTab.vue';
 import ProfileTab from '../components/dashboard/ProfileTab.vue';
-import DemoTools from '../components/dashboard/DemoTools.vue';
 
 const TABS = [
   { id: 'weeks', label: 'Các tuần của tôi' },
@@ -68,7 +66,6 @@ const router = useRouter();
 
 const tab = ref(TABS.some((t) => t.id === route.query.tab) ? route.query.tab : 'weeks');
 const alert = computed(() => (store.account ? store.account.alert : null));
-const demo = computed(() => route.query.demo === '1');
 
 function setTab(id) {
   tab.value = id;

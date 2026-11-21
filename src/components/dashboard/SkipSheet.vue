@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -33,22 +33,27 @@ const props = defineProps({ week: { type: Object, required: true } });
 const emit = defineEmits(['close', 'done']);
 const store = useMovaStore();
 
-const req = { customer_id: store.customerId, week_index: props.week.week_index };
-const p = api.customer.previewSkip(req);
-const loadError = ref(p.status === 'error' ? p.error.message : '');
-const preview = p.status === 'success' ? p.data : null;
+const req = { week_index: props.week.week_index };
+const loadError = ref('');
+const preview = ref(null);
 const error = ref('');
 const busy = ref(false);
 
-function confirm() {
+onMounted(async () => {
+  const p = await api.customer.previewSkip(req);
+  if (p.status === 'error') loadError.value = p.error.message;
+  else preview.value = p.data;
+});
+
+async function confirm() {
   busy.value = true;
-  const r = api.customer.skipWeek(req);
+  const r = await api.customer.skipWeek(req);
   busy.value = false;
   if (r.status === 'error') {
     error.value = r.error.message;
     return;
   }
-  store.refresh();
+  await store.refresh();
   store.toast(`Đã tạm hoãn tuần ${props.week.number}, giao lại ${r.data.new_deliveries[0].delivery_label}`);
   emit('done', r.data);
 }

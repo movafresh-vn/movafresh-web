@@ -45,13 +45,19 @@ const store = useMovaStore();
 const SALT = [{ id: 'salty', label: 'Mặn' }, { id: 'ok', label: 'Vừa' }, { id: 'bland', label: 'Nhạt' }];
 const SPICE = [{ id: 'low', label: 'Ít' }, { id: 'ok', label: 'Vừa' }, { id: 'high', label: 'Nhiều' }];
 
-function rate(order, dish, patch) {
-  const res = api.customer.rateDish({ customer_id: store.customerId, order_id: order.order_id, dish_id: dish.dish_id, ...patch });
+async function rate(order, dish, patch) {
+  const res = await api.customer.rateDish({ order_id: order.order_id, dish_id: dish.dish_id, ...patch });
   if (res.status === 'error') {
     store.toast(res.error.message);
     return;
   }
   dish.rating = { thumb: res.data.thumb, sauce_salt: res.data.sauce_salt, spice: res.data.spice };
+  // Máy chủ nhận một đánh giá đủ ba phần: chấm đủ thích, vị xốt và độ cay thì mới gửi.
+  if (!res.data.complete) {
+    store.toast('Chọn thêm vị xốt và độ cay để gửi đánh giá');
+    return;
+  }
+  dish.rated = true;
   store.toast('Đã lưu đánh giá, cảm ơn bạn');
   emit('rated');
 }

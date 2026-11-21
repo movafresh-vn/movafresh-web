@@ -57,8 +57,8 @@ const sum = ref(null);
 
 const signed = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${fmt(Math.abs(v))}`;
 
-function load() {
-  const r = api.customer.creditSummary(store.customerId);
+async function load() {
+  const r = await api.customer.creditSummary();
   if (r.status === 'success') sum.value = r.data;
 }
 load();

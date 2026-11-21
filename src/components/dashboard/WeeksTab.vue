@@ -102,8 +102,8 @@ function shortDate(key) {
   return `${dow} ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`;
 }
 
-function load() {
-  const res = api.customer.myWeeks(store.customerId);
+async function load() {
+  const res = await api.customer.myWeeks();
   if (res.status === 'error') return;
   data.value = res.data;
   const weeks = res.data.weeks;
@@ -111,25 +111,25 @@ function load() {
     const next = weeks.find((w) => !DONE.includes(w.status)) || weeks[weeks.length - 1];
     selected.value = next ? next.week_index : null;
   }
-  loadRatings();
+  await loadRatings();
 }
 
-function loadRatings() {
-  const r = api.customer.pendingRatings(store.customerId);
+async function loadRatings() {
+  const r = await api.customer.pendingRatings();
   ratings.value = r.status === 'success' ? r.data : [];
 }
 
-function afterSkip() {
+async function afterSkip() {
   skipping.value = null;
-  load();
+  await load();
 }
 
-function unlinkCardAction() {
+async function unlinkCardAction() {
   if (window.confirm('Bạn có chắc chắn muốn hủy liên kết thẻ/ví đối tác? Sau khi hủy, MOVA sẽ không tự động trừ tiền các tuần tiếp theo.')) {
-    const res = api.customer.unlinkCard({ customer_id: store.customerId });
+    const res = await api.customer.unlinkCard();
     if (res.status === 'success') {
       store.toast('✓ Đã hủy liên kết thẻ/ví đối tác thành công');
-      load();
+      await load();
     } else {
       store.toast(res.error?.message || 'Không thể hủy liên kết lúc này');
     }

@@ -59,8 +59,8 @@ const form = ref(null);
 const claimed = ref(false);
 const error = ref('');
 
-function load() {
-  const r = api.customer.findCustomer(store.customerId);
+async function load() {
+  const r = await api.customer.findCustomer();
   if (r.status !== 'success') return;
   const c = r.data;
   claimed.value = c.profile_reward_claimed;
@@ -68,17 +68,17 @@ function load() {
 }
 load();
 
-const completeness = computed(() => profileCompleteness(form.value));
+const completeness = computed(() => (form.value ? profileCompleteness(form.value) : { done: 0, total: 0, missing: [], complete: false }));
 
-function save() {
+async function save() {
   error.value = '';
-  const r = api.customer.saveProfile({ customer_id: store.customerId, ...form.value });
+  const r = await api.customer.saveProfile({ ...form.value });
   if (r.status === 'error') {
     error.value = r.error.message;
     return;
   }
   claimed.value = r.data.customer.profile_reward_claimed;
-  store.refresh();
+  await store.refresh();
   store.toast(r.data.reward_vnd ? `Đã lưu hồ sơ. MOVA cộng ${fmt(r.data.reward_vnd)} vào Fresh Credit` : 'Đã lưu hồ sơ');
 }
 </script>

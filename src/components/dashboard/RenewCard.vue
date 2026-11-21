@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -40,21 +40,25 @@ defineProps({ remaining: { type: Number, default: 0 } });
 const emit = defineEmits(['done']);
 const store = useMovaStore();
 
-const res = api.customer.renewalOffer(store.customerId);
-const offer = res.status === 'success' ? res.data : null;
+const offer = ref(null);
 const agree = ref(false);
 const error = ref('');
 const busy = ref(false);
 
-function renew() {
+onMounted(async () => {
+  const res = await api.customer.renewalOffer();
+  offer.value = res.status === 'success' ? res.data : null;
+});
+
+async function renew() {
   busy.value = true;
-  const r = api.customer.renewSubscription({ customer_id: store.customerId, consent: agree.value });
+  const r = await api.customer.renewSubscription({ consent: agree.value });
   busy.value = false;
   if (r.status === 'error') {
     error.value = r.error.message;
     return;
   }
-  store.refresh();
+  await store.refresh();
   store.toast(`Đã gia hạn thêm ${r.data.weeks_added} tuần`);
   emit('done');
 }

@@ -11,6 +11,11 @@
       <span class="status" :class="week.status">{{ week.status_label }}</span>
     </header>
 
+    <!-- Khoản thanh toán đến sau giờ chốt sổ: MOVA xem xét, báo kết quả cho khách -->
+    <p v-if="week.late_payment" class="pl-panel note late" :data-tone="week.late_payment.tone" data-testid="late-payment" role="status">
+      <b>Thanh toán đến sau giờ chốt sổ</b><br />{{ week.late_payment.label }}
+    </p>
+
     <p v-if="week.postponed_to_week != null" class="pl-panel note">
       Tuần này đã tạm hoãn. Thực đơn dời sang <b>Tuần {{ week.postponed_to_week + 1 }}</b>, ưu đãi của tuần được giữ nguyên.
     </p>
@@ -65,9 +70,13 @@
       <b>{{ b.delivery_issue.label }}</b><br />{{ b.delivery_issue.detail }}
     </p>
 
-    <div v-if="week.boxes.some((b) => b.photo_url)" class="proof">
-      <img v-for="b in week.boxes.filter((x) => x.photo_url)" :key="b.order_id" :src="b.photo_url" alt="Ảnh giao hàng" loading="lazy" />
+    <div v-if="week.boxes.some((b) => b.photo_url)" class="proof" data-testid="delivery-proof">
+      <figure v-for="b in week.boxes.filter((x) => x.photo_url)" :key="b.order_id">
+        <img :src="b.photo_url" alt="Ảnh giao hàng" loading="lazy" />
+        <figcaption v-if="b.delivered_at">Giao lúc {{ fmtDeadline(new Date(b.delivered_at)) }}</figcaption>
+      </figure>
     </div>
+    <p v-else-if="week.status === 'delivered'" class="pl-note" data-testid="delivery-proof-pending">Ảnh giao hàng sẽ hiện ở đây khi shipper tải lên.</p>
 
     <footer v-if="week.skip.allowed || skipHint" class="foot">
       <button v-if="week.skip.allowed" class="pl-btn" type="button" @click="$emit('skip', week)">Tạm hoãn tuần này</button>
@@ -152,6 +161,11 @@ const skipHint = computed(() => (props.week.editable && props.week.skip.code ===
 .box-status li[data-phase="delivered"] { background: var(--green-soft); color: var(--green-d); }
 .proof { display: grid; gap: 8px; }
 .proof img { width: 100%; max-height: 220px; object-fit: cover; border-radius: 12px; background: var(--line-2); }
+.proof figure { margin: 0; display: grid; gap: 4px; }
+.proof figcaption { font-size: 14px; color: var(--muted); }
+.late[data-tone="good"] { background: var(--green-soft); border-color: #bfe0cb; }
+.late[data-tone="wait"] { background: var(--orange-soft); border-color: #f3cdb8; }
+.late[data-tone="info"] { background: var(--blue-soft); }
 .foot { display: grid; }
 @media (min-width: 641px) { .foot { justify-items: start; } }
 </style>

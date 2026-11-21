@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -59,21 +59,26 @@ import { useMovaStore } from '../../stores/useMovaStore';
 const emit = defineEmits(['close', 'done', 'skip']);
 const store = useMovaStore();
 
-const res = api.customer.previewCancel(store.customerId);
-const loadError = ref(res.status === 'error' ? res.error.message : '');
-const p = res.status === 'success' ? res.data : null;
+const loadError = ref('');
+const p = ref(null);
 const error = ref('');
 const busy = ref(false);
 
-function confirm() {
+onMounted(async () => {
+  const res = await api.customer.previewCancel();
+  if (res.status === 'error') loadError.value = res.error.message;
+  else p.value = res.data;
+});
+
+async function confirm() {
   busy.value = true;
-  const r = api.customer.cancelSubscription({ customer_id: store.customerId, confirm: true });
+  const r = await api.customer.cancelSubscription({ confirm: true });
   busy.value = false;
   if (r.status === 'error') {
     error.value = r.error.message;
     return;
   }
-  store.refresh();
+  await store.refresh();
   store.toast(`Đã dừng gói. MOVA hoàn ${fmt(r.data.refund_vnd)}`);
   emit('done', r.data);
 }

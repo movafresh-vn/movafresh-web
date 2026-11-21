@@ -1,7 +1,9 @@
 <template>
   <div class="trace">
     <div class="wrap narrow">
-      <section v-if="!lot" class="pl-card">
+      <section v-if="!loaded" class="pl-card" role="status"><p class="pl-lead">Đang tải thông tin nguồn gốc…</p></section>
+
+      <section v-else-if="!lot" class="pl-card">
         <h1 class="pl-h1">Không tìm thấy mã QR này</h1>
         <p class="pl-lead">Mã <b class="code">{{ code }}</b> chưa có trong hệ thống. Bạn kiểm tra lại nhãn trên hộp hoặc thử một mã mẫu:</p>
         <ul class="samples">
@@ -88,6 +90,7 @@ const route = useRoute();
 const store = useMovaStore();
 const reward = BUSINESS.incentives.rewards.share;
 const lot = ref(null);
+const loaded = ref(false);
 const samples = ref([]);
 const message = ref('');
 const busy = ref(false);
@@ -96,11 +99,13 @@ const code = computed(() => String(route.params.code || ''));
 const harvestLabel = computed(() => (lot.value && lot.value.kind === 'rice' ? 'Ngày thu hoạch' : 'Ngày giết mổ'));
 const testText = computed(() => (lot.value.inspector.antibiotic_test === 'NEGATIVE' ? 'âm tính (đạt)' : lot.value.inspector.antibiotic_test || 'chưa có'));
 
-function load() {
-  const res = api.customer.traceLot(code.value);
+async function load() {
+  loaded.value = false;
+  const res = await api.customer.traceLot(code.value);
   lot.value = res.status === 'success' ? res.data : null;
-  samples.value = lot.value ? [] : api.customer.sampleLotCodes();
+  samples.value = lot.value ? [] : await api.customer.sampleLotCodes();
   message.value = '';
+  loaded.value = true;
   document.title = lot.value ? `${lot.value.product_name} | MOVA Fresh` : 'Truy xuất nguồn gốc | MOVA Fresh';
 }
 load();
@@ -122,11 +127,11 @@ async function share() {
   if (!store.isLoggedIn) {
     message.value = 'Đã chia sẻ. Đăng nhập để MOVA cộng thưởng vào Fresh Credit.';
   } else {
-    const res = api.customer.claimShare({ customer_id: store.customerId, kind: 'qr', ref: lot.value.qr_code });
+    const res = await api.customer.claimShare({ kind: 'qr', ref: lot.value.qr_code });
     if (res.status === 'error') message.value = `Đã chia sẻ. ${res.error.message}.`;
     else {
       message.value = `Đã chia sẻ. MOVA cộng ${fmt(res.data.reward_vnd)} vào Fresh Credit (khuyến mãi).`;
-      store.refresh();
+      await store.refresh();
     }
   }
   busy.value = false;

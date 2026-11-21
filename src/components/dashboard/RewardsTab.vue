@@ -89,10 +89,9 @@ const busy = ref(false);
 const r = computed(() => data.value.rewards);
 const inviteUrl = computed(() => `${location.origin}${data.value.invite_path}`);
 
-function load() {
-  const res = api.customer.rewards(store.customerId);
+async function load() {
+  const [res, cRes] = await Promise.all([api.customer.rewards(), api.customer.creditSummary()]);
   if (res.status === 'success') data.value = res.data;
-  const cRes = api.customer.creditSummary(store.customerId);
   if (cRes.status === 'success') creditSum.value = cRes.data;
 }
 load();
@@ -115,20 +114,20 @@ async function shareInvite() {
   if (done && !navigator.share) copiedInvite.value = true;
 }
 
-function claim(req) {
-  const res = api.customer.claimShare({ customer_id: store.customerId, ...req });
+async function claim(req) {
+  const res = await api.customer.claimShare({ ...req });
   if (res.status === 'error') {
     message.value = res.error.message;
     return;
   }
   message.value = `Đã cộng ${fmt(res.data.reward_vnd)} vào Fresh Credit (phần khuyến mãi).`;
-  store.refresh();
+  await store.refresh();
 }
 
 async function shareMenu() {
   busy.value = true;
   message.value = '';
-  const weeks = api.customer.myWeeks(store.customerId);
+  const weeks = await api.customer.myWeeks();
   const w = weeks.status === 'success' ? weeks.data.weeks.find((x) => x.editable) || weeks.data.weeks[0] : null;
   if (!w) {
     message.value = 'Bạn chưa có thực đơn để chia sẻ.';
@@ -137,16 +136,16 @@ async function shareMenu() {
   }
   const names = w.meals.map((m) => m.dishes[0].name).slice(0, 4).join(', ');
   const done = await send(`Thực đơn tuần này của nhà mình với MOVA Fresh: ${names}.`, `${location.origin}/`);
-  if (done) claim({ kind: 'menu', ref: `week-${w.week_index}` });
+  if (done) await claim({ kind: 'menu', ref: `week-${w.week_index}` });
   busy.value = false;
 }
 
-function sharePhoto(e) {
+async function sharePhoto(e) {
   const file = e.target.files && e.target.files[0];
   e.target.value = '';
   if (!file) return;
   message.value = '';
-  claim({ kind: 'photo', ref: `photo:${file.name}:${file.size}`, photo_name: file.name });
+  await claim({ kind: 'photo', ref: `photo:${file.name}:${file.size}`, photo_name: file.name });
 }
 </script>
 
