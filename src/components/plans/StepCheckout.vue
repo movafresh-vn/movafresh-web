@@ -58,6 +58,31 @@
           </button>
         </div>
         <p class="pl-note">MOVA báo khung giờ giao chính xác cho bạn trước {{ options.lead_time_notice_hours }} giờ.</p>
+
+        <!-- Hướng dẫn giao hàng lạnh -->
+        <div class="delivery-instruct-wrap">
+          <label class="pl-label" for="coDeliveryInstruct">Hướng dẫn khi giao hàng lạnh</label>
+          <select id="coDeliveryInstruct" v-model="c.deliveryInstruction" class="pl-input" @change="save">
+            <option value="Gọi điện trước 15 phút khi tới">Gọi điện trước 15 phút khi tới</option>
+            <option value="Gửi lễ tân / bảo vệ chung cư (thùng giữ lạnh 6 giờ)">Gửi lễ tân / bảo vệ chung cư (thùng giữ lạnh 6 giờ)</option>
+            <option value="Để trước cửa căn hộ &amp; chụp ảnh xác nhận">Để trước cửa căn hộ &amp; chụp ảnh xác nhận</option>
+            <option value="other">Ghi chú riêng...</option>
+          </select>
+          <div v-if="c.deliveryInstruction === 'other'" class="custom-instruction-box">
+            <input
+              v-model="c.customInstruction"
+              type="text"
+              class="pl-input"
+              placeholder="Nhập ghi chú riêng cho shipper xe lạnh..."
+              @input="save"
+            />
+          </div>
+        </div>
+
+        <!-- Dòng nhắc lịch giao cố định -->
+        <p class="fixed-delivery-reminder">
+          📅 <b>Lịch giao cố định:</b> Các tuần tiếp theo sẽ tự động giao vào đúng <b>{{ selectedDayLabel }}</b> hàng tuần — bạn có thể đổi ngày hoặc tạm dừng bất kỳ lúc nào trước <b>08:00 sáng ngày D-2</b>.
+        </p>
       </template>
       <div v-else-if="options" class="pl-panel warn" role="alert">
         <b>Khu của bạn hiện đã kín chỗ giao.</b>
@@ -263,12 +288,34 @@
       <div class="checkbox-stack">
         <label class="agree">
           <input v-model="c.agree" type="checkbox" @change="save" />
-          <span>Tôi đã đọc và đồng ý với Điều khoản giao dịch từ xa, chính sách hoàn tiền 7 ngày và quy chế bảo vệ người tiêu dùng của MOVA Fresh.</span>
+          <span>
+            Tôi đã đọc và đồng ý với
+            <router-link to="/terms" target="_blank" class="legal-link" @click.stop>Điều khoản giao dịch từ xa</router-link>,
+            <router-link to="/refund-policy" target="_blank" class="legal-link" @click.stop>Chính sách hoàn tiền 7 ngày</router-link> và
+            <router-link to="/privacy" target="_blank" class="legal-link" @click.stop>Chính sách bảo mật</router-link>
+            của MOVA Fresh.
+          </span>
         </label>
         <label class="agree newsletter">
           <input v-model="c.newsletterOptin" type="checkbox" @change="save" />
           <span>Đăng ký nhận bản tin công thức nấu ăn từ Đầu bếp MOVA &amp; ưu đãi định kỳ qua Email (Tặng ngay +15.000đ Fresh Credit).</span>
         </label>
+      </div>
+    </section>
+
+    <!-- 5. Câu hỏi thường gặp theo ngữ cảnh trước khi thanh toán -->
+    <section class="pl-card sec checkout-faqs-section">
+      <h2 class="pl-h2" style="margin-bottom: 2px;">Câu hỏi thường gặp khi thanh toán</h2>
+      <p class="pl-note" style="margin-top: 0; margin-bottom: 12px;">Giải đáp nhanh những băn khoăn phổ biến trước khi bạn hoàn tất đăng ký:</p>
+      
+      <div class="faq-accordion-list">
+        <div v-for="faq in checkoutFaqs" :key="faq.id" class="faq-acc-item" :class="{ open: openFaqId === faq.id }">
+          <button type="button" class="faq-acc-header" @click="toggleFaq(faq.id)">
+            <span class="faq-acc-q">{{ faq.q }}</span>
+            <span class="faq-acc-icon">{{ openFaqId === faq.id ? '−' : '+' }}</span>
+          </button>
+          <div v-show="openFaqId === faq.id" class="faq-acc-body" v-html="faq.a"></div>
+        </div>
       </div>
     </section>
 
@@ -349,6 +396,45 @@ const showTerms = ref(false);
 const voucherInput = ref('');
 const voucherMsg = ref('');
 const appliedVoucher = ref(null);
+
+const selectedDayLabel = computed(() => {
+  const opt = options.value && options.value.options[c.optionIndex];
+  return opt ? opt.day_labels.join(' và ') : 'ngày đã chọn';
+});
+
+const openFaqId = ref('faq1');
+
+const checkoutFaqs = [
+  {
+    id: 'faq1',
+    q: 'Tôi có bị khóa hợp đồng hay tự động gia hạn không?',
+    a: '<p><b>Hoàn toàn không.</b> Bạn có quyền dừng gói 1 chạm bất kỳ lúc nào ngay tại trang tài khoản. MOVA Fresh sẽ gửi thông báo trước ít nhất <b>7 ngày làm việc</b> trước khi hết chu kỳ 4 tuần để bạn chủ động quyết định tiếp tục hay dừng lại, và cam kết hoàn tiền 100% các bữa chưa giao trong 7 ngày làm việc.</p>'
+  },
+  {
+    id: 'faq2',
+    q: 'Nếu tôi không có ở nhà lúc xe lạnh giao tới thì sao?',
+    a: '<p>Bộ thùng carton sóng 3 lớp kèm túi xốp bạc và đá gel sinh học giữ lạnh chuẩn <b>0–4°C suốt 6 giờ</b>. Shipper sẽ gọi điện trước 15 phút, gửi lễ tân/bảo vệ chung cư hoặc đặt trước cửa và chụp ảnh hiện trường rõ nét gửi cho bạn.</p>'
+  },
+  {
+    id: 'faq3',
+    q: 'Khi nào tôi có thể đổi món hoặc đổi ngày giao?',
+    a: '<p>Bạn có thể đổi từng món trong thực đơn hoặc tạm hoãn chuyến giao thoải mái trước giờ chốt sổ của nhà máy Đắk Lắk là <b>08:00 sáng ngày D-2</b> (trước ngày giao 48 tiếng).</p>'
+  },
+  {
+    id: 'faq4',
+    q: 'Tôi có được xuất hóa đơn điện tử GTGT không?',
+    a: '<p><b>Có.</b> Căn cứ Điều 9 Nghị định 254/2026/NĐ-CP, hóa đơn điện tử GTGT hợp pháp được phát hành tự động cho từng lần giao hàng thực tế và gửi về email đã đăng ký của bạn.</p>'
+  },
+  {
+    id: 'faq5',
+    q: 'Tôi có cần chuẩn bị gia vị gì ở nhà không?',
+    a: '<p>Chỉ cần chuẩn bị gia vị bếp cơ bản (dầu ăn, muối, nước lọc). Gói xốt MOVA đặc biệt và toàn bộ nguyên liệu tươi sống sơ chế sẵn đã có trong thùng.</p>'
+  }
+];
+
+function toggleFaq(id) {
+  openFaqId.value = openFaqId.value === id ? '' : id;
+}
 
 const slots = computed(() => (options.value && options.value.options[c.optionIndex] ? options.value.options[c.optionIndex].slots : []));
 const fc = computed(() => preview.value.fresh_credit);
@@ -718,6 +804,84 @@ watch(() => c.packId, save);
 .otp-form { display: flex; gap: 8px; align-items: center; }
 .otp-input { width: 110px; font-size: 20px; text-align: center; letter-spacing: 4px; }
 .mclose { position: absolute; top: 16px; right: 16px; border: 0; background: #f1f5f9; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+.legal-link {
+  color: var(--green-d);
+  text-decoration: underline;
+  font-weight: 700;
+}
+.legal-link:hover {
+  color: var(--green);
+}
+
+.delivery-instruct-wrap {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+.custom-instruction-box {
+  margin-top: 4px;
+}
+.fixed-delivery-reminder {
+  font-size: 13.5px;
+  color: #0c6b3e;
+  background: var(--green-soft);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin: 10px 0 0;
+  line-height: 1.4;
+}
+
+.checkout-faqs-section {
+  padding: 18px 20px;
+}
+.faq-accordion-list {
+  display: grid;
+  gap: 8px;
+}
+.faq-acc-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.faq-acc-item.open {
+  border-color: var(--green);
+  background: #FFFFFF;
+}
+.faq-acc-header {
+  width: 100%;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.faq-acc-q {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.faq-acc-icon {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--green-d);
+  flex-shrink: 0;
+}
+.faq-acc-body {
+  padding: 0 14px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #334155;
+  border-top: 1px dashed var(--line-2);
+}
+.faq-acc-body p {
+  margin: 6px 0 0;
+}
 
 @media (max-width: 560px) {
   .bank { grid-template-columns: 1fr; justify-items: center; }

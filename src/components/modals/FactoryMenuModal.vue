@@ -107,66 +107,23 @@
         </div>
       </div>
 
-      <!-- Mini Modal Chi tiết món -->
-      <div v-if="detailDish" class="f-detail-overlay" @click.self="detailDish = null">
-        <div class="f-detail-sheet">
-          <button class="mclose" type="button" aria-label="Đóng" @click="detailDish = null">×</button>
-          
-          <div class="f-detail-header">
-            <span class="f-region-pill">📍 Vùng nguyên liệu: {{ detailDish.terroir_region || 'Đắk Lắk' }}</span>
-            <h3 class="f-detail-title">{{ detailDish.name }}</h3>
-          </div>
-
-          <div class="f-detail-body">
-            <div v-if="detailDish.terroir_story" class="f-detail-box story-box">
-              <span class="box-label">🌿 Câu chuyện vùng miền &amp; Thổ nhưỡng:</span>
-              <p>{{ detailDish.terroir_story }}</p>
-              <p v-if="detailDish.chef_note" class="chef-note">
-                <b>👨‍🍳 Đầu bếp MOVA:</b> {{ detailDish.chef_note }}
-              </p>
-            </div>
-
-            <div class="f-detail-box">
-              <span class="box-label">⚖️ Định lượng &amp; Quy cách chuẩn 1 người:</span>
-              <p>{{ detailDish.portion_specs?.size_detail || detailDish.spec || 'Đóng khay chân không vô trùng' }}</p>
-              <p v-if="detailDish.portion_specs?.storage_guide" class="storage-note">
-                ❄️ {{ detailDish.portion_specs.storage_guide }}
-              </p>
-            </div>
-
-            <div v-if="detailDish.nutrition_per_serving" class="f-detail-nutri num">
-              <div class="nutri-item"><small>Năng lượng</small><b>{{ detailDish.nutrition_per_serving.calories }} kcal</b></div>
-              <div class="nutri-item"><small>Chất đạm</small><b>{{ detailDish.nutrition_per_serving.protein_g }}g</b></div>
-              <div class="nutri-item"><small>Tinh bột</small><b>{{ detailDish.nutrition_per_serving.carbs_g }}g</b></div>
-              <div class="nutri-item"><small>Chất béo</small><b>{{ detailDish.nutrition_per_serving.fat_g }}g</b></div>
-            </div>
-
-            <div v-if="detailSteps.length" class="f-detail-box">
-              <span class="box-label">⏱️ 3 bước nấu nhanh 1 chảo (15 phút):</span>
-              <ol class="step-list">
-                <li v-for="(st, idx) in detailSteps" :key="idx">{{ st }}</li>
-              </ol>
-            </div>
-          </div>
-
-          <div class="f-detail-footer">
-            <button
-              type="button"
-              class="pl-btn primary"
-              :disabled="isCurrent(detailDish.id)"
-              @click="selectDish(detailDish)"
-            >
-              {{ isCurrent(detailDish.id) ? 'Đang là món hiện tại' : 'Chọn đổi sang món này' }}
-            </button>
-          </div>
-        </div>
-      </div>
+      <!-- Modal Chi tiết món dùng chung -->
+      <DishDetailModal
+        v-if="detailDish"
+        :dish="detailDish"
+        :household-size="householdSize"
+        :show-select="true"
+        :is-current="isCurrent(detailDish.id)"
+        @close="detailDish = null"
+        @select="selectDish"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
+import DishDetailModal from './DishDetailModal.vue';
 import { DISHES, SAUCES, SKUS } from '../../shared/data/catalog';
 import { recipeFor } from '../../shared/data/recipes';
 import { fmt } from '../../shared/utils/formatters';

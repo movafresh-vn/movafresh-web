@@ -93,69 +93,14 @@
       Gói xốt MOVA đặc biệt: <b>{{ meal.highlight_sauce.name }}</b>
     </footer>
 
-    <!-- Modal Chi tiết món -->
-    <div v-if="detailDish" class="modal" role="dialog" aria-modal="true" @click.self="detailDish = null">
-      <div class="modal-box">
-        <button class="mclose" type="button" @click="detailDish = null" aria-label="Đóng">×</button>
-        <div class="modal-content">
-          <div class="detail-header">
-            <div class="badge-row">
-              <span class="category-pill" :class="detailDish.kind">{{ kindLabel(detailDish.kind) }}</span>
-              <span class="terroir-badge">📍 Vùng nguyên liệu: {{ detailDish.terroir_region || detailDish.terroir || 'Đắk Lắk' }}</span>
-            </div>
-            <h3 class="dish-title">{{ detailDish.name }}</h3>
-          </div>
-
-          <!-- Terroir Story & Chef's Tip (Grand Frais & Pizza 4P's style) -->
-          <div v-if="detailDish.terroir_story" class="terroir-story-box">
-            <p class="story-text">🌿 {{ detailDish.terroir_story }}</p>
-            <p v-if="detailDish.chef_note" class="chef-tip">
-              <b>👨‍🍳 Mẹo từ Đầu bếp MOVA:</b> {{ detailDish.chef_note }}
-            </p>
-          </div>
-
-          <div class="detail-grid">
-            <!-- 1. Định lượng & Quy cách -->
-            <div class="info-card">
-              <h4 class="card-title">⚖️ Định lượng chuẩn (cho {{ effectiveHouseholdSize }} người)</h4>
-              <ul class="bom-list">
-                <li v-for="(b, idx) in detailDish.bom" :key="idx">
-                  <b>{{ formatBomGrams(b.gramsPerPerson) }}</b>
-                  <span class="sku-name"> {{ getSkuName(b.sku) }}</span>
-                </li>
-              </ul>
-              <p v-if="detailDish.portion_specs?.size_detail || detailDish.spec" class="spec-text">
-                <b>Quy cách:</b> {{ detailDish.portion_specs?.size_detail || detailDish.spec }}
-              </p>
-              <p v-if="detailDish.portion_specs?.storage_guide" class="storage-text">
-                <b>Bảo quản:</b> {{ detailDish.portion_specs.storage_guide }}
-              </p>
-            </div>
-
-            <!-- 2. Dinh dưỡng -->
-            <div class="info-card">
-              <h4 class="card-title">🥗 Dinh dưỡng (1 khẩu phần)</h4>
-              <div class="nutri-grid">
-                <div class="nutri-item"><b class="num">{{ detailDish.nutrition_per_serving?.calories || detailDish.nutrition?.kcal || 0 }}</b><span>Calo (kcal)</span></div>
-                <div class="nutri-item"><b class="num">{{ detailDish.nutrition_per_serving?.protein_g || detailDish.nutrition?.protein || 0 }}g</b><span>Đạm</span></div>
-                <div class="nutri-item"><b class="num">{{ detailDish.nutrition_per_serving?.carbs_g || detailDish.nutrition?.carb || 0 }}g</b><span>Tinh bột</span></div>
-                <div class="nutri-item"><b class="num">{{ detailDish.nutrition_per_serving?.fat_g || detailDish.nutrition?.fat || 0 }}g</b><span>Chất béo</span></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 3. Công thức 3 bước 15 phút -->
-          <div class="recipe-card">
-            <h4 class="card-title">⏱️ 3 bước nấu nhanh trong 15 phút — 1 chảo</h4>
-            <ol class="recipe-steps">
-              <li v-for="(step, sIdx) in dishSteps" :key="sIdx">
-                <span>{{ step }}</span>
-              </li>
-            </ol>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Modal Chi tiết món dùng chung -->
+    <DishDetailModal
+      v-if="detailDish"
+      :dish="detailDish"
+      :household-size="effectiveHouseholdSize"
+      :show-select="false"
+      @close="detailDish = null"
+    />
 
     <!-- Modal Toàn bộ thực đơn nhà máy -->
     <FactoryMenuModal
@@ -177,6 +122,7 @@ import { fmt } from '../../shared/utils/formatters';
 import { DISHES, SKUS } from '../../shared/data/catalog';
 import { recipeFor } from '../../shared/data/recipes';
 import FactoryMenuModal from '../modals/FactoryMenuModal.vue';
+import DishDetailModal from '../modals/DishDetailModal.vue';
 
 const props = defineProps({
   meal: { type: Object, required: true },

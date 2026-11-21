@@ -28,6 +28,16 @@
           <span class="lbl">Trang chủ</span>
         </router-link>
         <router-link
+          to="/menus"
+          class="nav-tab"
+          :class="{ active: route.path === '/menus' }"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          <span class="lbl">Thực đơn tuần</span>
+        </router-link>
+        <router-link
           to="/plans"
           class="nav-tab"
           :class="{ active: route.path === '/plans' }"

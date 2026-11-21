@@ -8,8 +8,11 @@
           Đắk Lắk, xe lạnh xuyên đêm, tận cửa nhà bạn. Đầu bếp MOVA tuyển chọn thực đơn theo số người ăn, khẩu vị và thể trạng gia đình bạn, sơ chế sạch sẽ 100% và giao tận cửa.
         </p>
         <div class="cta">
-          <router-link to="/plans" class="pl-btn primary big">Thiết kế thực đơn của tôi</router-link>
-          <p class="hint">Mất khoảng 2 phút. Bạn xem thực đơn trước, hài lòng rồi mới trả tiền.</p>
+          <div class="cta-row">
+            <router-link to="/plans" class="pl-btn primary big">Thiết kế thực đơn của tôi</router-link>
+            <router-link to="/menus" class="pl-btn outline big">Xem thực đơn tuần</router-link>
+          </div>
+          <p class="hint">Mất khoảng 1–2 phút. Bạn xem thực đơn trước, hài lòng rồi mới trả tiền.</p>
         </div>
 
         <!-- 3 Thẻ giá trị cốt lõi -->

@@ -111,49 +111,16 @@
         </div>
       </template>
 
-      <!-- Mini Modal Chi tiết món -->
-      <div v-if="selectedDishDetail" class="sub-modal" @click.self="selectedDishDetail = null">
-        <div class="sub-modal-box">
-          <button class="mclose" type="button" @click="selectedDishDetail = null">×</button>
-          <div class="detail-header">
-            <span class="terroir-pill">📍 Vùng nguyên liệu: {{ selectedDishDetail.terroir_region || selectedDishDetail.terroir || 'Đắk Lắk' }}</span>
-            <h3 class="detail-name">{{ selectedDishDetail.name }}</h3>
-          </div>
-
-          <div v-if="selectedDishDetail.terroir_story" class="detail-story">
-            <p>🌿 {{ selectedDishDetail.terroir_story }}</p>
-            <p v-if="selectedDishDetail.chef_note" class="chef-note">
-              <b>👨‍🍳 Đầu bếp MOVA:</b> {{ selectedDishDetail.chef_note }}
-            </p>
-          </div>
-
-          <div class="detail-section">
-            <b>⚖️ Định lượng &amp; Quy cách:</b>
-            <p class="spec-line">{{ selectedDishDetail.portion_specs?.size_detail || selectedDishDetail.spec }}</p>
-            <p v-if="selectedDishDetail.portion_specs?.storage_guide" class="storage-line">
-              {{ selectedDishDetail.portion_specs.storage_guide }}
-            </p>
-          </div>
-
-          <div class="nutri-bar">
-            <span><b>{{ selectedDishDetail.nutrition_per_serving?.calories || selectedDishDetail.nutrition?.kcal || 0 }}</b> kcal</span> ·
-            <span>Đạm: <b>{{ selectedDishDetail.nutrition_per_serving?.protein_g || selectedDishDetail.nutrition?.protein || 0 }}g</b></span> ·
-            <span>Carb: <b>{{ selectedDishDetail.nutrition_per_serving?.carbs_g || selectedDishDetail.nutrition?.carb || 0 }}g</b></span> ·
-            <span>Béo: <b>{{ selectedDishDetail.nutrition_per_serving?.fat_g || selectedDishDetail.nutrition?.fat || 0 }}g</b></span>
-          </div>
-
-          <div v-if="detailSteps.length" class="detail-steps">
-            <b>⏱️ 3 bước nấu nhanh (15 phút):</b>
-            <ol>
-              <li v-for="(st, idx) in detailSteps" :key="idx">{{ st }}</li>
-            </ol>
-          </div>
-
-          <div class="detail-actions">
-            <button class="pl-btn primary" type="button" @click="chooseFromDetail(selectedDishDetail)">Chọn món này</button>
-          </div>
-        </div>
-      </div>
+      <!-- Modal Chi tiết món dùng chung -->
+      <DishDetailModal
+        v-if="selectedDishDetail"
+        :dish="selectedDishDetail"
+        :household-size="target.meal.household_size || 2"
+        :show-select="true"
+        :is-current="selectedDishDetail.id === target.dish.dish_id"
+        @close="selectedDishDetail = null"
+        @select="chooseFromDetail(selectedDishDetail)"
+      />
 
       <!-- Modal Danh sách thực đơn toàn bộ nhà máy -->
       <FactoryMenuModal
@@ -177,6 +144,7 @@ import { useMovaStore } from '../../stores/useMovaStore';
 import { DISHES, SKUS } from '../../shared/data/catalog';
 import { recipeFor } from '../../shared/data/recipes';
 import FactoryMenuModal from '../modals/FactoryMenuModal.vue';
+import DishDetailModal from '../modals/DishDetailModal.vue';
 
 const props = defineProps({
   week: { type: Object, required: true },

@@ -47,7 +47,8 @@
       </div>
 
       <p class="more">
-        <router-link to="/plans" class="pl-btn">Xem thực đơn riêng do Đầu bếp thiết kế</router-link>
+        <router-link to="/menus" class="pl-btn outline" style="margin-right: 10px;">Xem toàn bộ thực đơn tuần</router-link>
+        <router-link to="/plans" class="pl-btn primary">Xem thực đơn riêng do Đầu bếp thiết kế</router-link>
       </p>
 
       <!-- Video Modal -->

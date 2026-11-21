@@ -9,9 +9,13 @@ const KEY = 'mova_plans_flow_v1';
 
 const freshAnswers = () => ({
   district: '',
+  adults: 2,
+  children: 0,
   size: BUSINESS.plan.householdDefault,
   needs: [],
   cuisine: 'viet',
+  cuisines: ['viet'],
+  proteinPrefs: {},
   avoid: [],
   meals: BUSINESS.plan.mealsPerWeekDefault,
   budget: null
@@ -21,6 +25,8 @@ const freshCheckout = () => ({
   frequency: 1,
   optionIndex: 0,
   slotId: '',
+  deliveryInstruction: 'Gọi điện trước 15 phút khi tới',
+  customInstruction: '',
   name: '',
   phone: '',
   phoneVerified: false,
@@ -116,6 +122,26 @@ export const usePlanFlowStore = defineStore('planFlow', {
 
     setAnswer(key, value) {
       this.answers[key] = value;
+      if (key === 'adults' || key === 'children') {
+        const a = Number(this.answers.adults != null ? this.answers.adults : 2);
+        const c = Number(this.answers.children != null ? this.answers.children : 0);
+        this.answers.size = Math.min(10, Math.max(1, a + c));
+        if (c > 0) {
+          if (!this.answers.needs.includes('young_child')) {
+            this.answers.needs.push('young_child');
+          }
+          if (!this.answers.avoid.includes('no_spicy')) {
+            this.answers.avoid.push('no_spicy');
+          }
+        }
+      } else if (key === 'size') {
+        const s = Number(value) || 2;
+        this.answers.size = s;
+        if ((this.answers.adults || 0) + (this.answers.children || 0) !== s) {
+          this.answers.adults = s;
+          this.answers.children = 0;
+        }
+      }
       this.persist();
     },
 
@@ -260,11 +286,21 @@ export const usePlanFlowStore = defineStore('planFlow', {
       const opt = this.options && this.options.options[c.optionIndex];
       if (!opt || !c.slotId) return null;
       const city = this.options.province;
+      const instruction = c.deliveryInstruction === 'other'
+        ? (c.customInstruction ? `Ghi chú: ${c.customInstruction.trim()}` : '')
+        : (c.deliveryInstruction || '');
       return {
         delivery_frequency: c.frequency === 2 ? 'twice_a_week' : 'once_a_week',
         preferred_days: opt.preferred_days,
         preferred_time_slot: c.slotId,
-        shipping_address: { street: c.street.trim(), district: c.district, city, receiver_name: c.name.trim(), receiver_phone: c.phone.trim() }
+        shipping_address: {
+          street: c.street.trim(),
+          district: c.district,
+          city,
+          receiver_name: c.name.trim(),
+          receiver_phone: c.phone.trim(),
+          delivery_instruction: instruction
+        }
       };
     },
 
