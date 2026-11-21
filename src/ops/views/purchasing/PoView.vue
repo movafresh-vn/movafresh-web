@@ -380,14 +380,14 @@ const optionCount = (im) => im.affected.reduce((n, a) => n + a.hits.filter((h) =
 const noOptionCount = (im) => im.affected.reduce((n, a) => n + a.hits.filter((h) => !h.options.length).length, 0);
 const pickKey = (im, a, h) => `${im.shortageId}|${a.orderId}|${h.mealIndex}|${h.kind}`;
 
-function load() {
+async function load() {
   try {
-    list.value = api.ops.procurement.listPos(ctx.value);
+    list.value = await api.ops.procurement.listPos(ctx.value);
     if (!selId.value || !list.value.some((p) => p.id === selId.value)) {
       const first = shown.value[0];
       selId.value = first ? first.id : null;
     }
-    d.value = selId.value ? api.ops.procurement.getPo(ctx.value, selId.value) : null;
+    d.value = selId.value ? await api.ops.procurement.getPo(ctx.value, selId.value) : null;
     if (d.value) {
       for (const im of d.value.impacts) for (const a of im.affected) for (const h of a.hits) { const k = pickKey(im, a, h); if (!picks[k]) picks[k] = h.suggestedDishId; }
       if (!inv.issuedAt) inv.issuedAt = d.value.po.deliveryDay;
@@ -416,8 +416,10 @@ async function act(fn, okText) {
     msg.value = okText;
   } catch (e) {
     error.value = e.message;
+    // Đối chiếu lệch: máy chủ trả bảng đối chiếu mới nhất trong details.match, hiện luôn để người dùng thấy dòng lệch.
+    if (e && (e.code === 'MATCH_DIFF' || e.code === 'NOTE_REQUIRED') && e.details && e.details.match && d.value) d.value = { ...d.value, match: e.details.match };
   }
-  load();
+  await load();
 }
 
 function saveQty(l) {
@@ -471,11 +473,11 @@ function pay() {
   act(() => api.ops.procurement.payPo(ctx.value, { poId: d.value.po.id, method: payMethod.value, ref: payRef.value }), 'Đã ghi nhận thanh toán.');
 }
 
-function openInvoice() {
+// Tệp hóa đơn nằm trong kho riêng tư; máy chủ trả đường dẫn lưu (chưa có URL tải có chữ ký), nên chỉ báo đã lưu kèm tên tệp.
+async function openInvoice() {
   try {
-    const f = api.ops.procurement.invoiceFile(ctx.value, d.value.invoice.id);
-    const w = window.open();
-    if (w) w.document.write(f.type === 'application/pdf' ? `<iframe src="${f.dataUrl}" style="border:0;width:100%;height:100vh"></iframe>` : `<img src="${f.dataUrl}" style="max-width:100%">`);
+    const f = await api.ops.procurement.invoiceFile(ctx.value, d.value.invoice.id);
+    msg.value = `Hóa đơn đã lưu trong kho riêng tư: ${f.name || f.path}.`;
   } catch (e) {
     error.value = e.message;
   }

@@ -45,9 +45,9 @@ const error = ref('');
 const msg = ref('');
 const canWrite = computed(() => ['purchasing', 'admin'].includes(session.value.role));
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.procurement.forecast(ctx.value);
+    data.value = await api.ops.procurement.forecast(ctx.value);
     error.value = '';
   } catch (e) {
     error.value = e.message;
@@ -55,12 +55,12 @@ function load() {
 }
 useLive(load, { every: 10000 });
 
-function send() {
+async function send() {
   try {
-    const r = api.ops.procurement.sendForecast(ctx.value);
+    const r = await api.ops.procurement.sendForecast(ctx.value);
     msg.value = `Đã gửi dự báo cho ${r.sent.length} nhà cung cấp. Họ xem trên cổng nhà cung cấp, không ràng buộc mua.`;
     error.value = '';
-    load();
+    await load();
   } catch (e) {
     error.value = e.message;
   }

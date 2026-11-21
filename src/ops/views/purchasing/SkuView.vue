@@ -2,6 +2,7 @@
   <section>
     <h1>Danh mục SKU</h1>
     <p class="ops-muted proc-note">Mã, quy cách, nhóm nhiệt (màu sticker dán trên túi), hạn dùng, nhóm thuế, tỷ lệ thu hồi sơ chế chuẩn và các món dùng SKU.</p>
+    <p v-if="error" class="ops-error" role="alert">{{ error }}</p>
     <section class="ops-card">
       <div class="inline-form">
         <div><label for="k-q">Tìm theo tên hoặc mã</label><input id="k-q" v-model="q" class="ops-input ops-input-sm" data-testid="sku-search" /></div>
@@ -33,12 +34,20 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { api } from '../../../shared/api';
 import { ctx } from '../../session';
 import StickerTag from '../../components/StickerTag.vue';
 
-const all = ref(api.ops.procurement.skuCatalog(ctx.value));
+const all = ref([]);
+const error = ref('');
+onMounted(async () => {
+  try {
+    all.value = await api.ops.procurement.skuCatalog(ctx.value);
+  } catch (e) {
+    error.value = e.message;
+  }
+});
 const q = ref('');
 const temp = ref('');
 const rows = computed(() => {

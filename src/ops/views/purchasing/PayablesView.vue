@@ -78,9 +78,9 @@ const router = useRouter();
 const data = ref(null);
 const error = ref('');
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.procurement.payables(ctx.value);
+    data.value = await api.ops.procurement.payables(ctx.value);
     error.value = '';
   } catch (e) {
     error.value = e.message;

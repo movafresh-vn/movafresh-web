@@ -1,12 +1,25 @@
 // api.ops phần chạy trên backend thật (async, qua http.js). Tên hàm giữ như bản giả lập để màn hình đổi ít nhất:
 // tham số đầu `ctx` còn đó cho khỏi sửa chỗ gọi nhưng KHÔNG dùng nữa (danh tính và vai trò lấy từ token Supabase).
 // Khác app khách: lỗi ném HttpError { code, status, details } (không có phong bì {status:'error'}).
-// Nhóm chưa chuyển (mua hàng, cổng nhà cung cấp, kho phụ tồn/thu hồi, logistics, tài chính, demo) vẫn ở bản giả lập trong index.js.
+// Nhóm chưa chuyển (kho phụ tồn/thu hồi/nhận xe, logistics, tài chính, demo) vẫn ở bản giả lập trong index.js.
 import { http as sharedHttp } from './http';
 import { fillPath } from './routes';
-import { OPS_ROUTES } from './opsRoutes';
+import { OPS_ROUTES, SUPPLIER_ROUTES } from './opsRoutes';
 import { syncServerTime } from '../utils/time';
-import { PHOTO_PURPOSE, uploadPhoto } from './uploads';
+import { PHOTO_PURPOSE, isDataUrl, uploadPhoto } from './uploads';
+
+/** Bỏ khóa null / undefined (máy chủ chỉ nhận "vắng mặt", không nhận null) của một đối tượng nông. */
+export const compact = (o) => (o && typeof o === 'object' && !Array.isArray(o) ? Object.fromEntries(Object.entries(o).filter(([, v]) => v !== null && v !== undefined)) : o);
+
+/** Bỏ khóa null / undefined / chuỗi rỗng (ô trống trên form thì không gửi). */
+export const dropEmpty = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== null && v !== undefined && v !== ''));
+
+/** Bảng kê thu mua: người bán và từng dòng bỏ trường rỗng (phone, cccd... để trống thì không gửi). */
+const statementBody = ({ seller, items, method }) => ({
+  seller: compact({ ...seller, phone: seller.phone || undefined }),
+  items: items.map((i) => compact({ ...i, name: i.name || undefined, unit: i.unit || undefined })),
+  method
+});
 
 export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
   const h = () => (typeof http === 'function' ? http() : http);
@@ -19,6 +32,24 @@ export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
   const keyOf = (opId) => (typeof opId === 'string' && opId.length >= 8 ? opId : undefined);
 
   const uploadTicket = (purpose, contentType) => call('uploadTicket', { body: { purpose, content_type: contentType } });
+
+  /** Cổng nhà cung cấp: admin xem thử một nhà cung cấp qua ?as_supplier_id= (nhà cung cấp thật bị máy chủ ép về chính mình). */
+  function callSupplier(name, { params, body, asSupplierId = null } = {}) {
+    const [verb, path] = SUPPLIER_ROUTES[name];
+    return h().request(verb, fillPath(path, params), { query: asSupplierId ? { as_supplier_id: asSupplierId } : undefined, body });
+  }
+
+  /** Tệp đính kèm là data URL trong form thì tải lên kho trước (vé một lần), gửi lại { name, type, path }. Đã có path thì giữ nguyên. */
+  async function attachment(file, purpose) {
+    if (!file) return null;
+    if (file.path) return { name: file.name, type: file.type, path: file.path };
+    if (file.dataUrl && isDataUrl(file.dataUrl)) {
+      const path = await uploadPhoto(file.dataUrl, purpose, { ticket: uploadTicket, fetchImpl });
+      return { name: file.name, type: file.type, path };
+    }
+    return null;
+  }
+  const photoPath = async (photo, purpose) => (photo && isDataUrl(photo) ? uploadPhoto(photo, purpose, { ticket: uploadTicket, fetchImpl }) : photo || undefined);
 
   return {
     me: () => call('me'),
@@ -136,6 +167,79 @@ export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
       }),
 
     saveLot: (_ctx, lot) => call('lotSave', { body: lot }),
-    listLots: () => call('lotList')
+    listLots: () => call('lotList'),
+
+    // Hai hàm liệt kê chung của màn "mô-đun" (ModuleView): PO và nhà cung cấp. Nhà cung cấp thật chỉ thấy PO của chính mình.
+    listPurchaseOrders: () => call('procPos'),
+    listSuppliers: async () => (await call('procSuppliers')).suppliers,
+
+    /** Mua hàng (C14). Hình dạng trả về giống bản giả lập; lỗi ném HttpError (MATCH_DIFF / NOTE_REQUIRED mang details.match). */
+    procurement: {
+      suppliers: () => call('procSuppliers'),
+      saveSupplier: (_ctx, profile) => call('procSaveSupplier', { body: compact({ ...profile, cccd: profile.cccd || undefined, taxId: profile.taxId || undefined, address: profile.address || undefined }) }),
+      addCert: (_ctx, { supplierId, cert }) => call('procAddCert', { params: { id: supplierId }, body: { cert: compact({ ...cert, issuer: cert.issuer || undefined }) } }),
+      removeCert: (_ctx, { supplierId, certId }) => call('procRemoveCert', { params: { id: supplierId, certId } }),
+      skuCatalog: () => call('procSkus'),
+      prices: () => call('procPrices'),
+      /**
+       * Nhập giá mới. Nếu giá làm món vượt trần giá vốn 35%, máy chủ trả CONFIRM_REQUIRED (details.newly_flagged): màn hình hiện danh
+       * sách món, người dùng xác nhận thì gọi lại với confirm:true. Trả về bản ghi giá (kèm newlyFlagged).
+       */
+      async addPrice(_ctx, { sku, priceVnd, effectiveFrom, note = '', confirm = false }) {
+        const r = await call('procAddPrice', { body: { sku, priceVnd, effectiveFrom, ...(note ? { note } : {}), ...(confirm ? { confirm: true } : {}) } });
+        return { ...r.entry, newlyFlagged: r.newly_flagged || [] };
+      },
+      forecast: () => call('procForecast'),
+      sendForecast: () => call('procSendForecast', { body: {} }),
+      listPos: () => call('procPos'),
+      getPo: (_ctx, poId) => call('procPo', { params: { id: poId } }),
+      invoiceFile: (_ctx, invoiceId) => call('procInvoiceFile', { params: { id: invoiceId } }),
+      editLine: (_ctx, { poId, sku, qty }) => call('procEditLine', { params: { id: poId, sku }, body: { qty } }),
+      approvePo: (_ctx, poId) => call('procApprove', { params: { id: poId }, body: {} }),
+      sendPo: (_ctx, { poId, via = 'link' }) => call('procSend', { params: { id: poId }, body: { via } }),
+      async submitInvoice(_ctx, { poId, number, issuedAt, lines, file = null }) {
+        const f = await attachment(file, 'invoice');
+        return call('procInvoice', { params: { id: poId }, body: { number, issuedAt, ...(lines ? { lines } : {}), ...(f ? { file: f } : {}) } });
+      },
+      /** Kết quả { po, match }. Lệch mà chưa chấp nhận: HttpError MATCH_DIFF (409) hoặc NOTE_REQUIRED (422) có details.match. */
+      matchPo: (_ctx, { poId, acceptDiff = false, acceptInvoicePrice = false, note = '' }) =>
+        call('procMatch', { params: { id: poId }, body: { acceptDiff, acceptInvoicePrice, ...(note ? { note } : {}) } }),
+      payPo: (_ctx, { poId, method = 'bank_transfer', ref = '' }) => call('procPay', { params: { id: poId }, body: { method, ...(ref ? { ref } : {}) } }),
+      payables: () => call('procPayables'),
+      directPurchases: () => call('procDirect'),
+      previewStatement: (_ctx, { seller, items, method = 'bank_transfer' }) => call('procDirectPreview', { body: statementBody({ seller, items, method }) }),
+      recordDirectPurchase: (_ctx, { seller, items, method = 'bank_transfer', intoStock = false, location = null }) =>
+        call('procDirectRecord', { body: { ...statementBody({ seller, items, method }), ...(intoStock ? { intoStock: true } : {}), ...(location ? { location } : {}) } }),
+      settings: () => call('procSettings'),
+      saveSettings: (_ctx, input) => call('procSaveSettings', { body: input })
+    },
+
+    /** Kho phụ: phần nhận hàng theo PO chạy thật; tồn kho, FEFO, thu hồi... còn ở bản giả lập (C15). */
+    hub: {
+      receivable: () => call('hubReceivable'),
+      async receive(_ctx, { poId, lines, photo = null, note = '' }) {
+        const p = await photoPath(photo, 'receipt');
+        return call('hubReceive', { body: { poId, lines: lines.map(dropEmpty), ...(p ? { photo: p } : {}), ...(note ? { note } : {}) } });
+      },
+      receipts: (_ctx, { limit = 30 } = {}) => call('hubReceipts', { query: { limit } })
+    },
+
+    /** Cổng nhà cung cấp (C14): mọi lệnh bị ép về chính nhà cung cấp đăng nhập; asSupplierId chỉ có tác dụng với admin. */
+    supplierPortal: {
+      overview: (_ctx, { asSupplierId = null } = {}) => callSupplier('overview', { asSupplierId }),
+      confirmPo: (_ctx, { poId, result = 'full', lines = [], shortPct = null, note = '', asSupplierId = null }) =>
+        callSupplier('confirmPo', {
+          params: { id: poId },
+          asSupplierId,
+          body: { result, ...(lines && lines.length ? { lines } : {}), ...(shortPct !== null && shortPct !== undefined ? { shortPct } : {}), ...(note ? { note } : {}) }
+        }),
+      async submitInvoice(_ctx, { poId, number, issuedAt, lines, file = null, asSupplierId = null }) {
+        const f = await attachment(file, 'invoice');
+        return callSupplier('invoice', { params: { id: poId }, asSupplierId, body: { number, issuedAt, ...(lines ? { lines } : {}), ...(f ? { file: f } : {}) } });
+      },
+      replyClaim: (_ctx, { claimId, reply, asSupplierId = null }) => callSupplier('replyClaim', { params: { id: claimId }, asSupplierId, body: { reply } }),
+      updateContact: (_ctx, { name, phone, asSupplierId = null }) => callSupplier('contact', { asSupplierId, body: { name, phone } }),
+      addCert: (_ctx, { cert, asSupplierId = null }) => callSupplier('addCert', { asSupplierId, body: { cert: compact({ ...cert, issuer: cert.issuer || undefined }) } })
+    }
   };
 }

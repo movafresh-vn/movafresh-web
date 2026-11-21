@@ -30,8 +30,8 @@ export function scanUnawaited(relPath) {
 
 export const read = (relPath) => readFileSync(resolve(ROOT, relPath), 'utf8');
 
-// Các hàm api.ops đã chạy trên backend thật (bất đồng bộ). Nhóm còn ở bản giả lập (procurement, hub, logistics, finance, demo) không nằm đây.
-const REAL_OPS = String.raw`(?:summary|me|planning\.\w+|factory\.\w+|listOrders|listProductionPlans|getProductionPlan|batches\.\w+|paymentExceptions\.\w+|shortPick\.\w+|uploads\.\w+|costing\.\w+|cycleCapacity\.\w+|handovers\.\w+|transitionOrder|substituteDish|saveLot|listLots)`;
+// Các hàm api.ops đã chạy trên backend thật (bất đồng bộ). Nhóm còn ở bản giả lập (kho phụ tồn/thu hồi/nhận xe, logistics, finance, demo) không nằm đây.
+const REAL_OPS = String.raw`(?:summary|me|planning\.\w+|factory\.\w+|listOrders|listProductionPlans|getProductionPlan|batches\.\w+|paymentExceptions\.\w+|shortPick\.\w+|uploads\.\w+|costing\.\w+|cycleCapacity\.\w+|handovers\.\w+|transitionOrder|substituteDish|saveLot|listLots|listPurchaseOrders|listSuppliers|procurement\.\w+|supplierPortal\.\w+|hub\.(?:receivable|receive|receipts))`;
 const CALL = new RegExp(String.raw`api\.ops\.${REAL_OPS}\(`, 'g');
 const READ_SYNC = new RegExp(String.raw`api\.ops\.${REAL_OPS}\([^)]*\)\s*\.(?!then|catch)\w+`);
 

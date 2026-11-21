@@ -127,11 +127,16 @@ const tempBad = (l) => {
   return v !== '' && v != null && !isTempOk(l.sku, Number(v), BUSINESS) && Number(f[l.sku].accepted) > 0;
 };
 
-function load() {
+async function load() {
   try {
-    pos.value = api.ops.hub.receivable(ctx.value);
-    receipts.value = api.ops.hub.receipts(ctx.value, { limit: 8 });
-    lotList.value = api.ops.hub.traceLots(ctx.value);
+    pos.value = await api.ops.hub.receivable(ctx.value);
+    receipts.value = await api.ops.hub.receipts(ctx.value, { limit: 8 });
+    // Danh sách lô để gán cho SKU bắt buộc có lô. Kho phụ chưa có quyền đọc sổ lô (chỉ xưởng và admin): khi đó nhập mã lô bằng tay.
+    try {
+      lotList.value = (await api.ops.listLots(ctx.value)).map((l) => ({ sku: l.sku, lotCode: l.qr_code }));
+    } catch {
+      lotList.value = [];
+    }
     if (sel.value) {
       const fresh = pos.value.find((p) => p.id === sel.value.id);
       if (!fresh) sel.value = null;
@@ -150,7 +155,7 @@ function pick(p) {
   note.value = '';
 }
 
-function submit() {
+async function submit() {
   error.value = '';
   try {
     const payload = lines.value
@@ -162,11 +167,11 @@ function submit() {
           tempC: x.temp === '' || x.temp == null ? undefined : Number(x.temp), reason: x.reason, lotCode: x.lotCode, expiresAt: x.expiresAt || undefined
         };
       });
-    const res = api.ops.hub.receive(ctx.value, { poId: sel.value.id, lines: payload, photo: photo.value, note: note.value });
+    const res = await api.ops.hub.receive(ctx.value, { poId: sel.value.id, lines: payload, photo: photo.value, note: note.value });
     const full = res.receipt;
     done.value = { ...res, receipt: full };
     sel.value = null;
-    load();
+    await load();
   } catch (e) {
     error.value = e.message;
   }

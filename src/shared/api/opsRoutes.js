@@ -43,5 +43,46 @@ export const OPS_ROUTES = {
   lotList: ['GET', '/ops/lots'],
   costingDishes: ['GET', '/ops/costing/dishes'],
   cycleCapacityList: ['GET', '/ops/logistics/cycle-capacity'],
-  cycleCapacityPut: ['PUT', '/ops/logistics/cycle-capacity/:date']
+  cycleCapacityPut: ['PUT', '/ops/logistics/cycle-capacity/:date'],
+
+  // Mua hàng (C14): nhà cung cấp, SKU, giá, dự báo, PO, đối chiếu, thanh toán, mua trực tiếp, cài đặt
+  procSuppliers: ['GET', '/ops/procurement/suppliers'],
+  procSaveSupplier: ['PUT', '/ops/procurement/suppliers'],
+  procAddCert: ['POST', '/ops/procurement/suppliers/:id/certs'],
+  procRemoveCert: ['DELETE', '/ops/procurement/suppliers/:id/certs/:certId'],
+  procSkus: ['GET', '/ops/procurement/skus'],
+  procPrices: ['GET', '/ops/procurement/prices'],
+  procAddPrice: ['POST', '/ops/procurement/price-entries'],
+  procForecast: ['GET', '/ops/procurement/forecast'],
+  procSendForecast: ['POST', '/ops/procurement/forecast/send'],
+  procPos: ['GET', '/ops/procurement/pos'],
+  procPo: ['GET', '/ops/procurement/pos/:id'],
+  procEditLine: ['PATCH', '/ops/procurement/pos/:id/lines/:sku'],
+  procApprove: ['POST', '/ops/procurement/pos/:id/approve'],
+  procSend: ['POST', '/ops/procurement/pos/:id/send'],
+  procInvoice: ['POST', '/ops/procurement/pos/:id/invoice'],
+  procMatch: ['POST', '/ops/procurement/pos/:id/match'],
+  procPay: ['POST', '/ops/procurement/pos/:id/pay'],
+  procInvoiceFile: ['GET', '/ops/procurement/invoices/:id/file'],
+  procPayables: ['GET', '/ops/procurement/payables'],
+  procDirect: ['GET', '/ops/procurement/direct-purchases'],
+  procDirectPreview: ['POST', '/ops/procurement/direct-purchases/preview'],
+  procDirectRecord: ['POST', '/ops/procurement/direct-purchases'],
+  procSettings: ['GET', '/ops/procurement/settings'],
+  procSaveSettings: ['PUT', '/ops/procurement/settings'],
+
+  // Kho phụ: nhận hàng theo PO
+  hubReceivable: ['GET', '/ops/hub/receivable'],
+  hubReceive: ['POST', '/ops/hub/receipts'],
+  hubReceipts: ['GET', '/ops/hub/receipts']
+};
+
+// Cổng nhà cung cấp: nằm ngoài /ops. Nhà cung cấp luôn bị ép về chính mình; admin xem thử bằng ?as_supplier_id=.
+export const SUPPLIER_ROUTES = {
+  overview: ['GET', '/supplier/overview'],
+  confirmPo: ['POST', '/supplier/pos/:id/confirm'],
+  invoice: ['POST', '/supplier/pos/:id/invoice'],
+  replyClaim: ['POST', '/supplier/claims/:id/reply'],
+  contact: ['PATCH', '/supplier/contact'],
+  addCert: ['POST', '/supplier/certs']
 };

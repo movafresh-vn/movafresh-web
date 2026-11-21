@@ -43,7 +43,7 @@ export const CUSTOMER_ROUTES = {
 
 /** Thay :tham_số bằng giá trị (đã mã hóa URL). Thiếu tham số thì ném lỗi để không gọi nhầm đường. */
 export function fillPath(path, params = {}) {
-  return path.replace(/:([a-z_]+)/g, (_, k) => {
+  return path.replace(/:([A-Za-z_]+)/g, (_, k) => {
     if (params[k] === undefined || params[k] === null) throw new Error(`Thiếu tham số đường dẫn: ${k}`);
     return encodeURIComponent(String(params[k]));
   });
