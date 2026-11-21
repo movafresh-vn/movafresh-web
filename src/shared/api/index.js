@@ -7,6 +7,7 @@ import { applyOrderStatus, applySubstitution, upsertLot } from '../domain/opsEve
 import { dishItemGrams, emptyFactory, shortageGrams } from '../domain/factory';
 import { createCustomerApi as createMockCustomerApi } from './customer';
 import { createCustomerApi } from './customerApi';
+import { createOpsApi } from './opsApi';
 import { createOpsFactoryApi } from './opsFactory';
 import { createProcurementApi } from './opsProcurement';
 import { createLogisticsApi } from './opsLogistics';
@@ -311,4 +312,7 @@ const hubJumpAt = (day) => atDay(day, BUSINESS.logistics.demoHubJump.hour, BUSIN
 
 // App khách dùng backend thật (async, qua http.js). `createApi(server)` còn dựng bản giả lập cho app vận hành và các bài test của nó đến C28.
 const mockApi = createApi();
-export const api = { ...mockApi, customer: createCustomerApi() };
+// App vận hành: phần đã có backend (kế hoạch, xưởng, đơn, lô, thanh toán muộn, hoàn thiếu hàng, giá vốn...) chạy thật và bất đồng bộ;
+// phần còn lại (mua hàng, nhà cung cấp, kho phụ, logistics, tài chính, demo) vẫn là bản giả lập cho tới khi backend của nhóm đó xong.
+const realOps = createOpsApi();
+export const api = { ...mockApi, customer: createCustomerApi(), ops: { ...mockApi.ops, ...realOps } };

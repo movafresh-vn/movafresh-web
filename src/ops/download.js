@@ -10,3 +10,9 @@ export function downloadText(filename, text, mime = 'text/csv;charset=utf-8') {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** Excel mở CSV UTF-8 đúng tiếng Việt khi có BOM đầu tệp. Thêm một lần, không thêm nếu đã có. */
+export const withBom = (text) => (String(text).startsWith('﻿') ? String(text) : `﻿${text}`);
+
+/** Tên tệp lệnh mua của một ngày giao (khớp Content-Disposition của máy chủ). */
+export const poCsvName = (date) => `po-${date}.csv`;

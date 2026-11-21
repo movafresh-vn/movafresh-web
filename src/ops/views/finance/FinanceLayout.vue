@@ -20,6 +20,7 @@ const tabs = [
   { key: 'bank', to: '/tai-chinh/thu-tien', title: 'Thu tiền & đối soát' },
   { key: 'revenue', to: '/tai-chinh/doanh-thu', title: 'Doanh thu & hóa đơn' },
   { key: 'margin', to: '/tai-chinh/gia-von', title: 'Giá vốn & margin' },
+  { key: 'costing', to: '/tai-chinh/gia-von-mon', title: 'Giá vốn món' },
   { key: 'payables', to: '/tai-chinh/cong-no', title: 'Công nợ & đợt chi' },
   { key: 'cashflow', to: '/tai-chinh/dong-tien', title: 'Dòng tiền' },
   { key: 'journal', to: '/tai-chinh/xuat-but-toan', title: 'Xuất bút toán' },

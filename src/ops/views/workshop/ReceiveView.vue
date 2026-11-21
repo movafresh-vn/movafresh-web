@@ -61,7 +61,8 @@
       <h2>Lô đã nhận</h2>
       <ul class="receipt-list" data-testid="receipt-list">
         <li v-for="r in receiptRows" :key="r.lotCode" class="receipt" :class="{ fail: r.verdict === 'fail' }">
-          <img v-if="r.photo" :src="r.photo" alt="Ảnh lô hàng" class="receipt-photo" />
+          <img v-if="photoSrc(r.photo)" :src="photoSrc(r.photo)" alt="Ảnh lô hàng" class="receipt-photo" />
+          <span v-else-if="r.photo" class="ops-pill">Đã lưu ảnh</span>
           <div class="receipt-body">
             <div><strong class="mono">{{ r.lotCode }}</strong>
               <span class="ops-pill" :class="r.verdict === 'pass' ? 'ops-pill-ok' : 'ops-pill-bad'">{{ r.verdict === 'pass' ? 'Đạt' : 'Không đạt' }}</span>
@@ -88,6 +89,7 @@ import { isTempOk, lotUsedKg, nextLotCode } from '../../../shared/domain/factory
 import { BUSINESS } from '../../../shared/config/business';
 import { apply, clientNow, hasUnsent } from '../../queue';
 import { catalog, factory, snapshot } from '../../factoryStore';
+import { photoSrc } from '../../../shared/api/uploads';
 import { sourceKindLabel as kindLabel } from '../../format';
 import PhotoInput from '../../components/PhotoInput.vue';
 

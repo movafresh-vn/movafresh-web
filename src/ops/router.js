@@ -4,6 +4,7 @@ import HomeView from './views/HomeView.vue';
 import ModuleView from './views/ModuleView.vue';
 import DemoView from './views/DemoView.vue';
 import PlanView from './views/PlanView.vue';
+import LatePaymentsView from './views/LatePaymentsView.vue';
 import WorkshopLayout from './views/workshop/WorkshopLayout.vue';
 import PurchasingLayout from './views/purchasing/PurchasingLayout.vue';
 import HubLayout from './views/hub/HubLayout.vue';
@@ -14,16 +15,18 @@ import FinanceLayout from './views/finance/FinanceLayout.vue';
 import ScorecardView from './views/ScorecardView.vue';
 import { MODULES } from './modules';
 import { session } from './session';
+import { guardNavigation } from './guard';
 import { ROLES } from '../shared/config/roles';
 
 // Màn thật: tổng quan founder (P2D), kế hoạch (P2A), cổng nhà cung cấp (P2B), giao hàng (P2C), giám sát nhà cung cấp (P2D). ModuleView chỉ còn là dự phòng.
-const COMPONENTS = { overview: HomeView, plan: PlanView, supplier: SupplierPortalView, shipper: ShipperView, monitoring: ScorecardView };
+const COMPONENTS = { overview: HomeView, plan: PlanView, 'late-payments': LatePaymentsView, supplier: SupplierPortalView, shipper: ShipperView, monitoring: ScorecardView };
 
 const workshopChildren = [
   { path: '', name: 'workshop', component: () => import('./views/workshop/TodayView.vue') },
   { path: '7-ngay', name: 'workshop-week', component: () => import('./views/workshop/WeekView.vue') },
   { path: 'nhan-nguyen-lieu', name: 'workshop-receive', component: () => import('./views/workshop/ReceiveView.vue') },
   { path: 'dong-goi', name: 'workshop-pack', component: () => import('./views/workshop/PackView.vue') },
+  { path: 'san-luong', name: 'workshop-yield', component: () => import('./views/workshop/YieldView.vue'), meta: { perm: 'yieldLog' } },
   { path: 'xuat-xe', name: 'workshop-load', component: () => import('./views/workshop/LoadView.vue') },
   { path: 'bao-thieu', name: 'workshop-shortage', component: () => import('./views/workshop/ShortageView.vue') }
 ];
@@ -68,6 +71,7 @@ const financeChildren = [
   { path: 'thu-tien', name: 'finance-bank', component: () => import('./views/finance/ReconcileView.vue') },
   { path: 'doanh-thu', name: 'finance-revenue', component: () => import('./views/finance/RevenueView.vue') },
   { path: 'gia-von', name: 'finance-margin', component: () => import('./views/finance/MarginView.vue') },
+  { path: 'gia-von-mon', name: 'finance-costing', component: () => import('./views/finance/CostingView.vue'), meta: { perm: 'costing' } },
   { path: 'cong-no', name: 'finance-payables', component: () => import('./views/finance/PayablesFinView.vue') },
   { path: 'dong-tien', name: 'finance-cashflow', component: () => import('./views/finance/CashflowView.vue') },
   { path: 'xuat-but-toan', name: 'finance-journal', component: () => import('./views/finance/JournalView.vue') },
@@ -93,15 +97,7 @@ const routes = [
 // App vận hành dùng hash history để không cần cấu hình lại redirect của Netlify.
 const router = createRouter({ history: createWebHashHistory(), routes });
 
-router.beforeEach((to) => {
-  if (to.name === 'login') return session.value ? '/' : true;
-  if (!session.value) return '/login';
-  const mod = to.meta.module;
-  if (mod && !mod.roles.includes(session.value.role)) return '/';
-  // Màn con có thể hẹp quyền hơn phân hệ (ví dụ kế toán chỉ xem PO, công nợ, cài đặt)
-  const sub = to.matched.map((r) => r.meta && r.meta.roles).filter(Boolean).pop();
-  if (sub && !sub.includes(session.value.role)) return '/';
-  return true;
-});
+// Chặn theo hồ sơ nhân viên của máy chủ: vai trò (phân hệ và màn con) và quyền cụ thể (meta.perm). Xem guard.js.
+router.beforeEach((to) => guardNavigation(session.value, to));
 
 export default router;

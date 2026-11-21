@@ -4,6 +4,7 @@ import { ctx } from './session';
 import { online, onQueueChange, pendingOps } from './queue';
 import { BUSINESS } from '../shared/config/business';
 import { demandTotals, emptyFactory, overlayFactory, progressLines, scopeKey } from '../shared/domain/factory';
+import { labelsByOrder } from './labelData';
 
 /**
  * Trạng thái dùng chung của các màn xưởng: ngày giao và chuyến xe đang chọn, ảnh chụp dữ liệu từ server,
@@ -16,9 +17,24 @@ export const snapshot = shallowRef(null);
 export const selDay = ref(null);
 export const selTrip = ref(null);
 export const loadError = ref('');
+/** Nhãn thùng theo mã đơn của ngày đang chọn (Order_Code, Batch_ID, Route_ID, Lot_IDs; không có thông tin khách). */
+export const labels = shallowRef({});
 
-export function loadCatalog() {
-  if (!catalog.value && ctx.value) catalog.value = api.ops.factory.catalog(ctx.value);
+export async function loadCatalog() {
+  if (!catalog.value && ctx.value) catalog.value = await api.ops.factory.catalog(ctx.value);
+}
+
+/** Nhãn của lô đang chọn. Chưa có lô hoặc lỗi thì để trống: màn in nhãn vẫn dùng được phần còn lại. */
+async function loadLabels(day) {
+  if (!day) {
+    labels.value = {};
+    return;
+  }
+  try {
+    labels.value = labelsByOrder(await api.ops.batches.labels(ctx.value, day));
+  } catch {
+    labels.value = {};
+  }
 }
 
 function pickTrip(snap) {
@@ -29,15 +45,17 @@ function pickTrip(snap) {
 }
 
 /** Tải lại ảnh chụp từ server (bỏ qua nếu đang mất mạng và đã có dữ liệu). */
-export function reload({ force = false } = {}) {
+export async function reload({ force = false } = {}) {
   if (!ctx.value) return;
-  loadCatalog();
-  if (!force && !online.value && snapshot.value) return;
   try {
-    snapshot.value = api.ops.factory.snapshot(ctx.value, selDay.value);
-    selDay.value = snapshot.value.day;
-    pickTrip(snapshot.value);
+    await loadCatalog();
+    if (!force && !online.value && snapshot.value) return;
+    const snap = await api.ops.factory.snapshot(ctx.value, selDay.value);
+    snapshot.value = snap;
+    selDay.value = snap.day;
+    pickTrip(snap);
     loadError.value = '';
+    await loadLabels(snap.day);
   } catch (e) {
     loadError.value = e.message;
   }
@@ -46,7 +64,7 @@ export function reload({ force = false } = {}) {
 export function setDay(day) {
   selDay.value = day;
   selTrip.value = null;
-  reload({ force: true });
+  return reload({ force: true });
 }
 
 export function setTrip(id) {

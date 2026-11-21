@@ -242,11 +242,11 @@ function create() {
   }
 }
 
-function act(fn, text) {
+async function act(fn, text) {
   msg.value = '';
   error.value = '';
   try {
-    const r = fn();
+    const r = await fn();
     msg.value = text(r);
   } catch (e) {
     error.value = e.message;

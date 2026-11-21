@@ -408,11 +408,11 @@ function select(id) {
   load();
 }
 
-function act(fn, okText) {
+async function act(fn, okText) {
   msg.value = '';
   error.value = '';
   try {
-    fn();
+    await fn();
     msg.value = okText;
   } catch (e) {
     error.value = e.message;
@@ -443,12 +443,12 @@ function apply(im, a, h) {
   act(() => api.ops.substituteDish(ctx.value, { orderId: a.orderId, mealIndex: h.mealIndex, kind: h.kind, toDishId, shortageId: im.shortageId, reason: `${d.value.po.supplierName} thiếu hàng` }), `Đã đổi món cho đơn ${a.orderId} và báo khách.`);
 }
 
-function applyAll() {
+async function applyAll() {
   let n = 0;
   error.value = '';
   for (const { im, a, h } of pendingHits.value) {
     try {
-      api.ops.substituteDish(ctx.value, { orderId: a.orderId, mealIndex: h.mealIndex, kind: h.kind, toDishId: picks[pickKey(im, a, h)], shortageId: im.shortageId, reason: `${d.value.po.supplierName} thiếu hàng` });
+      await api.ops.substituteDish(ctx.value, { orderId: a.orderId, mealIndex: h.mealIndex, kind: h.kind, toDishId: picks[pickKey(im, a, h)], shortageId: im.shortageId, reason: `${d.value.po.supplierName} thiếu hàng` });
       n += 1;
     } catch (e) {
       error.value = e.message;

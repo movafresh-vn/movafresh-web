@@ -5,7 +5,7 @@
         <strong>MOVA Vận hành</strong>
         <span class="ops-role">{{ session.label }}</span>
       </div>
-      <div class="ops-clock" :title="'Đồng hồ nghiệp vụ (giả lập)'">
+      <div class="ops-clock" :title="'Giờ nghiệp vụ theo máy chủ'" data-testid="ops-clock">
         {{ clockText }}
       </div>
       <button class="ops-btn ops-btn-ghost" @click="logout">Đăng xuất</button>
@@ -24,12 +24,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { session, ctx, setSession } from './session';
+import { session, ctx, logoutStaff } from './session';
 import { modulesFor } from './modules';
 import { api } from '../shared/api';
 import { fmtDeadline } from '../shared/utils/time';
+import { useLive } from './useLive';
 import QueueBanner from './components/QueueBanner.vue';
 
 const router = useRouter();
@@ -38,32 +39,21 @@ const menu = computed(() => (session.value ? modulesFor(session.value.role) : []
 const nowIso = ref(null);
 const clockText = computed(() => (nowIso.value ? fmtDeadline(new Date(nowIso.value)) : ''));
 
-function refresh({ tick = true } = {}) {
+// Giờ nghiệp vụ do MÁY CHỦ quyết định (job chốt sổ, trừ tiền... chạy ở máy chủ, không còn nhịp "tick" của trình duyệt).
+// Mỗi lần summary trả về, đồng hồ web được đồng bộ (xem opsApi.summary), nên mọi màn dùng chung một "bây giờ".
+async function refresh() {
   if (!ctx.value) return;
   try {
-    // Chỉ chạy job theo nhịp 15 giây. Sự kiện `storage` (tab khác vừa ghi) chỉ đọc lại đồng hồ, không ghi,
-    // để hai tab không ghi đè nhau liên tục.
-    if (tick) api.ops.tick(ctx.value);
-    nowIso.value = api.ops.summary(ctx.value).now;
-  } catch {
-    // phiên hết hạn hoặc dữ liệu bị xóa: bỏ qua, trang tự xử lý ở lần tải sau
+    nowIso.value = (await api.ops.summary(ctx.value)).now;
+  } catch (e) {
+    // 401/403: phiên không còn hiệu lực, về trang đăng nhập; lỗi mạng thì giữ nguyên
+    if (e && (e.status === 401 || e.status === 403)) await logout();
   }
 }
-const onStorage = () => refresh({ tick: false });
+useLive(refresh, { every: 15000 });
 
-let timer = null;
-onMounted(() => {
-  refresh();
-  timer = setInterval(() => refresh(), 15000);
-  window.addEventListener('storage', onStorage);
-});
-onBeforeUnmount(() => {
-  clearInterval(timer);
-  window.removeEventListener('storage', onStorage);
-});
-
-function logout() {
-  setSession(null);
+async function logout() {
+  await logoutStaff();
   router.push('/login');
 }
 </script>

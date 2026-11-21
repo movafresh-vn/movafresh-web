@@ -75,10 +75,10 @@ const shortBags = ref(1);
 const formError = ref('');
 const legend = 'túi cỡ chuẩn của xưởng';
 
-function load() {
+async function load() {
   if (!online.value && fc.value) return; // mất mạng: giữ dữ liệu đã tải, lớp phủ lo phần chưa gửi
   try {
-    fc.value = api.ops.factory.forecast(ctx.value);
+    fc.value = await api.ops.factory.forecast(ctx.value);
     error.value = '';
   } catch (e) {
     error.value = e.message;
@@ -116,7 +116,7 @@ function saveShort(r) {
 let off = null;
 onMounted(() => {
   load();
-  off = onQueueChange(() => online.value && (fc.value = api.ops.factory.forecast(ctx.value)));
+  off = onQueueChange(() => online.value && load());
 });
 onBeforeUnmount(() => off && off());
 </script>

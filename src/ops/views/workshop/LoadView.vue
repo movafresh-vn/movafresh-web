@@ -55,6 +55,8 @@
             <input id="d-seal" v-model="sealNo" class="ops-input" autocomplete="off" data-testid="d-seal" />
           </div>
         </div>
+        <label>Ảnh thùng xe và nhiệt kế (bắt buộc)</label>
+        <PhotoInput v-model="photo" label="Chụp ảnh thùng xe + nhiệt kế" testid="d-photo" />
         <p class="ops-muted">Giờ xuất ghi tự động lúc bấm Xuất xe (theo đồng hồ nghiệp vụ). Thùng xe lạnh phải từ {{ chillMax }}°C trở xuống.</p>
         <p v-if="tempCheck && Number(tempC) > chillMax" class="ops-error" role="alert">Nhiệt độ thùng xe đang cao hơn {{ chillMax }}°C. Kiểm tra máy lạnh trước khi xuất.</p>
         <label v-if="missing.length" class="check-row">
@@ -115,6 +117,8 @@ import { boxProgress } from '../../../shared/domain/factory';
 import { apply, hasUnsent } from '../../queue';
 import { boxes, loadState as state, scope, selDay, slotLabel, tripInfo, tripOrders, zoneName } from '../../factoryStore';
 import { hhmm } from '../../format';
+import PhotoInput from '../../components/PhotoInput.vue';
+import { checkDepart, departOp } from '../../departRules';
 
 const chillMax = BUSINESS.temperature.chill.max;
 const scan = ref('');
@@ -122,6 +126,7 @@ const scanMsg = ref('');
 const scanOk = ref(false);
 const tempC = ref('');
 const sealNo = ref('');
+const photo = ref('');
 const confirmMissing = ref(false);
 const error = ref('');
 const manifest = ref(false);
@@ -165,14 +170,14 @@ function scanSubmit() {
 
 function depart() {
   error.value = '';
-  if (!tempCheck.value) return (error.value = 'Nhập nhiệt độ thùng xe.');
-  if (!sealNo.value.trim()) return (error.value = 'Nhập số niêm phong.');
-  if (!loadedCount.value) return (error.value = 'Chưa có thùng nào lên xe.');
-  if (missing.value.length && !confirmMissing.value) return (error.value = `Còn ${missing.value.length} thùng chưa lên xe. Tích xác nhận nếu vẫn xuất xe.`);
-  apply('depart', {
-    scope: scope.value, tempC: Number(tempC.value), sealNo: sealNo.value.trim(), confirmMissing: confirmMissing.value,
+  const bad = checkDepart({ tempC: tempC.value, sealNo: sealNo.value, photo: photo.value, loadedCount: loadedCount.value, missingCount: missing.value.length, confirmMissing: confirmMissing.value });
+  if (bad) return (error.value = bad);
+  // Rule 7: sổ bàn giao chuỗi lạnh = nhiệt độ + ảnh + giờ. Ảnh (data URL) được hàng đợi tải lên kho trước khi gửi thao tác.
+  apply('depart', departOp({
+    scope: scope.value, tempC: tempC.value, sealNo: sealNo.value, photo: photo.value, confirmMissing: confirmMissing.value,
     expected: tripOrders.value.map((o) => o.orderId)
-  });
+  }));
+  photo.value = '';
   manifest.value = true;
 }
 

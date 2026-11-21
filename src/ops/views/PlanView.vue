@@ -58,6 +58,32 @@
           </div>
         </section>
 
+        <section class="ops-card ops-noprint" aria-label="Chốt sổ một chạm" data-testid="cutoff-card">
+          <h2 class="plan-h2">Chốt sổ <span class="ops-pill" :class="cs.phase === 'open' ? 'ops-pill-warn' : 'ops-pill-ok'" data-testid="batch-status">{{ phaseLabel }}</span></h2>
+          <p class="ops-muted">
+            Giờ chốt sổ: <strong data-testid="cutoff-at">{{ fmtDeadline(new Date(ov.detail.cutoffAt)) }}</strong>.
+            Chốt sổ khóa các đơn đã trả tiền, bóc BOM ra gram thô chính xác, lập lệnh mua cho Đắk Lắk và chia tuyến. Tiền về sau khi đã chốt không tự vào lô: admin duyệt ở mục Thanh toán muộn.
+          </p>
+          <p v-if="cs.pendingExceptions" class="ops-error" data-testid="pending-exceptions">
+            Có {{ cs.pendingExceptions }} khoản thanh toán muộn chờ duyệt. <RouterLink to="/thanh-toan-tre">Mở hàng chờ</RouterLink>
+          </p>
+          <template v-if="can('batchLock') && cs.canLock">
+            <label v-if="cs.needsReason" for="lock-reason">Chưa tới giờ chốt sổ. Lý do chốt sớm (bắt buộc, được ghi nhật ký)</label>
+            <input v-if="cs.needsReason" id="lock-reason" v-model="lockReason" class="ops-input" autocomplete="off" data-testid="lock-reason" />
+            <div class="ops-actions">
+              <button class="ops-btn ops-btn-primary" :disabled="busy" data-testid="lock-batch" @click="lock">{{ cs.needsReason ? 'Chốt sớm' : 'Chốt sổ ngay' }}</button>
+            </div>
+          </template>
+          <div v-if="cs.canStartPrep && can('startPrep')" class="ops-actions">
+            <button class="ops-btn ops-btn-primary" :disabled="busy" data-testid="start-prep" @click="startPrep">Bắt đầu sơ chế</button>
+          </div>
+          <div v-if="batch && cs.phase !== 'open'" class="ops-actions">
+            <button class="ops-btn" :disabled="busy" data-testid="po-csv" @click="downloadPo">Tải lệnh mua (CSV, kg thô chính xác)</button>
+          </div>
+          <p v-if="msg" class="ops-ok" role="status" data-testid="cutoff-msg">{{ msg }}</p>
+          <p v-if="actionError" class="ops-error" role="alert" data-testid="cutoff-error">{{ actionError }}</p>
+        </section>
+
         <section class="ops-card ops-noprint" aria-label="Nhu cầu theo SKU">
           <h2 class="plan-h2">
             Nhu cầu theo SKU
@@ -154,10 +180,13 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { api } from '../../shared/api';
-import { fmtDay, fmtDeadline } from '../../shared/utils/time';
-import { ctx } from '../session';
+import { fmtDay, fmtDeadline, serverNow } from '../../shared/utils/time';
+import { can, ctx } from '../session';
+import { useLive } from '../useLive';
+import { downloadText, poCsvName, withBom } from '../download';
+import { cutoffState, lockErrorMessage, lockRequest, lockSummary } from '../planning/cutoff';
 import { dm, kg, shortDay } from '../format';
 import StickerTag from '../components/StickerTag.vue';
 import ProductionSheet from '../components/ProductionSheet.vue';
@@ -167,13 +196,65 @@ const error = ref('');
 const showSheet = ref(false);
 let day = null;
 
-function load(d = day) {
+const batch = ref(null);
+const lockReason = ref('');
+const busy = ref(false);
+const msg = ref('');
+const actionError = ref('');
+
+async function load(d = day) {
   try {
-    ov.value = api.ops.planning.overview(ctx.value, d);
-    day = ov.value.day;
+    const o = await api.ops.planning.overview(ctx.value, d);
+    ov.value = o;
+    day = o.day;
+    // Lô của ngày đang xem (trạng thái chốt sổ thật nằm ở máy chủ); chưa có lô = chưa ai chốt
+    const list = await api.ops.batches.list(ctx.value);
+    batch.value = list.find((b) => b.delivery_date === o.day) || null;
     error.value = '';
   } catch (e) {
     error.value = e.message;
+  }
+}
+
+const cs = computed(() => cutoffState({ batch: batch.value, cutoffAt: ov.value && ov.value.detail ? ov.value.detail.cutoffAt : null, now: serverNow() }));
+const phaseLabel = computed(() => ({ open: 'CHƯA CHỐT', locked: 'ĐÃ CHỐT', prepping: 'ĐANG SƠ CHẾ', closed: 'ĐÃ ĐÓNG' })[cs.value.phase]);
+
+async function run(fn, okText) {
+  busy.value = true;
+  msg.value = '';
+  actionError.value = '';
+  try {
+    const r = await fn();
+    msg.value = typeof okText === 'function' ? okText(r) : okText;
+    await load();
+  } catch (e) {
+    actionError.value = lockErrorMessage(e);
+  } finally {
+    busy.value = false;
+  }
+}
+
+const lock = () => {
+  let body;
+  try {
+    body = lockRequest({ date: day, early: cs.value.early, reason: lockReason.value });
+  } catch (e) {
+    actionError.value = e.message;
+    return;
+  }
+  return run(() => api.ops.batches.lock(ctx.value, body), (r) => lockSummary(r));
+};
+const startPrep = () => run(() => api.ops.batches.startPrep(ctx.value, day), 'Đã bắt đầu sơ chế.');
+
+async function downloadPo() {
+  busy.value = true;
+  actionError.value = '';
+  try {
+    downloadText(poCsvName(day), withBom(await api.ops.batches.purchaseOrdersCsv(ctx.value, day)));
+  } catch (e) {
+    actionError.value = lockErrorMessage(e);
+  } finally {
+    busy.value = false;
   }
 }
 
@@ -190,15 +271,5 @@ async function printSheet() {
   window.print();
 }
 
-let timer = null;
-const onStorage = () => load();
-onMounted(() => {
-  load();
-  timer = setInterval(() => load(), 5000);
-  window.addEventListener('storage', onStorage);
-});
-onBeforeUnmount(() => {
-  clearInterval(timer);
-  window.removeEventListener('storage', onStorage);
-});
+useLive(() => load(), { every: 6000 });
 </script>

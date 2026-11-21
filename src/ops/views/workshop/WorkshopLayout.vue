@@ -18,10 +18,11 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted } from 'vue';
+import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import DayTripBar from '../../components/DayTripBar.vue';
 import { loadError, reload, snapshot } from '../../factoryStore';
+import { useLive } from '../../useLive';
 
 const route = useRoute();
 
@@ -30,6 +31,7 @@ const tabs = [
   { key: 'week', to: '/xuong/7-ngay', title: '7 ngày tới' },
   { key: 'receive', to: '/xuong/nhan-nguyen-lieu', title: 'Nhận nguyên liệu' },
   { key: 'pack', to: '/xuong/dong-goi', title: 'Đóng gói' },
+  { key: 'yield', to: '/xuong/san-luong', title: 'Sản lượng thực tế' },
   { key: 'load', to: '/xuong/xuat-xe', title: 'Xuất xe' },
   { key: 'short', to: '/xuong/bao-thieu', title: 'Báo thiếu / hỏng' }
 ];
@@ -37,15 +39,6 @@ const tabs = [
 // 7 ngày tới và Nhận nguyên liệu không phụ thuộc ngày giao đã chọn
 const needsDay = computed(() => !['workshop-week', 'workshop-receive'].includes(route.name));
 
-let timer = null;
-const onStorage = () => reload();
-onMounted(() => {
-  reload({ force: true });
-  timer = setInterval(() => reload(), 8000);
-  window.addEventListener('storage', onStorage);
-});
-onBeforeUnmount(() => {
-  clearInterval(timer);
-  window.removeEventListener('storage', onStorage);
-});
+// Tải lại theo nhịp 6 giây, không chồng yêu cầu, dừng khi tab ẩn. Mất mạng mà đã có dữ liệu thì giữ nguyên (lớp phủ lo phần chưa gửi).
+useLive(() => reload(), { every: 6000 });
 </script>
