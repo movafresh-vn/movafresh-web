@@ -30,10 +30,11 @@ const tabs = [
 // Số việc đang chờ kế toán: giao dịch chờ khớp tay, yêu cầu điều chỉnh chờ duyệt
 const badge = reactive({ bank: 0, credit: 0 });
 
-useLive(() => {
+useLive(async () => {
   try {
-    badge.bank = api.ops.finance.reconciliation(ctx.value).queue.length;
-    badge.credit = api.ops.finance.creditSummary(ctx.value).pendingAdjustments;
+    const [rec, cred] = await Promise.all([api.ops.finance.reconciliation(ctx.value), api.ops.finance.creditSummary(ctx.value)]);
+    badge.bank = rec.queue.length;
+    badge.credit = cred.pendingAdjustments;
   } catch {
     // dữ liệu chưa sẵn: bỏ số
   }

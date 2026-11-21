@@ -78,11 +78,11 @@ function reload() {
   st.value = api.demo.state(ctx.value);
 }
 
-function run(fn, okText) {
+async function run(fn, okText) {
   msg.value = '';
   err.value = '';
   try {
-    const fired = fn();
+    const fired = await fn();
     msg.value = okText(fired);
   } catch (e) {
     err.value = e.message;
@@ -105,16 +105,22 @@ const seedTrips = () =>
     () => api.demo.seedTrips(ctx.value),
     (r) => `Đã đóng thùng, lên xe và xuất bến ${r.departed.length} chuyến của ngày ${r.day}: ${r.boxes} thùng.`
   );
+// Hai nút ngân hàng dùng đường nhập dòng sao kê thật của máy chủ (cùng đường với webhook); bảng demo đầy đủ chuyển sang /dev ở C27.
 const bankExact = () =>
   run(
-    () => {
-      const w = api.ops.finance.reconciliation(ctx.value).waiting[0];
+    async () => {
+      const w = (await api.ops.finance.reconciliation(ctx.value)).waiting[0];
       if (!w) throw new Error('Không có khoản nạp / chuyển khoản nào đang chờ tiền về');
-      return { txn: api.ops.finance.mockBankTransfer(ctx.value, { ledgerId: w.ledgerId, scenario: 'exact' }), w };
+      const r = await api.ops.finance.bankWebhook(ctx.value, { amountVnd: w.amountVnd, content: w.ref });
+      return r.txn;
     },
-    (r) => `Ngân hàng báo ${r.txn.amountVnd.toLocaleString('vi-VN')}đ nội dung "${r.txn.content}": ${r.txn.status === 'matched' ? 'đã tự khớp' : r.txn.status}.`
+    (t) => `Ngân hàng báo ${t.amountVnd.toLocaleString('vi-VN')}đ nội dung "${t.content}": ${t.status === 'matched' ? 'đã tự khớp' : t.statusLabel}.`
   );
-const bankStranger = () => run(() => api.ops.finance.mockBankTransfer(ctx.value, {}), (t) => `Nhận giao dịch lạ ${t.amountVnd.toLocaleString('vi-VN')}đ: vào hàng chờ khớp tay.`);
+const bankStranger = () =>
+  run(
+    async () => (await api.ops.finance.bankWebhook(ctx.value, { amountVnd: 123000, content: 'chuyen tien khong ma' })).txn,
+    (t) => `Nhận giao dịch lạ ${t.amountVnd.toLocaleString('vi-VN')}đ: vào hàng chờ khớp tay.`
+  );
 const jump = (kind) => run(() => api.demo.jumpTo(ctx.value, kind), summarize);
 const setNow = () => run(() => api.demo.setNow(ctx.value, new Date(at.value)), summarize);
 const reset = () => {

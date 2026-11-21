@@ -313,7 +313,7 @@ const hubJumpAt = (day) => atDay(day, BUSINESS.logistics.demoHubJump.hour, BUSIN
 // App khách dùng backend thật (async, qua http.js). `createApi(server)` còn dựng bản giả lập cho app vận hành và các bài test của nó đến C28.
 const mockApi = createApi();
 // App vận hành: phần đã có backend (kế hoạch, xưởng, đơn, lô, thanh toán muộn, hoàn thiếu hàng, giá vốn...) chạy thật và bất đồng bộ;
-// phần còn lại (mua hàng, nhà cung cấp, kho phụ, logistics, tài chính, demo) vẫn là bản giả lập cho tới khi backend của nhóm đó xong.
+// phần còn lại (bảng demo và các hàm dev) vẫn là bản giả lập cho tới khi /dev của backend (C18) được nối ở C27.
 const realOps = createOpsApi();
 // `hub` trộn theo từng hàm: nhận hàng theo PO chạy thật, tồn kho / thu hồi / xe về còn ở bản giả lập cho tới khi C15-C16 chuyển xong.
 export const api = { ...mockApi, customer: createCustomerApi(), ops: { ...mockApi.ops, ...realOps, hub: { ...mockApi.ops.hub, ...realOps.hub } } };

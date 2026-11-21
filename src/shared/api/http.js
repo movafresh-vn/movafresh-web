@@ -43,7 +43,7 @@ export function createHttp(opts = {}) {
   /**
    * @param {string} method
    * @param {string} path  đường dẫn sau /api/v2, vd '/ops/summary'
-   * @param {{ query?: object, body?: any, key?: string, auth?: boolean, as?: 'json'|'text'|'blob', headers?: object }} [o]
+   * @param {{ query?: object, body?: any, key?: string, auth?: boolean, as?: 'json'|'text'|'blob'|'download', headers?: object }} [o]
    */
   async function request(method, path, o = {}) {
     const m = method.toUpperCase();
@@ -65,6 +65,7 @@ export function createHttp(opts = {}) {
       throw new HttpError('Không kết nối được máy chủ MOVA', { code: 'NETWORK_ERROR', status: 0, details: { cause: String(e?.message || e) } });
     }
     if (res.status === 204) return null;
+    if (res.ok && o.as === 'download') return { text: await res.text(), headers: res.headers };
     if (res.ok && (o.as === 'text' || o.as === 'blob')) return o.as === 'text' ? res.text() : res.blob();
     const payload = await res.json().catch(() => null);
     if (!res.ok) {

@@ -1,7 +1,7 @@
 // api.ops phần chạy trên backend thật (async, qua http.js). Tên hàm giữ như bản giả lập để màn hình đổi ít nhất:
 // tham số đầu `ctx` còn đó cho khỏi sửa chỗ gọi nhưng KHÔNG dùng nữa (danh tính và vai trò lấy từ token Supabase).
 // Khác app khách: lỗi ném HttpError { code, status, details } (không có phong bì {status:'error'}).
-// Nhóm chưa chuyển (tài chính, demo) vẫn ở bản giả lập trong index.js.
+// Nhóm chưa chuyển (bảng demo) vẫn ở bản giả lập trong index.js.
 import { http as sharedHttp } from './http';
 import { fillPath } from './routes';
 import { OPS_ROUTES, SHIPPER_ROUTES, SUPPLIER_ROUTES } from './opsRoutes';
@@ -20,6 +20,17 @@ const statementBody = ({ seller, items, method }) => ({
   items: items.map((i) => compact({ ...i, name: i.name || undefined, unit: i.unit || undefined })),
   method
 });
+
+/** Tên tệp trong Content-Disposition của máy chủ (attachment; filename="x.csv"). */
+export function filenameOf(headers, fallback) {
+  const m = /filename=("?)([^";]+)/i.exec((headers && headers.get && headers.get('Content-Disposition')) || '');
+  return m ? decodeURIComponent(m[2]) : fallback;
+}
+/** Số nguyên trong một tiêu đề trả lời (X-Count...), 0 nếu vắng. */
+export function numHeader(headers, name) {
+  const n = Number(headers && headers.get ? headers.get(name) : 0);
+  return Number.isFinite(n) ? n : 0;
+}
 
 export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
   const h = () => (typeof http === 'function' ? http() : http);
@@ -315,6 +326,75 @@ export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
       /** Mặc định tồn kho bị giữ vẫn giữ (an toàn thực phẩm); `releaseStock: true` chỉ khi đã xác nhận lô an toàn. */
       closeRecall: (_ctx, { recallId, note = '', releaseStock = false }) =>
         call('hubRecallClose', { params: { id: recallId }, body: { ...(note ? { note } : {}), ...(releaseStock ? { releaseStock: true } : {}) } })
+    },
+
+    /**
+     * Tài chính & kế toán (C17). Hình dạng trả về giống bản giả lập; lỗi ném HttpError.
+     * Khách nhận diện bằng customerId (uuid tài khoản) + customerCode (mã nạp); đơn bằng mã đơn MV-....
+     * Ba tệp CSV (file chi, bút toán, bảng kê) là text/csv thô: tên tệp và số liệu đọc từ tiêu đề trả lời, trả lại đúng dạng { filename, csv, count, ... }.
+     */
+    finance: {
+      /** Kiểm toàn vẹn sổ Fresh Credit: { ok, users_checked, mismatches }. */
+      integrity: () => call('finCreditIntegrity'),
+      creditSummary: () => call('finCreditSummary'),
+      creditLedger: (_ctx, { customerId = null, group = null, limit = 300 } = {}) => call('finCreditLedger', { query: { customerId, group, limit } }),
+      adjustments: () => call('finAdjustments'),
+      requestAdjustment: (_ctx, { customerId, bucket, deltaVnd, reason }) => call('finRequestAdjustment', { body: { customerId, bucket, deltaVnd, reason } }),
+      /** Kế toán đề nghị, admin duyệt; người đề nghị không tự duyệt được (SELF_APPROVE). */
+      decideAdjustment: (_ctx, { id, approve, note = '' }) => call('finDecideAdjustment', { params: { id }, body: { approve: Boolean(approve), ...(note ? { note } : {}) } }),
+
+      reconciliation: () => call('finReconciliation'),
+      /** Kế toán nhập dòng sao kê (cùng đường với webhook ngân hàng). Trả { txn, result, duplicate }. */
+      bankWebhook: (_ctx, txn = {}) =>
+        call('finImportBankLine', { body: compact({ txnId: txn.txnId || undefined, amountVnd: txn.amountVnd, content: txn.content ?? '', at: txn.at }), key: keyOf(txn.txnId) }),
+      /** Không có "chấp nhận lệch": số tiền phải ĐÚNG giá gói / tổng tuần chưa trả, không thì AMOUNT_DIFF (409, details.diffVnd). */
+      manualMatch: (_ctx, { bankId, ledgerId, note = '' }) => call('finManualMatch', { params: { id: bankId }, body: { ledgerId, ...(note ? { note } : {}) } }),
+      ignoreBankTxn: (_ctx, { bankId, note }) => call('finIgnoreBankTxn', { params: { id: bankId }, body: { note: note || '' } }),
+
+      revenue: (_ctx, { from = null, to = null } = {}) => call('finRevenue', { query: { from, to } }),
+      invoices: () => call('finInvoices'),
+      /** Trả { issued: n }: số hóa đơn vừa xuất (hóa đơn chỉ xuất khi giao hàng). */
+      issueInvoices: () => call('finIssueInvoices', { body: {} }),
+      margins: (_ctx, { from = null, to = null } = {}) => call('finMargins', { query: { from, to } }),
+      boxCost: (_ctx, orderId) => call('finBoxCost', { params: { order: orderId } }),
+
+      payables: () => call('finPayables'),
+      async payRunFile(_ctx, { poIds = null } = {}) {
+        const r = await call('finPayRunFile', { query: { poIds: poIds && poIds.length ? poIds.join(',') : null }, as: 'download' });
+        return { filename: filenameOf(r.headers, 'file-chi.csv'), csv: r.text, count: numHeader(r.headers, 'X-Count'), totalVnd: numHeader(r.headers, 'X-Total-Vnd') };
+      },
+      /** Chi cả đợt: mỗi khoản đi qua một cửa chi của máy chủ (idempotent); tiền mặt từ ngưỡng 5 triệu bị chặn kèm cảnh báo mất khấu trừ VAT. */
+      executePayRun: (_ctx, { poIds, method = 'bank_transfer', ref = '' }) => call('finPayRun', { body: { poIds, method, ...(ref ? { ref } : {}) } }),
+      cashflow: () => call('finCashflow'),
+
+      journal: (_ctx, { from = null, to = null, groups = null } = {}) => call('finJournal', { query: { from, to, groups: groups && groups.length ? groups.join(',') : null } }),
+      async journalCsv(_ctx, { from = null, to = null, groups = null } = {}) {
+        const r = await call('finJournalCsv', { query: { from, to, groups: groups && groups.length ? groups.join(',') : null }, as: 'download' });
+        const unmapped = (r.headers.get('X-Unmapped') || '').split(',').filter(Boolean);
+        return {
+          filename: filenameOf(r.headers, 'but-toan.csv'),
+          csv: r.text,
+          count: numHeader(r.headers, 'X-Count'),
+          totals: { balanced: r.headers.get('X-Balanced') !== 'false' },
+          unmapped
+        };
+      },
+      async statementsCsv() {
+        const r = await call('finStatementsCsv', { as: 'download' });
+        return { filename: filenameOf(r.headers, 'bang-ke-thu-mua.csv'), csv: r.text, count: numHeader(r.headers, 'X-Count') };
+      },
+
+      settings: () => call('finSettings'),
+      /** Chỉ nhận openingCashVnd và accountMap; thời điểm xuất hóa đơn luôn là "khi giao hàng" (khác bản giả lập). */
+      saveSettings: (_ctx, input = {}) => call('finSaveSettings', { body: compact({ openingCashVnd: input.openingCashVnd, accountMap: input.accountMap, issueOn: input.issueOn }) })
+    },
+
+    monitoring: {
+      scorecard: (_ctx, { from = null, to = null } = {}) => call('monScorecard', { query: { from, to } })
+    },
+
+    overview: {
+      founder: () => call('ovFounder')
     },
 
     /** Cổng nhà cung cấp (C14): mọi lệnh bị ép về chính nhà cung cấp đăng nhập; asSupplierId chỉ có tác dụng với admin. */

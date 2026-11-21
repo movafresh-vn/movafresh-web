@@ -122,7 +122,35 @@ export const OPS_ROUTES = {
   hubSeafoodClose: ['POST', '/ops/hub/seafood/close'],
   hubSort: ['POST', '/ops/hub/routes/:id/sort'],
   hubDispatch: ['POST', '/ops/hub/routes/:id/dispatch'],
-  hubRouteSheet: ['GET', '/ops/hub/routes/:id/sheet']
+  hubRouteSheet: ['GET', '/ops/hub/routes/:id/sheet'],
+
+  // Tài chính & kế toán (C17). Ba đường CSV trả text/csv thô kèm tiêu đề X-Count / X-Total-Vnd / X-Balanced / X-Unmapped.
+  finCreditIntegrity: ['GET', '/ops/finance/credit/integrity'],
+  finCreditSummary: ['GET', '/ops/finance/credit/summary'],
+  finCreditLedger: ['GET', '/ops/finance/credit/ledger'],
+  finAdjustments: ['GET', '/ops/finance/credit/adjustments'],
+  finRequestAdjustment: ['POST', '/ops/finance/credit/adjustments'],
+  finDecideAdjustment: ['POST', '/ops/finance/credit/adjustments/:id/decision'],
+  finReconciliation: ['GET', '/ops/finance/reconciliation'],
+  finImportBankLine: ['POST', '/ops/finance/bank-transactions'],
+  finManualMatch: ['POST', '/ops/finance/bank-transactions/:id/match'],
+  finIgnoreBankTxn: ['POST', '/ops/finance/bank-transactions/:id/ignore'],
+  finRevenue: ['GET', '/ops/finance/revenue'],
+  finInvoices: ['GET', '/ops/finance/invoices'],
+  finIssueInvoices: ['POST', '/ops/finance/invoices/issue'],
+  finMargins: ['GET', '/ops/finance/margins'],
+  finBoxCost: ['GET', '/ops/finance/box-cost/:order'],
+  finPayables: ['GET', '/ops/finance/payables'],
+  finPayRunFile: ['GET', '/ops/finance/pay-run/file'],
+  finPayRun: ['POST', '/ops/finance/pay-run'],
+  finCashflow: ['GET', '/ops/finance/cashflow'],
+  finJournal: ['GET', '/ops/finance/journal'],
+  finJournalCsv: ['GET', '/ops/finance/journal.csv'],
+  finStatementsCsv: ['GET', '/ops/finance/statements.csv'],
+  finSettings: ['GET', '/ops/finance/settings'],
+  finSaveSettings: ['PUT', '/ops/finance/settings'],
+  monScorecard: ['GET', '/ops/monitoring/scorecard'],
+  ovFounder: ['GET', '/ops/overview/founder']
 };
 
 // Cổng nhà cung cấp: nằm ngoài /ops. Nhà cung cấp luôn bị ép về chính mình; admin xem thử bằng ?as_supplier_id=.

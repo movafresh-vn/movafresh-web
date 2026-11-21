@@ -88,6 +88,7 @@ import { fmt } from '../../../shared/utils/formatters';
 import { fmtDeadline } from '../../../shared/utils/time';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
+import { financeError } from '../../financeUi';
 
 const data = ref(null);
 const inv = ref(null);
@@ -95,23 +96,22 @@ const error = ref('');
 const from = ref('');
 const to = ref('');
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.finance.revenue(ctx.value, { from: from.value || null, to: to.value || null });
-    inv.value = api.ops.finance.invoices(ctx.value);
+    [data.value, inv.value] = await Promise.all([api.ops.finance.revenue(ctx.value, { from: from.value || null, to: to.value || null }), api.ops.finance.invoices(ctx.value)]);
     error.value = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 useLive(load, { every: 8000 });
 
-function issue() {
+async function issue() {
   try {
-    api.ops.finance.issueInvoices(ctx.value);
+    await api.ops.finance.issueInvoices(ctx.value);
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
-  load();
+  await load();
 }
 </script>
