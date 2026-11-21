@@ -83,6 +83,7 @@ movafresh-web/
     └── shared/
         ├── api/                        # Lớp gọi backend (xem bên dưới)
         ├── config/                     # business.js (khung giờ, hằng hiển thị), roles.js (nhãn vai trò)
+        ├── data/                       # Dữ liệu hiển thị tĩnh còn lại (catalog, packaging, recipes, sources); nguồn sự thật nghiệp vụ là backend
         ├── domain/                     # Hàm thuần dùng chung cho hiển thị và hàng đợi offline (không giữ trạng thái)
         ├── utils/                      # time.js (giờ Việt Nam + đồng hồ theo máy chủ), formatters.js (fmt), qr.js
         └── __tests__/                  # Vitest, tên theo nhóm: w1* (client), w2* (phễu), w3* (tài khoản), w4–w9* (vận hành)

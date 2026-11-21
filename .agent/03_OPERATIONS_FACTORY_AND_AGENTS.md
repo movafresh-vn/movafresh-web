@@ -1,7 +1,7 @@
 # 03. VẬN HÀNH NHÀ MÁY, KHO BÃI & HỆ THỐNG VẬN HÀNH `/ops.html`
 
 > **Quy định quy trình sản xuất thực phẩm, đóng gói, điều phối chuỗi cung ứng Đắk Lắk – TP.HCM, phân quyền 8 vai trò vận hành và các tác tử AI tự động.**
-> Phiên bản: V2.2 | Cập nhật: 18/11/2026 (Đồng bộ toàn diện Hạ tầng & Vận hành)
+> Phiên bản: V2.3 | Cập nhật: 22/11/2026 (Chạy trên backend thật: máy trạng thái đơn, chốt sổ cứng, truy xuất lô, chuỗi lạnh)
 
 ---
 
@@ -65,20 +65,28 @@ MOVA Fresh giải quyết bằng thuật toán **BOM (Bill of Materials) Reverse
 
 ---
 
-## 3. HỆ THỐNG VẬN HÀNH `/ops.html` — PHÂN QUYỀN 8 VAI TRÒ & BẢO MẬT PII
+## 3. HỆ THỐNG VẬN HÀNH `/ops.html`: PHÂN QUYỀN 8 VAI TRÒ & BẢO MẬT PII
 
-Ứng dụng vận hành được đóng gói thành một Single Page độc lập tại **`/ops.html`** với hash router, phục vụ 8 nhóm tác nhân chuyên trách. Mặc định ẩn danh sách mã PIN demo khi chạy production (chỉ bật khi `VITE_SHOW_DEMO_PINS=true` hoặc chạy dev):
+Ứng dụng vận hành là Single Page độc lập tại **`/ops.html`** (hash router), phục vụ 8 vai trò. Từ V2.3 **không còn mã PIN**: nhân viên đăng nhập **email + mật khẩu** (Supabase Auth), vai trò và quyền lấy từ `GET /ops/me`; máy chủ kiểm quyền ở từng lệnh. Tài khoản local do `npm run seed:staff` tạo (`<vai trò>@staff.movafresh.local`; shipper `shipper1..4@`; nhà cung cấp `s-factory@`, `s-seafood@`, `s-truck@`, `s-lastmile@`, `s-pack@`).
 
-| Mã PIN | Nhóm vai trò | Phạm vi chức năng & Bảo mật dữ liệu |
-|---|---|---|
-| **`1111`** | **Quản đốc phân xưởng (Factory Manager)** | Xem kế hoạch sản xuất tuần, in phiếu chế bản in ấn (Printable Work Order), cân đối định mức BOM nguyên liệu thô theo ngày chốt sổ `08:00 D-2`. |
-| **`2222`** | **Bếp phân xưởng (Factory Workshop)** | Màn hình thao tác tại chỗ: Kế hoạch hôm nay, 7 ngày tới, trạm sơ chế/đóng gói, đóng thùng, xuất xe lạnh Đắk Lắk $\rightarrow$ TP.HCM. Tích hợp Offline Queue lưu trữ khi mất mạng. |
-| **`3333–3336`** | **Mua hàng & Kho (Procurement)** | Quản lý Đơn mua hàng (PO), đối soát 3 chiều (3-way match: PO - GRN - Hóa đơn), quản lý kho theo nguyên tắc FEFO, xử lý thu hồi lô hàng sự cố (Lot Recall). Không hiển thị mã khách hàng cá nhân. |
-| **`4001–4005`** | **Cổng Nhà cung cấp (Supplier Portal)** | Dành cho 5 nhà cung ứng chính (`S-FACTORY`, `S-SEAFOOD`, `S-TRUCK`, `S-LASTMILE`, `S-PACK`): Xem đơn đặt hàng, xác nhận giao hàng, đối soát công nợ gối đầu. |
-| **`5555`** | **Điều phối vận hành & Xe lạnh (Logistics)** | Quản lý công suất tuyến (Capacity overrides), hành trình xe lạnh xuyên đêm, kiểm soát chuỗi lạnh (Cold chain sensor: nhiệt độ thùng $-18^\circ\text{C}$ / $0–4^\circ\text{C}$), ghi nhận KPI giao đúng giờ và chi phí logistics theo thùng. |
-| **`6666`** | **Kho phụ trung chuyển TP.HCM (Secondary Hub)** | Tiếp nhận xe lạnh từ Đắk Lắk, ghép hải sản tươi Vũng Tàu, phân loại đơn theo tuyến phường/quận, in phiếu giao hàng. Được phép thấy tên & SĐT người nhận để in nhãn. |
-| **`7777`** | **Shipper chặng cuối (Delivery)** | Giao diện mobile tối giản: Danh sách điểm dừng theo tuyến, SĐT che một phần (`0987***321`), không thấy thông tin tiền bạc hay mã khách hàng. Thao tác 1 chạm: Đã giao / Báo giao thất bại. |
-| **`9999`** | **Kế toán & Quản trị dòng tiền (Finance & Accounting)** | Sổ cái Fresh Credit 2 ngăn (`real_vnd` vs `promo_vnd`), đối soát ngân hàng VietQR, xuất hóa đơn VAT, báo cáo biên lợi nhuận gộp, lịch thanh toán công nợ nhà cung cấp, dự báo dòng tiền 13 tuần, export file CSV hạch toán chuẩn MISA / Fast. |
+| Vai trò | Phạm vi chức năng & Bảo mật dữ liệu |
+|---|---|
+| **`workshop`: Xưởng Đắk Lắk** | Hôm nay làm bao nhiêu (túi × gram), nhận nguyên liệu kèm mã lô và ảnh, đóng gói theo thùng, **in nhãn thùng (Order_Code, Batch_ID, Route_ID, Lot_IDs; không có tên khách)**, **nhập hiệu suất thực tế so chuẩn (lệch >5% bị cờ)**, xuất xe (**bắt buộc nhiệt độ + ảnh**: biên bản giao nhận lạnh bất biến), báo thiếu/hỏng và **hoàn tiền thiếu hàng hàng loạt** (xem trước có mã băm, rồi xác nhận). Offline Queue khi mất mạng. Không thấy thông tin cá nhân khách. |
+| **`hub`: Kho phụ TP.HCM** | Nhận hàng đối chiếu PO, tồn kho theo lô và FEFO, truy xuất lô trong vài giây (mọi đơn bị ảnh hưởng), thu hồi lô (giữ đơn, bồi thường promo), nhận xe lạnh (**cần ảnh dỡ hàng và nhiệt độ**), ghép hải sản, chia tuyến theo Route_ID, xuất kho. Được thấy tên và địa chỉ người nhận để in phiếu tuyến. |
+| **`dispatch`: Điều phối** | Kế hoạch & chốt sổ, **nút chốt sổ một chạm** (chốt sớm trước giờ cần lý do, có audit), **tải lệnh mua tổng (CSV)**, sức chứa ba giới hạn của chu kỳ (xưởng, xe theo hộp, xe theo kg), chuyến xe, lập tuyến, ngoại lệ giao hàng, chuỗi lạnh (giữ/hủy), chi phí logistics theo thùng và KPI. |
+| **`purchasing`: Mua hàng** | Nhà cung cấp, SKU, bảng giá (cảnh báo khi giá mới làm món vượt 35% giá vốn), dự báo, PO (duyệt, gửi, đối chiếu ba chiều PO–phiếu nhận–hóa đơn, trả), mua trực tiếp, công nợ, thẻ điểm nhà cung cấp. Không thấy mã khách. |
+| **`supplier`: Cổng nhà cung cấp** | Năm nhà cung cấp chính (`S-FACTORY`, `S-SEAFOOD`, `S-TRUCK`, `S-LASTMILE`, `S-PACK`): xác nhận PO, hóa đơn, trả lời khiếu nại, xem công nợ. **Chỉ thấy dữ liệu của chính mình.** |
+| **`shipper`: Giao hàng** | Điểm dừng của tuyến mình, SĐT che một phần, gọi khách, đã giao (**ảnh bằng chứng nếu hướng dẫn giao yêu cầu**) hoặc không giao được (mở ngoại lệ). Không thấy tiền bạc hay mã khách. |
+| **`accounting`: Kế toán** | Sổ Fresh Credit 2 ngăn, đề nghị điều chỉnh (admin duyệt), đối soát ngân hàng, doanh thu và hóa đơn theo từng lần giao, giá vốn và margin, công nợ và pay-run, dòng tiền, xuất bút toán CSV (cân đối nợ/có), **bảng giá vốn món (cờ đỏ khi >35%)**. |
+| **`admin`: Quản trị / Founder** | Tổng quan founder, **hàng đợi thanh toán muộn** (xem mục 3A), duyệt điều chỉnh, ô toàn vẹn sổ cái, giám sát nhà cung cấp, bảng demo (chỉ bản dev). |
+
+### 3A. Các luồng mới ở V2.3 (màn hình tương ứng)
+- **Chốt sổ cứng:** tới giờ chốt (mặc định 08:00 ngày D-2, cấu hình ở máy chủ) hoặc khi admin bấm chốt, lô giao bị khóa, BOM và lệnh mua tổng được đóng băng. Tuần chưa trả ở lại DRAFT. Màn Kế hoạch & chốt sổ có nút chốt, giờ chốt và tải lệnh mua CSV.
+- **Thanh toán muộn (`/thanh-toan-tre`, admin):** tiền tới sau khi lô khóa **không bao giờ** chui vào lô; mở một ngoại lệ chờ admin. Admin nhận (khi lô còn LOCKED và còn chỗ) hoặc từ chối: đơn dời sang ngày giao trống kế tiếp, hết chỗ thì tiền thành Fresh Credit (hoàn được). Khách nhận thông báo từng bước.
+- **Hướng dẫn giao:** mỗi gói có hướng dẫn giao bắt buộc (mặc định "để ở lễ tân + shipper chụp ảnh"); shipper phải chụp ảnh khi hướng dẫn đòi.
+- **Hiệu suất, truy xuất, chuỗi lạnh:** nhập hiệu suất thực tế; truy xuất lô liệt kê mọi đơn bị ảnh hưởng; các cạnh IN_TRANSIT và CROSS_DOCK của máy trạng thái đòi biên bản giao nhận lạnh (nhiệt độ + ảnh).
+- **Hoàn tiền thiếu hàng hàng loạt:** xưởng báo thiếu một SKU, hệ thống phân bổ đơn bị ảnh hưởng theo mã đơn, xem trước (có mã băm), xác nhận trong một giao dịch, idempotent theo (đợt thiếu, tuần).
+- **Bảng demo (`/demo`, chỉ `VITE_DEV_TOOLS=true`):** đồng hồ máy chủ giả lập, chạy job, dữ liệu mẫu, chuyển khoản ngân hàng giả có chữ ký (gọi `/dev/*` của backend).
 
 ---
 
