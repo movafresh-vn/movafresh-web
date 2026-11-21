@@ -46,7 +46,7 @@ describe('W4-01: app vận hành chặn theo hồ sơ nhân viên của máy ch�
 
   it('W4-01: router dùng guardNavigation và các màn mới có route + quyền; không còn tra PIN hay vai trò cứng', () => {
     const router = read('ops/router.js');
-    expect(router).toMatch(/router\.beforeEach\(\(to\) => guardNavigation\(session\.value, to\)\)/);
+    expect(router).toMatch(/router\.beforeEach\(\(to\) => guardNavigation\(session\.value, to, \{ dev: devToolsEnabled\(\) \}\)\)/);
     expect(router).toMatch(/'late-payments': LatePaymentsView/);
     expect(router).toMatch(/name: 'workshop-yield'[^\n]*perm: 'yieldLog'/);
     expect(router).toMatch(/name: 'finance-costing'[^\n]*perm: 'costing'/);

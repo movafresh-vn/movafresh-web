@@ -13,7 +13,10 @@ export const MODULES = [
   { path: '/giao-hang', name: 'shipper', title: 'Giao hàng', roles: ['shipper', 'dispatch', 'admin'], build: 'P2C', preview: 'orders', note: 'Điểm giao theo thứ tự, gọi khách (SĐT che một phần), đã giao / không giao được.' },
   { path: '/tai-chinh', name: 'finance', title: 'Tài chính & kế toán', roles: ['accounting', 'admin'], build: 'P2D', preview: 'orders', note: 'Sổ Fresh Credit 2 ngăn, đối soát thu VietQR và thẻ, doanh thu và hóa đơn, giá vốn và margin, công nợ và đợt chi, dòng tiền 30 ngày, xuất bút toán CSV.' },
   { path: '/giam-sat', name: 'monitoring', title: 'Giám sát nhà cung cấp', roles: ['admin', 'purchasing'], build: 'P2D', preview: 'suppliers', note: 'Thẻ điểm: giao đúng hạn, đáp ứng PO, đạt QC, chênh khối lượng, vượt nhiệt, khiếu nại, chênh giá so thị trường.' },
-  { path: '/demo', name: 'demo', title: 'Bảng demo', roles: ['admin'], build: 'P0', preview: null, note: 'Đồng hồ giả lập và các nút nhảy tới mốc.' }
+  { path: '/demo', name: 'demo', title: 'Bảng demo', roles: ['admin'], build: 'P0', preview: null, note: 'Đồng hồ máy chủ, chạy job, dữ liệu mẫu và tiền ngân hàng giả (chỉ bản dev).' }
 ];
 
-export const modulesFor = (role) => MODULES.filter((m) => m.roles.includes(role));
+import { devToolsEnabled } from '../shared/api/devApi';
+
+/** Bảng demo (công cụ dev) chỉ có ở bản build VITE_DEV_TOOLS=true. */
+export const modulesFor = (role, env = import.meta.env) => MODULES.filter((m) => m.roles.includes(role) && (m.name !== 'demo' || devToolsEnabled(env)));

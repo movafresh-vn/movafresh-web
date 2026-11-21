@@ -8,6 +8,7 @@ import { dishItemGrams, emptyFactory, shortageGrams } from '../domain/factory';
 import { createCustomerApi as createMockCustomerApi } from './customer';
 import { createCustomerApi } from './customerApi';
 import { createOpsApi } from './opsApi';
+import { createDevApi } from './devApi';
 import { createOpsFactoryApi } from './opsFactory';
 import { createProcurementApi } from './opsProcurement';
 import { createLogisticsApi } from './opsLogistics';
@@ -316,4 +317,4 @@ const mockApi = createApi();
 // phần còn lại (bảng demo và các hàm dev) vẫn là bản giả lập cho tới khi /dev của backend (C18) được nối ở C27.
 const realOps = createOpsApi();
 // `hub` trộn theo từng hàm: nhận hàng theo PO chạy thật, tồn kho / thu hồi / xe về còn ở bản giả lập cho tới khi C15-C16 chuyển xong.
-export const api = { ...mockApi, customer: createCustomerApi(), ops: { ...mockApi.ops, ...realOps, hub: { ...mockApi.ops.hub, ...realOps.hub } } };
+export const api = { ...mockApi, customer: createCustomerApi(), demo: createDevApi(), ops: { ...mockApi.ops, ...realOps, hub: { ...mockApi.ops.hub, ...realOps.hub } } };

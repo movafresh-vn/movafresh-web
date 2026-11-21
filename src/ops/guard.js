@@ -15,8 +15,10 @@ export function routeAllowed(session, to) {
 }
 
 /** Trả đường dẫn cần chuyển tới, hoặc true nếu cho vào. */
-export function guardNavigation(session, to) {
+export function guardNavigation(session, to, { dev = false } = {}) {
   if (to.name === 'login') return session ? '/' : true;
   if (!session) return '/login';
+  // Bảng demo chỉ có ở bản build dev (VITE_DEV_TOOLS=true).
+  if (to.name === 'demo' && !dev) return '/';
   return routeAllowed(session, to) ? true : '/';
 }

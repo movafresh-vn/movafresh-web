@@ -14,6 +14,7 @@ import ShipperView from './views/shipper/ShipperView.vue';
 import FinanceLayout from './views/finance/FinanceLayout.vue';
 import ScorecardView from './views/ScorecardView.vue';
 import { MODULES } from './modules';
+import { devToolsEnabled } from '../shared/api/devApi';
 import { session } from './session';
 import { guardNavigation } from './guard';
 import { ROLES } from '../shared/config/roles';
@@ -98,6 +99,6 @@ const routes = [
 const router = createRouter({ history: createWebHashHistory(), routes });
 
 // Chặn theo hồ sơ nhân viên của máy chủ: vai trò (phân hệ và màn con) và quyền cụ thể (meta.perm). Xem guard.js.
-router.beforeEach((to) => guardNavigation(session.value, to));
+router.beforeEach((to) => guardNavigation(session.value, to, { dev: devToolsEnabled() }));
 
 export default router;
