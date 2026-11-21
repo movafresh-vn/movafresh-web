@@ -32,3 +32,16 @@ export async function verifyOtp(contact, token) {
   if (error) throw error;
   return data.user;
 }
+
+/** Đăng nhập nhân viên vận hành bằng email + mật khẩu (tài khoản do admin tạo, xem backend `npm run seed:staff`). */
+export async function signInWithPassword(email, password) {
+  if (!supabase) throw new Error('Thiếu cấu hình Supabase Auth trong biến môi trường VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY.');
+  const { data, error } = await supabase.auth.signInWithPassword({ email: String(email).trim(), password });
+  if (error) throw error;
+  return data.user;
+}
+
+export async function signOut() {
+  if (!supabase) return;
+  await supabase.auth.signOut();
+}

@@ -82,3 +82,24 @@ export function fmtDate(date) {
   const p = vnParts(date);
   return `${pad(p.d)}/${pad(p.m)}/${p.y}`;
 }
+
+// ---------- Đồng hồ theo máy chủ ----------
+// Giờ nghiệp vụ (chốt sổ, hạn thanh toán, đồng hồ dev) do máy chủ quyết định. Web chỉ giữ độ lệch giữa giờ máy chủ và giờ máy để
+// mọi màn dùng chung một "bây giờ". Chưa đồng bộ lần nào thì độ lệch là 0 (dùng giờ máy).
+let serverOffsetMs = 0;
+
+/** Ghi nhận giờ máy chủ (chuỗi ISO) vừa nhận được; `localMs` là giờ máy lúc nhận. */
+export function syncServerTime(serverIso, localMs = Date.now()) {
+  const t = new Date(serverIso).getTime();
+  if (Number.isFinite(t)) serverOffsetMs = t - localMs;
+  return serverOffsetMs;
+}
+
+/** "Bây giờ" theo máy chủ. */
+export function serverNow(localMs = Date.now()) {
+  return new Date(localMs + serverOffsetMs);
+}
+
+export function clockOffsetMs() {
+  return serverOffsetMs;
+}
