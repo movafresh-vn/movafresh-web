@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { createServer } from '../mock-server/server';
-import { createMemoryStorage } from '../mock-server/storage';
-import { createApi } from '../api';
 import { BUSINESS } from '../config/business';
-import { DISHES, PERSONAS, SKUS, SAUCES } from '../data/catalog';
+import { DISHES, SKUS, SAUCES } from '../data/catalog';
+import { PERSONAS } from './helpers/personas';
 import { generateMeals } from '../domain/mealPlan';
 import { aggregateBom } from '../domain/bom';
 import { rng } from '../utils/formatters';
@@ -11,22 +9,6 @@ import {
   applyFactoryOp, bagsFor, boxProgress, buildProductionSheet, demandTotals, emptyFactory, expiryOf, isTempOk, nextDailyId, nextLotCode,
   orderPackList, overlayFactory, progressLines, scopeKey, tripForSlot, unbatchedBags, weekStartOf
 } from '../domain/factory';
-
-const START = '2026-11-20T09:00:00+07:00'; // Thứ Sáu
-const admin = { role: 'admin' };
-const workshop = { role: 'workshop' };
-
-function setup() {
-  const server = createServer({ storage: createMemoryStorage(), startAt: START, running: false });
-  return { server, api: createApi(server) };
-}
-
-/** Chốt sổ ngày giao đầu tiên và trả về { day, plan }. */
-function closeFirstDay(api) {
-  api.demo.jumpTo(admin, 'cutoff');
-  const plan = api.ops.listProductionPlans(admin)[0];
-  return { day: plan.day, plan };
-}
 
 const PHOTO = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
 
@@ -228,155 +210,5 @@ describe('phiếu sản xuất 3 bảng', () => {
     const factoryKg = Object.entries(bom.skuGrams).filter(([k]) => SKUS[k].supplierId === 'S-FACTORY').reduce((s, [, g]) => s + g / 1000, 0);
     expect(Math.abs(t1kg - factoryKg)).toBeLessThan(0.1 * sheet.table1.length);
     expect(sheet.table1[0].packNote).toMatch(/^Túi \d+g × \d+ túi/);
-  });
-});
-
-describe('API xưởng và kế hoạch', () => {
-  it('vai trò không phải xưởng không ghi được; xưởng không vào màn kế hoạch', () => {
-    const { api } = setup();
-    expect(() => api.ops.factory.apply({ role: 'shipper' }, { type: 'progress' })).toThrow();
-    expect(() => api.ops.planning.overview(workshop)).toThrow();
-    expect(() => api.ops.factory.snapshot({ role: 'dispatch' })).toThrow();
-    expect(() => api.ops.factory.forecast({ role: 'shipper' })).toThrow();
-  });
-
-  it('chưa tới giờ chốt thì kế hoạch là dự kiến; tới giờ chốt thì hiện số đã chốt khớp BOM của kế hoạch', () => {
-    const { api } = setup();
-    const before = api.ops.planning.overview({ role: 'dispatch' });
-    expect(before.detail.closed).toBe(false);
-    expect(before.sheet.status).toBe('preview');
-    expect(before.days.every((d) => !d.closed)).toBe(true);
-
-    const { day, plan } = closeFirstDay(api);
-    const after = api.ops.planning.overview({ role: 'dispatch' }, day);
-    expect(after.detail.closed).toBe(true);
-    expect(after.detail.source).toBe('closed');
-    expect(after.detail.boxes).toBe(plan.orderIds.length);
-    expect(after.detail.counts.skippedUnpaid).toBe(plan.skippedOrderIds.length);
-    expect(after.sheet.status).toBe('closed');
-    expect(after.sheet.boxes).toBe(plan.bom.boxes);
-    const kg = after.detail.items.filter((i) => i.type === 'sku').reduce((s, i) => s + i.kg, 0);
-    const planKg = Object.entries(plan.bom.skuGrams).reduce((s, [, g]) => s + g / 1000, 0);
-    const hubKg = after.detail.hub.reduce((s, h) => s + h.kg, 0);
-    expect(Math.abs(kg + hubKg - planKg)).toBeLessThan(0.1 * Object.keys(plan.bom.skuGrams).length);
-    expect(after.weeks).toHaveLength(4);
-    expect(after.weekRows.length).toBeGreaterThan(5);
-  });
-
-  it('ảnh chụp của xưởng không chứa tên, SĐT, địa chỉ hay mã khách', () => {
-    const { api, server } = setup();
-    closeFirstDay(api);
-    const snap = api.ops.factory.snapshot(workshop);
-    expect(snap.orders.length).toBeGreaterThan(0);
-    const json = JSON.stringify([snap, api.ops.factory.forecast(workshop), api.ops.factory.catalog(workshop)]);
-    const customers = server.read((db) => db.customers);
-    for (const c of customers) {
-      expect(json).not.toContain(c.name);
-      expect(json).not.toContain(c.phone);
-      expect(json).not.toContain(c.address);
-      expect(json).not.toContain(`"${c.id}"`);
-    }
-    for (const o of snap.orders) expect(Object.keys(o).sort()).toEqual(['bagsByTemp', 'deliveryAt', 'deliveryDay', 'items', 'orderId', 'slotId', 'status', 'tripId', 'workshopBags', 'zoneId']);
-  });
-
-  it('nhận lô bò → mẻ túi → tích túi (đang sản xuất) → đóng thùng → lên xe → xuất xe', () => {
-    const { api, server } = setup();
-    const { day } = closeFirstDay(api);
-    let snap = api.ops.factory.snapshot(workshop, day);
-    const list = snap.orders.find((l) => l.items.some((i) => i.key === 'NL-BO-01')) || snap.orders[0];
-    const tripId = list.tripId;
-    const scope = scopeKey(day, tripId);
-
-    // lô bò
-    const code = nextLotCode('NL-BO-01', snap.lotCodes, snap.now);
-    api.ops.factory.apply(workshop, { type: 'receipt', opId: 'o1', sku: 'NL-BO-01', sourceId: 'SRC-HTX-01', weightKg: 60, tempC: 2.1, photo: PHOTO, verdict: 'pass', lotCode: code });
-    const lot = api.ops.listLots(workshop).find((l) => l.qr_code === code);
-    expect(lot).toBeTruthy();
-    expect(lot.sample).toBe(false);
-    const trace = api.customer.traceLot(code);
-    expect(trace.status).toBe('success'); // trang /q/:code đọc được lô vừa nhận
-    expect(trace.data.farm.name).toMatch(/Krông Năng/);
-    // mẻ túi phải có lô
-    expect(() => api.ops.factory.apply(workshop, { type: 'batch', opId: 'o2', id: 'B-1', key: 'NL-BO-01', bags: 5 })).toThrow(/lô/);
-    api.ops.factory.apply(workshop, { type: 'batch', opId: 'o3', id: 'B-1', key: 'NL-BO-01', bags: 5, lotCode: code, expiresAt: expiryOf('NL-BO-01', snap.now) });
-    // gửi lại cùng opId không nhân đôi
-    api.ops.factory.apply(workshop, { type: 'batch', opId: 'o3', id: 'B-1', key: 'NL-BO-01', bags: 5, lotCode: code });
-    expect(api.ops.factory.snapshot(workshop, day).factory.batches).toHaveLength(1);
-    // lô bị trùng mã
-    expect(() => api.ops.factory.apply(workshop, { type: 'receipt', opId: 'o4', sku: 'NL-BO-01', sourceId: 'SRC-HTX-01', weightKg: 1, tempC: 2, photo: PHOTO, verdict: 'pass', lotCode: code })).toThrow(/đã có/);
-
-    // tích túi đầu tiên: đơn chuyển "đang sản xuất"
-    expect(server.read((db) => db.orders.find((o) => o.id === list.orderId).status)).toBe('locked');
-    api.ops.factory.apply(workshop, { type: 'tick', opId: 'o5', orderId: list.orderId, key: list.items[0].key, count: 1 });
-    expect(server.read((db) => db.orders.find((o) => o.id === list.orderId).status)).toBe('in_production');
-    for (const it of list.items.filter((i) => !i.hub)) api.ops.factory.apply(workshop, { type: 'tick', opId: `t-${it.key}`, orderId: list.orderId, key: it.key, count: it.bags });
-    api.ops.factory.apply(workshop, { type: 'closeBox', opId: 'o6', orderId: list.orderId });
-
-    // lên xe: đúng chuyến mới được
-    const otherTrip = BUSINESS.factory.trips.find((t) => t.id !== tripId).id;
-    expect(() => api.ops.factory.apply(workshop, { type: 'load', opId: 'o7', scope: scopeKey(day, otherTrip), orderId: list.orderId, loaded: true })).toThrow(/chuyến/);
-    api.ops.factory.apply(workshop, { type: 'load', opId: 'o8', scope, orderId: list.orderId, loaded: true });
-    // thiếu thùng thì xuất xe bị chặn cho tới khi xác nhận
-    const expected = snap.orders.filter((l) => l.tripId === tripId).length;
-    const depart = { type: 'depart', scope, tempC: 2.4, sealNo: 'NP-0001' };
-    if (expected > 1) {
-      expect(() => api.ops.factory.apply(workshop, { ...depart, opId: 'o9' })).toThrow(/chưa lên xe/);
-    }
-    api.ops.factory.apply(workshop, { ...depart, opId: 'o10', confirmMissing: true });
-    snap = api.ops.factory.snapshot(workshop, day);
-    const load = snap.factory.loads[scope];
-    expect(load.departedAt).toBeTruthy();
-    expect(load.missing.length).toBe(expected - 1);
-    expect(snap.trips.find((t) => t.id === tripId).departedAt).toBeTruthy();
-  });
-
-  it('báo thiếu một SKU: liệt kê đơn bị ảnh hưởng, đề xuất món thay, báo khách và bù Fresh Credit', () => {
-    const { api, server } = setup();
-    const { day } = closeFirstDay(api);
-    const snap = api.ops.factory.snapshot(workshop, day);
-    const counts = {};
-    for (const l of snap.orders) for (const it of l.items) if (it.type === 'sku' && !it.hub) counts[it.key] = (counts[it.key] || 0) + 1;
-    const key = ['NL-GA-03', 'NL-BO-01', 'NL-HEO-02', 'NL-SUON-04'].find((k) => counts[k]);
-    api.ops.factory.apply(workshop, { type: 'shortage', opId: 's1', id: 'SH-1', key, qty: 2, unit: 'bag', kind: 'short', day });
-    const impact = api.ops.factory.impact(workshop, 'SH-1');
-    expect(impact.affected.length).toBeGreaterThan(0);
-    expect(impact.coveredGrams).toBeGreaterThanOrEqual(impact.needGrams);
-    // không lộ khách
-    expect(Object.keys(impact.affected[0]).sort()).toEqual(['deliveryDay', 'grams', 'hits', 'orderId', 'slotId', 'tripId', 'zoneId']);
-    const hit = impact.affected[0].hits.find((h) => h.suggestedDishId);
-    expect(hit).toBeTruthy();
-    // món thay không dùng chính mặt hàng đang thiếu
-    for (const o of hit.options) expect(DISHES[o.dishId].bom.some((b) => b.sku === key)).toBe(false);
-
-    const order = server.read((db) => db.orders.find((o) => o.id === impact.affected[0].orderId));
-    const customerId = order.customerId;
-    const subs = () => server.read((db) => db.notifications.filter((n) => n.customerId === customerId && n.type === 'substitution').length);
-    const nBefore = subs();
-    const sub = api.ops.substituteDish(workshop, { orderId: order.id, mealIndex: hit.mealIndex, kind: hit.kind, toDishId: hit.suggestedDishId, reason: `thiếu ${key}`, shortageId: 'SH-1', opId: 'sub-1' });
-    expect(subs()).toBe(nBefore + 1);
-    // gửi lại cùng opId không bù hai lần
-    const again = api.ops.substituteDish(workshop, { orderId: order.id, mealIndex: hit.mealIndex, kind: hit.kind, toDishId: hit.suggestedDishId, shortageId: 'SH-1', opId: 'sub-1' });
-    expect(again.duplicate).toBe(true);
-    expect(subs()).toBe(nBefore + 1);
-    const comp = server.read((db) => db.ledger.filter((l) => l.orderId === order.id && l.kind === 'compensation').length);
-    expect(comp).toBe(sub.compensationVnd > 0 ? 1 : 0);
-    const after = api.ops.factory.impact(workshop, 'SH-1');
-    expect(after.handled).toHaveLength(1);
-    expect(after.handled[0].toDishId).toBe(hit.suggestedDishId);
-  });
-
-  it('dự kiến 7 ngày tới và năng lực tuần sau', () => {
-    const { api } = setup();
-    const fc = api.ops.factory.forecast(workshop);
-    expect(fc.days).toHaveLength(7);
-    expect(fc.nextWeek.start).toBe('2026-11-23');
-    expect(fc.rows.length).toBeGreaterThan(5);
-    const row = fc.rows.find((r) => r.nextWeekBags > 0);
-    api.ops.factory.apply(workshop, { type: 'capacity', opId: 'c1', weekStart: fc.nextWeek.start, key: row.key, status: 'short', shortBags: 12 });
-    expect(() => api.ops.factory.apply(workshop, { type: 'capacity', opId: 'c2', weekStart: fc.nextWeek.start, key: row.key, status: 'short' })).toThrow();
-    const after = api.ops.factory.forecast(workshop);
-    expect(after.capacity[row.key]).toMatchObject({ status: 'short', shortBags: 12 });
-    const plan = api.ops.planning.overview({ role: 'dispatch' });
-    expect(plan.capacity[fc.nextWeek.start][row.key].status).toBe('short');
   });
 });

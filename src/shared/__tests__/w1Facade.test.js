@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { HttpError } from '../api/http';
 import { createCustomerApi } from '../api/customerApi';
 import { createPlanDrafts } from '../api/planDraft';
-import { createCustomerApi as createMockCustomerApi } from '../api/customer';
 import { createCustomerApi as createRealFromIndex } from '../api/customerApi';
 
 const memStore = () => { let v = { profiles: {}, plans: {} }; return { read: () => v, write: (x) => { v = x; } }; };
@@ -41,10 +40,11 @@ const SURVEY = { user_contact: { phone_or_email: '0987654321' }, survey_answers:
 
 describe('W1-03: facade async giữ nguyên tên hàm', () => {
   it('W1-03: mọi hàm của api.customer cũ còn trong facade (trừ đăng nhập demo đã bỏ) và đều trả Promise', () => {
-    const mock = createMockCustomerApi({ read: () => ({}), write: () => ({}), tick: () => [] });
+    // Danh sách hàm của api.customer trước khi chuyển sang backend thật (bản giả lập đã xóa ở C28).
+    const LEGACY = ['serviceAreas', 'checkArea', 'captureLead', 'joinWaitlist', 'onboardingProfile', 'generateMealPlan', 'getPlan', 'applyChefMenu', 'configurePlan', 'swapOptions', 'availableSlots', 'deliveryOptions', 'previewSubscription', 'createSubscription', 'listNotifications', 'getAccount', 'myWeeks', 'mealOptions', 'previewMealChange', 'changeMeal', 'previewSkip', 'skipWeek', 'previewCancel', 'cancelSubscription', 'unlinkCard', 'renewalOffer', 'renewSubscription', 'creditSummary', 'topUpCredit', 'notifications', 'markNotificationsRead', 'pendingRatings', 'rateDish', 'rewards', 'saveProfile', 'claimShare', 'traceLot', 'sampleLotCodes'];
     const REMOVED = ['tick', 'findCustomerByContact', 'sampleAccounts'];
     const { api } = make({});
-    for (const name of Object.keys(mock)) {
+    for (const name of LEGACY) {
       if (REMOVED.includes(name)) continue;
       expect(typeof api[name], `thiếu ${name}`).toBe('function');
     }

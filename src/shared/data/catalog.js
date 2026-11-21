@@ -39,11 +39,11 @@ export const SAUCES = {
 };
 
 export const SUPPLIERS = {
-  'S-FACTORY': { id: 'S-FACTORY', name: 'Nhà máy sơ chế MOVA Đắk Lắk', type: 'factory', termDays: 30, pin: '4001', contact: 'Quản đốc nhà máy' },
-  'S-SEAFOOD': { id: 'S-SEAFOOD', name: 'Đầu mối hải sản Vũng Tàu', type: 'seafood', termDays: 15, pin: '4002', contact: 'Chủ đầu mối' },
-  'S-TRUCK': { id: 'S-TRUCK', name: 'Nhà xe lạnh Tây Nguyên – Sài Gòn', type: 'long_haul', termDays: 15, pin: '4003', contact: 'Điều độ xe' },
-  'S-LASTMILE': { id: 'S-LASTMILE', name: 'Đội giao hàng chặng cuối', type: 'last_mile', termDays: 7, pin: '4004', contact: 'Trưởng đội' },
-  'S-PACK': { id: 'S-PACK', name: 'Xưởng bao bì cách nhiệt', type: 'packaging', termDays: 30, pin: '4005', contact: 'Kinh doanh' }
+  'S-FACTORY': { id: 'S-FACTORY', name: 'Nhà máy sơ chế MOVA Đắk Lắk', type: 'factory', termDays: 30, contact: 'Quản đốc nhà máy' },
+  'S-SEAFOOD': { id: 'S-SEAFOOD', name: 'Đầu mối hải sản Vũng Tàu', type: 'seafood', termDays: 15, contact: 'Chủ đầu mối' },
+  'S-TRUCK': { id: 'S-TRUCK', name: 'Nhà xe lạnh Tây Nguyên – Sài Gòn', type: 'long_haul', termDays: 15, contact: 'Điều độ xe' },
+  'S-LASTMILE': { id: 'S-LASTMILE', name: 'Đội giao hàng chặng cuối', type: 'last_mile', termDays: 7, contact: 'Trưởng đội' },
+  'S-PACK': { id: 'S-PACK', name: 'Xưởng bao bì cách nhiệt', type: 'packaging', termDays: 30, contact: 'Kinh doanh' }
 };
 
 /**
@@ -490,24 +490,3 @@ export const DISHES = {
     ]
   })
 };
-
-/** Mã khung giờ của hợp đồng API → khung giờ nội bộ. */
-export const SLOT_ALIASES = {
-  early_morning_06_08: 'early_morning_06_08',
-  noon_11_13: 'noon_11_13',
-  evening_18_21: 'evening_18_21'
-};
-
-/** 10 AI Personas theo .agent/05 — nền để nhân ra các hộ mẫu. */
-export const PERSONAS = [
-  { id: 'P1', label: 'Dân gym nam', householdSize: 1, goals: ['high_protein', 'low_carb'], restrictions: [], mealsPerWeek: 6, deliveriesPerWeek: 1, payment: 'fresh_credit', zoneId: 'Z3' },
-  { id: 'P2', label: 'Nữ văn phòng giảm mỡ', householdSize: 1, goals: ['low_carb'], restrictions: ['no_beef'], mealsPerWeek: 5, deliveriesPerWeek: 1, payment: 'card', zoneId: 'Z1' },
-  { id: 'P3', label: 'Cần hạn chế đường', householdSize: 2, goals: ['limit_sugar', 'low_carb'], restrictions: [], mealsPerWeek: 5, deliveriesPerWeek: 1, payment: 'bank_transfer_4w', zoneId: 'Z5' },
-  { id: 'P4', label: 'Dạ dày nhạy cảm', householdSize: 1, goals: ['gentle_digestion'], restrictions: ['no_spicy'], mealsPerWeek: 4, deliveriesPerWeek: 1, payment: 'card', zoneId: 'Z2' },
-  { id: 'P5', label: 'Gia đình trẻ có con nhỏ', householdSize: 3, goals: ['balanced'], restrictions: ['no_spicy'], mealsPerWeek: 5, deliveriesPerWeek: 2, payment: 'fresh_credit', zoneId: 'Z2' },
-  { id: 'P6', label: 'Đại gia đình ba thế hệ', householdSize: 6, goals: ['balanced'], restrictions: [], mealsPerWeek: 6, deliveriesPerWeek: 2, payment: 'bank_transfer_4w', zoneId: 'Z4' },
-  { id: 'P7', label: 'Chuyên gia bận rộn độc thân', householdSize: 1, goals: ['balanced'], restrictions: [], mealsPerWeek: 4, deliveriesPerWeek: 1, payment: 'card', zoneId: 'Z1' },
-  { id: 'P8', label: 'Ăn chay bán phần', householdSize: 2, goals: ['balanced'], restrictions: ['no_beef', 'no_pork'], mealsPerWeek: 4, deliveriesPerWeek: 1, payment: 'fresh_credit', zoneId: 'Z6' },
-  { id: 'P9', label: 'Mẹ bỉm sữa sau sinh', householdSize: 2, goals: ['high_protein', 'gentle_digestion'], restrictions: ['no_spicy'], mealsPerWeek: 6, deliveriesPerWeek: 2, payment: 'bank_transfer_4w', zoneId: 'Z7' },
-  { id: 'P10', label: 'Cặp đôi Gen Z mê Fusion', householdSize: 2, goals: ['balanced'], restrictions: [], mealsPerWeek: 5, deliveriesPerWeek: 1, payment: 'card', zoneId: 'Z8' }
-];

@@ -111,7 +111,7 @@
               <button v-if="d.po.status !== 'draft'" class="ops-btn" data-testid="po-print" @click="printPo">In PO</button>
             </div>
             <div v-if="d.po.sentVia === 'link' || d.po.status === 'approved'" class="gap-top ops-noprint">
-              <p class="ops-muted tight">Link gửi nhà cung cấp (đăng nhập bằng PIN của họ):</p>
+              <p class="ops-muted tight">Link gửi nhà cung cấp (nhà cung cấp đăng nhập bằng tài khoản riêng):</p>
               <p class="link-box" data-testid="po-link">{{ link }}</p>
             </div>
             <p v-if="d.po.status === 'sent'" class="ops-muted" data-testid="po-waiting">Đã gửi {{ fmtDeadline(new Date(d.po.sentAt)) }}. Chờ nhà cung cấp xác nhận đủ hoặc thiếu.</p>
