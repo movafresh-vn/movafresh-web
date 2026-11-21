@@ -9,7 +9,7 @@ describe('W6-01: màn kho phụ chờ mọi lời gọi API', () => {
     expect(FILES.flatMap((f) => scanUnawaitedOps(f))).toEqual([]);
   });
 
-  it('W6-01: bộ quét bắt lỗi của nhóm kho phụ và cho qua cách viết đúng; nhận xe / chia tuyến (C16) chưa bị ép', () => {
+  it('W6-01: bộ quét bắt lỗi của nhóm kho phụ và cho qua cách viết đúng; nhận xe / chia tuyến (C16) cũng bị ép', () => {
     const bad = [
       'd.value = api.ops.hub.stock(ctx.value);',
       'xp.value = api.ops.hub.fefoPlan(ctx.value, { sku, qty });',
@@ -24,7 +24,7 @@ describe('W6-01: màn kho phụ chờ mọi lời gọi API', () => {
       'd.value = await api.ops.hub.stock(ctx.value);',
       'run(() => api.ops.hub.issue(ctx.value, { sku, qty }), "ok");',
       '[recalls.value, lots.value] = await Promise.all([api.ops.hub.recalls(ctx.value), api.ops.hub.traceLots(ctx.value)]);',
-      'api.ops.hub.sortBox(ctx.value, b); // chia tuyến còn ở bản giả lập (C16)'
+      'await api.ops.hub.sortBox(ctx.value, b);'
     ];
     for (const line of good) expect(scanUnawaitedOps('x.vue', line), line).toEqual([]);
   });

@@ -1,10 +1,10 @@
 // api.ops phần chạy trên backend thật (async, qua http.js). Tên hàm giữ như bản giả lập để màn hình đổi ít nhất:
 // tham số đầu `ctx` còn đó cho khỏi sửa chỗ gọi nhưng KHÔNG dùng nữa (danh tính và vai trò lấy từ token Supabase).
 // Khác app khách: lỗi ném HttpError { code, status, details } (không có phong bì {status:'error'}).
-// Nhóm chưa chuyển (kho phụ nhận xe/ghép hải sản/chia tuyến, logistics, tài chính, demo) vẫn ở bản giả lập trong index.js.
+// Nhóm chưa chuyển (tài chính, demo) vẫn ở bản giả lập trong index.js.
 import { http as sharedHttp } from './http';
 import { fillPath } from './routes';
-import { OPS_ROUTES, SUPPLIER_ROUTES } from './opsRoutes';
+import { OPS_ROUTES, SHIPPER_ROUTES, SUPPLIER_ROUTES } from './opsRoutes';
 import { syncServerTime } from '../utils/time';
 import { PHOTO_PURPOSE, isDataUrl, uploadPhoto } from './uploads';
 
@@ -30,6 +30,12 @@ export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
   }
   /** Khóa idempotency ổn định theo opId để gửi lại cùng một thao tác không tạo hai lần. */
   const keyOf = (opId) => (typeof opId === 'string' && opId.length >= 8 ? opId : undefined);
+
+  /** App shipper: shipper thật bị máy chủ ép về chính mình; điều phối / admin xem thử bằng as_shipper_id. */
+  function callShipper(name, { params, query, body } = {}) {
+    const [verb, path] = SHIPPER_ROUTES[name];
+    return h().request(verb, fillPath(path, params), { query, body });
+  }
 
   const uploadTicket = (purpose, contentType) => call('uploadTicket', { body: { purpose, content_type: contentType } });
 
@@ -214,8 +220,71 @@ export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
       saveSettings: (_ctx, input) => call('procSaveSettings', { body: input })
     },
 
-    /** Kho phụ: nhận hàng theo PO, tồn kho FEFO, truy xuất và thu hồi chạy thật; nhận xe, ghép hải sản, chia tuyến, xuất kho còn ở bản giả lập (C16). */
+    /**
+     * Điều phối logistics (C16). Hình dạng trả về giống bản giả lập; lỗi ném HttpError.
+     * Mã đơn là order_code (MV-...); mã tuyến là "<lô>:<khung>:<tuyến>" (đường dẫn tự mã hóa).
+     */
+    logistics: {
+      config: () => call('logConfig'),
+      capacityBoard: (_ctx, { weeks = 2 } = {}) => call('logCapacityBoard', { query: { weeks } }),
+      /** day trống hoặc '*' = mọi ngày giao của khung; capacityBoxes: null = bỏ ghi đè (chỉ với một ngày cụ thể). */
+      setCapacity: (_ctx, { zoneId, day = null, slotId, capacityBoxes, allowBelowUsed = false }) =>
+        call('logSetCapacity', { body: { zoneId, day: day || null, slotId, capacityBoxes, ...(allowBelowUsed ? { allowBelowUsed: true } : {}) } }),
+      trips: (_ctx, day = null) => call('logTrips', { query: { day } }),
+      saveTrip: (_ctx, input) => call('logSaveTrip', { body: dropEmpty({ ...input }) }),
+      exceptions: () => call('logExceptions'),
+      resolveException: (_ctx, { id, kind, day = null, slotId = null, amountVnd = null, note = '' }) =>
+        call('logResolve', { params: { id }, body: compact({ kind, day, slotId, amountVnd, ...(note ? { note } : {}) }) }),
+      coldChain: (_ctx, { day = null } = {}) => call('logColdChain', { query: { day } }),
+      /** Mã số đo (vd FD|2026-12-03|T1) có dấu "|" nên đi trong thân, không đi trong đường dẫn. */
+      decideCold: (_ctx, { id, decision, note = '' }) => call('logColdDecision', { body: { id, decision, ...(note ? { note } : {}) } }),
+      costs: (_ctx, day = null) => call('logCosts', { query: { day } }),
+      saveHubCost: (_ctx, { day, laborVnd, rentVnd, iceVnd, otherVnd }) => call('logHubCost', { body: compact({ day, laborVnd, rentVnd, iceVnd, otherVnd }) }),
+      publishedCosts: () => call('logPublishedCosts'),
+      kpis: (_ctx, { from = null, to = null } = {}) => call('logKpis', { query: { from, to } })
+    },
+
+    routes: {
+      board: (_ctx, day = null) => call('routeBoard', { query: { day } }),
+      plan: (_ctx, { day, slotId, shipperIds = null }) => call('routePlan', { body: { day, slotId, ...(shipperIds ? { shipperIds } : {}) } }),
+      moveStop: (_ctx, { orderId, toRouteId }) => call('routeMoveStop', { body: { orderId, toRouteId } })
+    },
+
+    /**
+     * App shipper (C16). Điểm giao nhận bằng mã đơn. Ảnh giao hàng tải lên TRƯỚC (vé một lần, mục đích delivery_proof) rồi gửi đường dẫn;
+     * máy chủ chỉ đòi ảnh khi hướng dẫn giao của khách yêu cầu (mặc định là có).
+     */
+    shipper: {
+      board: (_ctx, { asShipperId = null, day = null } = {}) => callShipper('board', { query: { as_shipper_id: asShipperId, day } }),
+      callCustomer: (_ctx, { orderId, asShipperId = null }) => callShipper('call', { params: { ref: orderId }, body: asShipperId ? { as_shipper_id: asShipperId } : {} }),
+      async deliver(_ctx, { orderId, photo = null, tempC = null, recovered = null, asShipperId = null }) {
+        const p = await photoPath(photo, 'delivery_proof');
+        return callShipper('deliver', {
+          params: { ref: orderId },
+          body: compact({ photo_path: p, temp_c: tempC, recovered: recovered ? compact(recovered) : null, as_shipper_id: asShipperId })
+        });
+      },
+      fail: (_ctx, { orderId, reason, note = '', asShipperId = null }) =>
+        callShipper('fail', { params: { ref: orderId }, body: compact({ reason, ...(note ? { note } : {}), as_shipper_id: asShipperId }) })
+    },
+
+    /** Kho phụ: nhận hàng theo PO, tồn kho FEFO, truy xuất, thu hồi (C14/C15); nhận xe, ghép hải sản, chia tuyến, xuất kho (C16). */
     hub: {
+      // ---- Nhận xe lạnh (C16). Đóng chuyến luôn cần ảnh dỡ hàng (sổ bàn giao bất biến hub_unloading).
+      arrivals: (_ctx, day = null) => call('hubArrivals', { query: { day } }),
+      scanArrival: (_ctx, { scope, code, state = 'ok' }) => call('hubArrivalScan', { body: { scope, code, state } }),
+      async closeArrival(_ctx, { scope, tempC, frozenTempC = null, photo = null, note = '' }) {
+        const p = await photoPath(photo, 'handover');
+        return call('hubArrivalClose', { body: compact({ scope, tempC, frozenTempC, photo: p, ...(note ? { note } : {}) }) });
+      },
+      seafood: (_ctx, day = null) => call('hubSeafood', { query: { day } }),
+      tickSeafood: (_ctx, { orderId, key, count }) => call('hubSeafoodTick', { body: { orderId, key, count } }),
+      closeSeafood: (_ctx, { orderId }) => call('hubSeafoodClose', { body: { orderId } }),
+      sortBox: (_ctx, { routeId, orderId, location = '', clear = false }) =>
+        call('hubSort', { params: { id: routeId }, body: { orderId, ...(location ? { location } : {}), ...(clear ? { clear: true } : {}) } }),
+      dispatchRoute: (_ctx, { routeId, tempC, frozenTempC = null }) => call('hubDispatch', { params: { id: routeId }, body: compact({ tempC, frozenTempC }) }),
+      routeSheet: (_ctx, routeId) => call('hubRouteSheet', { params: { id: routeId } }),
+
       receivable: () => call('hubReceivable'),
       async receive(_ctx, { poId, lines, photo = null, note = '' }) {
         const p = await photoPath(photo, 'receipt');

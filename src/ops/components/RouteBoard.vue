@@ -13,11 +13,11 @@
     </section>
     <section v-else-if="board" class="ops-card" data-testid="rb-none">
       <h2>Chưa có ngày nào chốt sổ</h2>
-      <p class="ops-muted">Tuyến chỉ lập cho các đơn đã chốt sổ và đã về kho phụ. Vào Bảng demo, bấm "Tới giờ chốt sổ", rồi dựng chuyến xe mẫu.</p>
+      <p class="ops-muted">Tuyến chỉ lập cho các đơn đã chốt sổ và đã về kho phụ (xe lạnh đã nhận xong).</p>
     </section>
 
     <section v-if="board && board.day && mode === 'plan'" class="alert-ok mock-note" data-testid="mock-note">
-      <strong>Bản mock.</strong> {{ board.engine }}
+      <strong>Lập tuyến theo cụm.</strong> {{ board.engine }}
     </section>
 
     <section v-for="s in board ? board.slots : []" :key="s.slotId" class="ops-card rb-slot" :class="{ 'ops-noprint': sheet }" :data-slot="s.slotId">
@@ -39,7 +39,7 @@
             <span>{{ sh.name }} ({{ sh.capacityBoxes }})</span>
           </label>
         </fieldset>
-        <button class="ops-btn ops-btn-primary" type="button" data-testid="rb-plan" @click="plan(s)">Lập tuyến tự động (bản mock)</button>
+        <button class="ops-btn ops-btn-primary" type="button" data-testid="rb-plan" @click="plan(s)">Lập tuyến tự động</button>
       </div>
       <div v-else-if="canPlan && hasPlanned(s) && mode === 'plan'" class="rb-plan">
         <button class="ops-btn" type="button" data-testid="rb-replan" @click="plan(s)">Lập lại các tuyến chưa xuất kho</button>
@@ -50,13 +50,13 @@
 
       <article v-for="r in s.routes" :key="r.id" class="rb-route" :class="'st-' + r.status" :data-route="r.id">
         <div class="head-row">
-          <h3 class="mono">{{ r.id }}</h3>
+          <h3 class="mono" :title="r.id">{{ routeLabel(r.id) }}</h3>
           <span class="ops-pill" :class="r.status === 'planned' ? 'ops-pill-warn' : 'ops-pill-ok'">{{ ROUTE_STATUS[r.status] }}</span>
         </div>
         <p class="rb-meta">
           <b>{{ r.shipperName }}</b> · {{ r.boxes }} / {{ r.capacityBoxes }} thùng
           · ước tính {{ r.estMinutes }} phút <span v-if="!r.fitsWindow" class="ops-pill ops-pill-bad">dài hơn khung giờ</span>
-          <span v-if="r.mock" class="ops-pill" title="Chưa phải engine tối ưu thật">mock</span>
+          <span v-if="r.mock" class="ops-pill" title="Thứ tự điểm theo cụm khu - phường, chưa tối ưu theo bản đồ">cụm khu</span>
         </p>
         <div class="ops-bar-track"><div class="ops-bar-fill" :style="{ width: Math.min(100, Math.round((r.boxes / r.capacityBoxes) * 100)) + '%' }"></div></div>
 
@@ -143,7 +143,7 @@ import { BUSINESS } from '../../shared/config/business';
 import { ctx, session } from '../session';
 import { useLive } from '../useLive';
 import { hhmm, shortDay } from '../format';
-import { ROUTE_STATUS, STOP_PILL, STOP_STATUS, WAIT_REASON, dt, tempText } from '../logisticsUi';
+import { ROUTE_STATUS, STOP_PILL, STOP_STATUS, WAIT_REASON, dt, logisticsError, routeLabel, tempText } from '../logisticsUi';
 import RouteSheet from './RouteSheet.vue';
 
 const props = defineProps({ mode: { type: String, default: 'plan' } }); // plan | sort | dispatch
@@ -154,7 +154,8 @@ const board = ref(null);
 const error = ref('');
 const ok = ref('');
 const sel = ref(null);
-const chosen = ref(BUSINESS.logistics.shippers.map((s) => s.id));
+const chosen = ref([]);
+let chosenInit = false;
 const unassigned = reactive({});
 const loc = reactive({});
 const temp = reactive({});
@@ -166,17 +167,21 @@ const canPlan = computed(() => ['dispatch', 'hub', 'admin'].includes(role.value)
 const canPrint = computed(() => ['hub', 'admin'].includes(role.value));
 const withRecipient = computed(() => Boolean(board.value && board.value.canSeeRecipient) && props.mode !== 'plan');
 
-function load() {
+async function load() {
   try {
-    board.value = api.ops.routes.board(ctx.value, sel.value);
+    board.value = await api.ops.routes.board(ctx.value, sel.value);
     sel.value = board.value.day;
+    if (!chosenInit && board.value.shippers) {
+      chosen.value = board.value.shippers.map((x) => x.id);
+      chosenInit = true;
+    }
     for (const s of board.value.slots) {
       s.routes.forEach((r, i) => {
         for (const st of r.stops) if (loc[st.orderId] === undefined) loc[st.orderId] = defaultLoc(s, r, i);
       });
     }
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
 }
 useLive(load, { every: 5000 });
@@ -200,48 +205,55 @@ function pick(d) {
   load();
 }
 
-function run(fn, okText) {
+async function run(fn, okText) {
   error.value = '';
   ok.value = '';
   try {
-    const r = fn();
+    const r = await fn();
     if (okText) ok.value = typeof okText === 'function' ? okText(r) : okText;
     return r;
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
     return null;
   } finally {
-    load();
+    await load();
   }
 }
 
-function plan(s) {
+async function plan(s) {
   const shipperIds = props.mode === 'plan' ? chosen.value : null;
-  const r = run(() => api.ops.routes.plan(ctx.value, { day: board.value.day, slotId: s.slotId, shipperIds }), (x) => `Đã lập ${x.routes.length} tuyến cho ${x.totalBoxes - x.unassigned.length} thùng (bản mock).`);
+  const r = await run(() => api.ops.routes.plan(ctx.value, { day: board.value.day, slotId: s.slotId, shipperIds }), (x) => `Đã lập ${x.routes.length} tuyến cho ${x.totalBoxes - x.unassigned.length} thùng.`);
   if (r) unassigned[s.slotId] = r.unassigned;
 }
 
-function move(st, ev) {
+async function move(st, ev) {
   const to = ev.target.value;
   if (!to) return;
-  run(() => api.ops.routes.moveStop(ctx.value, { orderId: st.orderId, toRouteId: to }), `Đã chuyển ${st.orderId} sang tuyến ${to}.`);
+  await run(() => api.ops.routes.moveStop(ctx.value, { orderId: st.orderId, toRouteId: to }), `Đã chuyển ${st.orderId} sang tuyến ${routeLabel(to)}.`);
 }
 
 const sortOne = (r, st) => run(() => api.ops.hub.sortBox(ctx.value, { routeId: r.id, orderId: st.orderId, location: loc[st.orderId] || '' }));
 const unsort = (r, st) => run(() => api.ops.hub.sortBox(ctx.value, { routeId: r.id, orderId: st.orderId, clear: true }));
-function sortAll(r) {
-  run(() => {
-    for (const st of r.stops) if (!st.sorted) api.ops.hub.sortBox(ctx.value, { routeId: r.id, orderId: st.orderId, location: loc[st.orderId] || '' });
-  }, `Đã chia đủ ${r.stops.length} thùng vào tuyến ${r.id}.`);
+async function sortAll(r) {
+  await run(async () => {
+    for (const st of r.stops) if (!st.sorted) await api.ops.hub.sortBox(ctx.value, { routeId: r.id, orderId: st.orderId, location: loc[st.orderId] || '' });
+  }, `Đã chia đủ ${r.stops.length} thùng vào tuyến ${routeLabel(r.id)}.`);
 }
 
-function openSheet(r) {
-  sheet.value = run(() => api.ops.hub.routeSheet(ctx.value, r.id));
+async function openSheet(r) {
+  sheet.value = await run(() => api.ops.hub.routeSheet(ctx.value, r.id));
 }
 
-function dispatch(r) {
-  run(() => api.ops.hub.dispatchRoute(ctx.value, { routeId: r.id, tempC: temp[r.id], frozenTempC: tempF[r.id] }), (x) =>
-    `Đã xuất kho tuyến ${x.routeId}, ${r.shipperName} nhận tuyến; khách được báo "đang giao".${x.breaches.length ? ' Nhiệt độ vượt ngưỡng: đã tạo cảnh báo cho QC.' : ''}`
+const num = (v) => (v === '' || v == null || !Number.isFinite(Number(v)) ? null : Number(v));
+
+async function dispatch(r) {
+  const tempC = num(temp[r.id]);
+  if (tempC === null) {
+    error.value = logisticsError({ code: 'TEMP_REQUIRED' });
+    return;
+  }
+  await run(() => api.ops.hub.dispatchRoute(ctx.value, { routeId: r.id, tempC, frozenTempC: num(tempF[r.id]) }), (x) =>
+    `Đã xuất kho tuyến ${routeLabel(x.routeId)}, ${r.shipperName} nhận tuyến; khách được báo "đang giao".${x.breaches.length ? ' Nhiệt độ vượt ngưỡng: đã tạo cảnh báo cho QC.' : ''}`
   );
 }
 </script>

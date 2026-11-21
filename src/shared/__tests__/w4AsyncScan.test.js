@@ -41,7 +41,7 @@ describe('W4-async: màn vận hành chờ mọi lời gọi API đã chuyển s
       'act(() => api.ops.substituteDish(ctx.value, b), ok);',
       'await Promise.all([api.ops.listOrders(ctx.value), api.ops.summary(ctx.value)]);',
       '// api.ops.summary(ctx.value) trong chú thích',
-      'api.ops.logistics.trips(ctx.value); // nhóm còn ở bản giả lập'
+      'api.ops.finance.creditSummary(ctx.value); // tài chính còn ở bản giả lập (C17)'
     ];
     for (const line of good) expect(scanUnawaitedOps('x.vue', line), line).toEqual([]);
   });

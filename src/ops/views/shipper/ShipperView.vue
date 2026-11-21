@@ -25,7 +25,7 @@
     <section v-for="r in data ? data.routes : []" :key="r.id" class="sp-route" :data-route="r.id">
       <div class="ops-card sp-route-head">
         <h2>{{ r.slotLabel }}</h2>
-        <p class="ops-muted">Giao {{ hhmm(r.startAt) }}–{{ hhmm(r.endAt) }} · {{ r.boxes }} điểm · <span class="mono">{{ r.id }}</span></p>
+        <p class="ops-muted">Giao {{ hhmm(r.startAt) }}–{{ hhmm(r.endAt) }} · {{ r.boxes }} điểm · <span class="mono" :title="r.id">{{ routeLabel(r.id) }}</span></p>
         <div class="ops-bar-track"><div class="ops-bar-fill" :style="{ width: r.stops.length ? Math.round(((r.done + r.failed) / r.stops.length) * 100) + '%' : '0%' }"></div></div>
         <p data-testid="sp-progress"><b>{{ r.done }}</b> đã giao · <b :class="{ 'ops-error': r.failed }">{{ r.failed }}</b> không giao được · {{ r.stops.length - r.done - r.failed }} còn lại</p>
         <p v-if="r.status === 'done'" class="ops-ok">Tuyến đã xong.</p>
@@ -58,7 +58,7 @@
         <!-- Đã giao: ảnh, nhiệt độ, thu hồi thùng xốp / túi gel -->
         <form v-if="active.orderId === st.orderId && active.mode === 'deliver'" class="sp-panel" novalidate data-testid="sp-deliver-form" @submit.prevent="deliver(st)">
           <h3>Xác nhận đã giao</h3>
-          <label>Ảnh thùng hàng trước cửa (bắt buộc)</label>
+          <label>Ảnh thùng hàng trước cửa {{ photoRequired(st) ? '(bắt buộc)' : '(tùy chọn: khách dặn không cần ảnh)' }}</label>
           <PhotoInput v-model="photo" testid="sp-photo" label="Chụp ảnh giao hàng" />
           <label :for="`tp-${st.orderId}`">Nhiệt độ thùng lúc giao (°C){{ data.deliveryTempRequired ? '' : ', tùy chọn' }}</label>
           <input :id="`tp-${st.orderId}`" v-model="tempC" class="ops-input" type="number" step="0.1" inputmode="decimal" data-testid="sp-temp" />
@@ -78,7 +78,7 @@
           </template>
           <p v-if="panelError" class="ops-error" role="alert" data-testid="sp-panel-error">{{ panelError }}</p>
           <div class="sp-actions">
-            <button class="ops-btn ops-btn-primary" type="submit" data-testid="sp-deliver-ok">Xác nhận đã giao</button>
+            <button class="ops-btn ops-btn-primary" type="submit" data-testid="sp-deliver-ok" :disabled="busy">{{ busy ? 'Đang gửi…' : 'Xác nhận đã giao' }}</button>
             <button class="ops-btn" type="button" @click="close">Hủy</button>
           </div>
         </form>
@@ -95,7 +95,7 @@
           <input :id="`fn-${st.orderId}`" v-model="note" class="ops-input" placeholder="Ví dụ: gọi 2 lần không bắt máy" />
           <p v-if="panelError" class="ops-error" role="alert" data-testid="sp-panel-error">{{ panelError }}</p>
           <div class="sp-actions">
-            <button class="ops-btn ops-btn-danger" type="submit" data-testid="sp-fail-ok">Xác nhận không giao được</button>
+            <button class="ops-btn ops-btn-danger" type="submit" data-testid="sp-fail-ok" :disabled="busy">Xác nhận không giao được</button>
             <button class="ops-btn" type="button" @click="close">Hủy</button>
           </div>
           <p class="help">Khách được báo ngay. Điều phối sẽ chọn giao lại khung sau, giữ lạnh ở kho phụ hoặc bù Fresh Credit.</p>
@@ -112,7 +112,7 @@ import { fmtDay } from '../../../shared/utils/time';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
 import { hhmm } from '../../format';
-import { STOP_PILL, STOP_STATUS } from '../../logisticsUi';
+import { STOP_PILL, STOP_STATUS, logisticsError, photoRequired, routeLabel } from '../../logisticsUi';
 import PhotoInput from '../../components/PhotoInput.vue';
 
 const data = ref(null);
@@ -127,19 +127,20 @@ const recFoam = ref(0);
 const recGel = ref(0);
 const reason = ref('');
 const note = ref('');
+const busy = ref(false);
 
 const isShipper = computed(() => ctx.value.role === 'shipper');
 const canAct = computed(() => ['shipper', 'admin'].includes(ctx.value.role));
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.shipper.board(ctx.value, { asShipperId: asId.value || null });
+    data.value = await api.ops.shipper.board(ctx.value, { asShipperId: asId.value || null });
     if (!isShipper.value && !asId.value && data.value.shippers.length) {
       asId.value = data.value.shippers[0].id;
-      data.value = api.ops.shipper.board(ctx.value, { asShipperId: asId.value });
+      data.value = await api.ops.shipper.board(ctx.value, { asShipperId: asId.value });
     }
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
 }
 useLive(() => {
@@ -161,46 +162,70 @@ function open(st, mode) {
   panelError.value = '';
   toast.value = '';
 }
-function close() {
+async function close() {
   active.orderId = '';
   active.mode = '';
-  load();
+  await load();
 }
 
-function call(st) {
+async function call(st) {
   error.value = '';
   try {
-    api.ops.shipper.callCustomer(ctx.value, { orderId: st.orderId, ...who() });
-    toast.value = `Đang kết nối cuộc gọi tới ${st.name} (${st.phoneMasked}) qua tổng đài ẩn số. Bản demo chỉ ghi lượt gọi.`;
+    await api.ops.shipper.callCustomer(ctx.value, { orderId: st.orderId, ...who() });
+    toast.value = `Đang kết nối cuộc gọi tới ${st.name} (${st.phoneMasked}) qua tổng đài ẩn số; lượt gọi đã được ghi lại.`;
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
-  load();
+  await load();
 }
 
-function deliver(st) {
+// Ảnh bằng chứng: bắt buộc trừ khi hướng dẫn giao của khách nói không cần (máy chủ báo qua st.photoRequired). Máy chủ vẫn là nơi quyết định cuối cùng.
+async function deliver(st) {
   panelError.value = '';
+  if (busy.value) return;
+  if (photoRequired(st) && !photo.value) {
+    panelError.value = 'Cần chụp ảnh thùng hàng trước cửa để xác nhận đã giao.';
+    return;
+  }
+  const t = tempC.value === '' || !Number.isFinite(Number(tempC.value)) ? null : Number(tempC.value);
+  if (data.value.deliveryTempRequired && t === null) {
+    panelError.value = 'Nhập nhiệt độ thùng lúc giao.';
+    return;
+  }
+  busy.value = true;
   try {
-    const r = api.ops.shipper.deliver(ctx.value, { orderId: st.orderId, photo: photo.value, tempC: tempC.value, recovered: { foam: Number(recFoam.value) || 0, gel: Number(recGel.value) || 0 }, ...who() });
-    toast.value = `Đã giao ${st.orderId}. Khách nhận thông báo kèm ảnh.${r.recovered && (r.recovered.foam || r.recovered.gel) ? ` Đã thu ${r.recovered.foam} thùng xốp, ${r.recovered.gel} túi gel.` : ''}`;
-    close();
+    const r = await api.ops.shipper.deliver(ctx.value, {
+      orderId: st.orderId,
+      photo: photo.value || null,
+      tempC: t,
+      recovered: data.value.recoveryEnabled ? { foam: Number(recFoam.value) || 0, gel: Number(recGel.value) || 0 } : null,
+      ...who()
+    });
+    toast.value = `Đã giao ${st.orderId}. Khách nhận thông báo${photo.value ? ' kèm ảnh' : ''}.${r && r.recovered && (r.recovered.foam || r.recovered.gel) ? ` Đã thu ${r.recovered.foam} thùng xốp, ${r.recovered.gel} túi gel.` : ''}`;
+    await close();
   } catch (e) {
-    panelError.value = e.message;
+    panelError.value = logisticsError(e);
+  } finally {
+    busy.value = false;
   }
 }
 
-function fail(st) {
+async function fail(st) {
   panelError.value = '';
+  if (busy.value) return;
   if (!reason.value) {
     panelError.value = 'Chọn lý do không giao được.';
     return;
   }
+  busy.value = true;
   try {
-    api.ops.shipper.fail(ctx.value, { orderId: st.orderId, reason: reason.value, note: note.value, ...who() });
+    await api.ops.shipper.fail(ctx.value, { orderId: st.orderId, reason: reason.value, note: note.value, ...who() });
     toast.value = `Đã báo ${st.orderId} không giao được. Khách đã được báo, điều phối sẽ xử lý.`;
-    close();
+    await close();
   } catch (e) {
-    panelError.value = e.message;
+    panelError.value = logisticsError(e);
+  } finally {
+    busy.value = false;
   }
 }
 </script>

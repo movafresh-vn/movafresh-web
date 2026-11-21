@@ -100,7 +100,7 @@ import { fmt } from '../../../shared/utils/formatters';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
 import { hhmm, shortDay } from '../../format';
-import { dt, tempText } from '../../logisticsUi';
+import { dt, logisticsError, tempText } from '../../logisticsUi';
 import { slotLabel, zoneName } from '../../factoryStore';
 
 const STATUS = {
@@ -118,9 +118,9 @@ const ok = ref('');
 const sel = ref(null);
 const forms = reactive({});
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.logistics.trips(ctx.value, sel.value);
+    data.value = await api.ops.logistics.trips(ctx.value, sel.value);
     sel.value = data.value.day;
     for (const t of data.value.trips) {
       if (!forms[t.scope]) {
@@ -134,7 +134,7 @@ function load() {
       }
     }
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
 }
 useLive(load, { every: 8000 });
@@ -144,17 +144,18 @@ function pick(d) {
   load();
 }
 
-function save(t) {
+async function save(t) {
   error.value = '';
   ok.value = '';
   try {
-    api.ops.logistics.saveTrip(ctx.value, { day: data.value.day, tripId: t.tripId, ...forms[t.scope] });
+    const f = forms[t.scope];
+    await api.ops.logistics.saveTrip(ctx.value, { day: data.value.day, tripId: t.tripId, ...f, capacityBoxes: Number(f.capacityBoxes), costVnd: Number(f.costVnd) });
     ok.value = `Đã lưu ${t.label}.`;
     delete forms[t.scope];
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
-  load();
+  await load();
 }
 
 const pointText = (list) => (list.length ? list.map((p) => `${p.cls === 'frozen' ? 'đông ' : ''}${tempText(p.tempC)}${p.ok ? '' : ' (vượt ngưỡng)'}`).join(' · ') : 'chưa có số đo');

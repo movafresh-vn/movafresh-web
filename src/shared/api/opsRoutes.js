@@ -91,7 +91,38 @@ export const OPS_ROUTES = {
   hubRecallNotify: ['POST', '/ops/hub/recalls/:id/notify'],
   hubRecallCompensate: ['POST', '/ops/hub/recalls/:id/compensate'],
   hubRecallWasteHeld: ['POST', '/ops/hub/recalls/:id/waste-held'],
-  hubRecallClose: ['POST', '/ops/hub/recalls/:id/close']
+  hubRecallClose: ['POST', '/ops/hub/recalls/:id/close'],
+
+  // Điều phối logistics (C16): cấu hình, bảng sức chứa, chuyến xe, ngoại lệ, chuỗi lạnh, chi phí, KPI
+  logConfig: ['GET', '/ops/logistics/config'],
+  logCapacityBoard: ['GET', '/ops/logistics/capacity-board'],
+  logSetCapacity: ['PUT', '/ops/logistics/capacity'],
+  logTrips: ['GET', '/ops/logistics/trips'],
+  logSaveTrip: ['PUT', '/ops/logistics/trips'],
+  logExceptions: ['GET', '/ops/logistics/exceptions'],
+  logResolve: ['POST', '/ops/logistics/exceptions/:id/resolve'],
+  logColdChain: ['GET', '/ops/logistics/cold-chain'],
+  logColdDecision: ['POST', '/ops/logistics/cold-chain/decision'],
+  logCosts: ['GET', '/ops/logistics/costs'],
+  logHubCost: ['PUT', '/ops/logistics/hub-costs'],
+  logPublishedCosts: ['GET', '/ops/logistics/costs/published'],
+  logKpis: ['GET', '/ops/logistics/kpis'],
+
+  // Lập tuyến
+  routeBoard: ['GET', '/ops/routes/board'],
+  routePlan: ['POST', '/ops/routes/plan'],
+  routeMoveStop: ['POST', '/ops/routes/move-stop'],
+
+  // Kho phụ: nhận xe, ghép hải sản, chia tuyến, xuất kho
+  hubArrivals: ['GET', '/ops/hub/arrivals'],
+  hubArrivalScan: ['POST', '/ops/hub/arrivals/scan'],
+  hubArrivalClose: ['POST', '/ops/hub/arrivals/close'],
+  hubSeafood: ['GET', '/ops/hub/seafood'],
+  hubSeafoodTick: ['POST', '/ops/hub/seafood/tick'],
+  hubSeafoodClose: ['POST', '/ops/hub/seafood/close'],
+  hubSort: ['POST', '/ops/hub/routes/:id/sort'],
+  hubDispatch: ['POST', '/ops/hub/routes/:id/dispatch'],
+  hubRouteSheet: ['GET', '/ops/hub/routes/:id/sheet']
 };
 
 // Cổng nhà cung cấp: nằm ngoài /ops. Nhà cung cấp luôn bị ép về chính mình; admin xem thử bằng ?as_supplier_id=.
@@ -102,4 +133,12 @@ export const SUPPLIER_ROUTES = {
   replyClaim: ['POST', '/supplier/claims/:id/reply'],
   contact: ['PATCH', '/supplier/contact'],
   addCert: ['POST', '/supplier/certs']
+};
+
+// App shipper: nằm ngoài /ops. Shipper thật bị ép về chính mình; điều phối / admin xem thử bằng as_shipper_id.
+export const SHIPPER_ROUTES = {
+  board: ['GET', '/shipper/board'],
+  call: ['POST', '/shipper/stops/:ref/call'],
+  deliver: ['POST', '/shipper/stops/:ref/deliver'],
+  fail: ['POST', '/shipper/stops/:ref/fail']
 };

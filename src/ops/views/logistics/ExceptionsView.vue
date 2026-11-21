@@ -18,7 +18,7 @@
           <thead><tr><th>Tuyến</th><th>Khung giờ</th><th>Shipper</th><th class="r">Thùng</th><th class="r">Đã giao</th><th class="r">Không giao được</th><th>Trạng thái</th></tr></thead>
           <tbody>
             <tr v-for="r in routeRows" :key="r.id" :data-route="r.id">
-              <td class="mono">{{ r.id }}</td><td>{{ r.slot }}</td><td>{{ r.shipperName }}</td>
+              <td class="mono" :title="r.id">{{ r.label }}</td><td>{{ r.slot }}</td><td>{{ r.shipperName }}</td>
               <td class="r">{{ r.boxes }}</td><td class="r">{{ r.delivered }}</td><td class="r"><span :class="{ 'ops-error': r.failed }">{{ r.failed }}</span></td>
               <td><span class="ops-pill" :class="r.status === 'planned' ? 'ops-pill-warn' : 'ops-pill-ok'">{{ ROUTE_STATUS[r.status] }}</span></td>
             </tr>
@@ -92,7 +92,7 @@ import { fmt } from '../../../shared/utils/formatters';
 import { fmtDay } from '../../../shared/utils/time';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
-import { EXCEPTION_KIND, ROUTE_STATUS, dt } from '../../logisticsUi';
+import { EXCEPTION_KIND, ROUTE_STATUS, dt, logisticsError, routeLabel } from '../../logisticsUi';
 
 const RES = { redeliver: 'Giao lại khung sau', hold_cold: 'Giữ lạnh', compensate: 'Bù Fresh Credit' };
 const data = ref(null);
@@ -101,13 +101,14 @@ const error = ref('');
 const ok = ref('');
 const pickOpt = reactive({});
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.logistics.exceptions(ctx.value);
+    const [ex, rb] = await Promise.all([api.ops.logistics.exceptions(ctx.value), api.ops.routes.board(ctx.value, null)]);
+    data.value = ex;
     for (const e of [...data.value.open, ...data.value.held]) if (!pickOpt[e.id] && e.redeliveryOptions.length) pickOpt[e.id] = e.redeliveryOptions[0].value;
-    board.value = api.ops.routes.board(ctx.value, null);
+    board.value = rb;
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
 }
 useLive(load, { every: 5000 });
@@ -115,30 +116,30 @@ useLive(load, { every: 5000 });
 const routeRows = computed(() =>
   board.value
     ? board.value.slots.flatMap((s) => s.routes.map((r) => ({
-        id: r.id, slot: s.label, shipperName: r.shipperName, boxes: r.boxes, status: r.status,
+        id: r.id, label: routeLabel(r.id), slot: s.label, shipperName: r.shipperName, boxes: r.boxes, status: r.status,
         delivered: r.stops.filter((x) => x.status === 'delivered').length, failed: r.stops.filter((x) => x.status === 'failed').length
       })))
     : []
 );
 
-function resolve(e, input, text) {
+async function resolve(e, input, text) {
   error.value = '';
   ok.value = '';
   try {
-    const r = api.ops.logistics.resolveException(ctx.value, { id: e.id, ...input });
+    const r = await api.ops.logistics.resolveException(ctx.value, { id: e.id, ...input });
     ok.value = typeof text === 'function' ? text(r) : text;
   } catch (err) {
-    error.value = err.message;
+    error.value = logisticsError(err);
   }
-  load();
+  await load();
 }
 
 function redeliver(e) {
   const [day, slotId] = (pickOpt[e.id] || '').split('|');
-  resolve(e, { kind: 'redeliver', day, slotId }, `Đã xếp giao lại ${e.orderId}, khách được báo khung giờ mới. Lập tuyến cho khung đó để shipper giao.`);
+  return resolve(e, { kind: 'redeliver', day, slotId }, `Đã xếp giao lại ${e.orderId}, khách được báo khung giờ mới. Lập tuyến cho khung đó để shipper giao.`);
 }
 
 function compensate(e) {
-  resolve(e, { kind: 'compensate' }, (r) => `Đã bù ${fmt(r.compensationVnd)} vào Fresh Credit của khách (đơn ${e.orderId}), khách được báo.`);
+  return resolve(e, { kind: 'compensate' }, (r) => `Đã bù ${fmt(r.compensationVnd)} vào Fresh Credit của khách (đơn ${e.orderId}), khách được báo.`);
 }
 </script>

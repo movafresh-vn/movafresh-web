@@ -34,8 +34,8 @@ describe('W5-01: màn mua hàng và nhận hàng chờ mọi lời gọi API', (
       'data.value = await api.ops.procurement.payables(ctx.value);',
       'act(() => api.ops.procurement.approvePo(ctx, d.po.id), "ok");',
       'const s = (await api.ops.procurement.settings(ctx.value)).settings;',
-      'api.ops.hub.sortBox(ctx.value, b); // kho phụ chia tuyến còn ở bản giả lập (C16)',
-      'api.ops.hub.arrivals(ctx.value); // nhận xe còn ở bản giả lập (C16)'
+      'await api.ops.hub.sortBox(ctx.value, b);',
+      'api.ops.finance.creditSummary(ctx.value); // tài chính còn ở bản giả lập (C17)'
     ];
     for (const line of good) expect(scanUnawaitedOps('x.vue', line), line).toEqual([]);
   });

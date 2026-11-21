@@ -27,11 +27,11 @@ const tabs = [
 // Số việc đang chờ điều phối: ngoại lệ chưa xử lý và cảnh báo nhiệt độ chưa có quyết định
 const badge = reactive({ exceptions: 0, cold: 0 });
 
-useLive(() => {
+useLive(async () => {
   try {
-    const ex = api.ops.logistics.exceptions(ctx.value);
+    const ex = await api.ops.logistics.exceptions(ctx.value);
     badge.exceptions = ex.open.length + ex.held.filter((h) => h.holdExpired).length;
-    badge.cold = api.ops.logistics.coldChain(ctx.value).openAlertsAll;
+    badge.cold = (await api.ops.logistics.coldChain(ctx.value)).openAlertsAll;
   } catch {
     // không có quyền hoặc dữ liệu chưa sẵn: bỏ số
   }

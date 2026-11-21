@@ -80,7 +80,7 @@
           <table class="ops-table" data-testid="cost-routes">
             <thead><tr><th>Tuyến</th><th>Shipper</th><th class="r">Điểm giao</th><th class="r">Lần hụt</th><th class="r">Chi phí tuyến</th><th class="r">Mỗi điểm giao</th></tr></thead>
             <tbody>
-              <tr v-for="r in data.detail.routes" :key="r.routeId"><td class="mono">{{ r.routeId }}</td><td>{{ shipperName(r.shipperId) }}</td><td class="r">{{ r.stops }}</td><td class="r">{{ r.failedAttempts }}</td><td class="r">{{ fmt(r.costVnd) }}</td><td class="r">{{ fmt(r.perStopVnd) }}</td></tr>
+              <tr v-for="r in data.detail.routes" :key="r.routeId"><td class="mono" :title="r.routeId">{{ routeLabel(r.routeId) }}</td><td>{{ shipperName(r.shipperId) }}</td><td class="r">{{ r.stops }}</td><td class="r">{{ r.failedAttempts }}</td><td class="r">{{ fmt(r.costVnd) }}</td><td class="r">{{ fmt(r.perStopVnd) }}</td></tr>
               <tr v-if="!data.detail.routes.length"><td colspan="6" class="ops-muted">Chưa lập tuyến nào cho ngày này.</td></tr>
             </tbody>
           </table>
@@ -113,7 +113,7 @@ import { fmtDay } from '../../../shared/utils/time';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
 import { shortDay } from '../../format';
-import { dec, dt, pctText } from '../../logisticsUi';
+import { dec, dt, logisticsError, pctText, routeLabel } from '../../logisticsUi';
 
 const HUB_FIELDS = [
   { k: 'laborVnd', label: 'Nhân công kho' },
@@ -132,18 +132,19 @@ let hubFor = '';
 
 const shipperName = (id) => (BUSINESS.logistics.shippers.find((s) => s.id === id) || {}).name || id;
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.logistics.costs(ctx.value, sel.value);
+    const [costs, k] = await Promise.all([api.ops.logistics.costs(ctx.value, sel.value), api.ops.logistics.kpis(ctx.value, {})]);
+    data.value = costs;
     sel.value = data.value.day;
     data.value.defaults = { ...data.value.defaults };
-    kpi.value = api.ops.logistics.kpis(ctx.value, {});
+    kpi.value = k;
     if (data.value.detail && hubFor !== data.value.day) {
       hubFor = data.value.day;
       for (const f of HUB_FIELDS) hub[f.k] = data.value.detail.hub[f.k] || 0;
     }
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
 }
 useLive(load, { every: 6000 });
@@ -155,16 +156,19 @@ function pick(d) {
   load();
 }
 
-function saveHub() {
+async function saveHub() {
   error.value = '';
   ok.value = '';
   try {
-    api.ops.logistics.saveHubCost(ctx.value, { day: data.value.day, ...hub });
+    await api.ops.logistics.saveHubCost(ctx.value, {
+      day: data.value.day,
+      laborVnd: Math.round(Number(hub.laborVnd) || 0), rentVnd: Math.round(Number(hub.rentVnd) || 0), iceVnd: Math.round(Number(hub.iceVnd) || 0), otherVnd: Math.round(Number(hub.otherVnd) || 0)
+    });
     ok.value = 'Đã lưu chi phí kho phụ và cập nhật chi phí mỗi thùng.';
     hubFor = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
-  load();
+  await load();
 }
 </script>

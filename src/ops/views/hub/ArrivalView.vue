@@ -25,7 +25,7 @@
     </section>
     <section v-else-if="data" class="ops-card" data-testid="arr-none">
       <h2>Chưa có xe nào xuất bến</h2>
-      <p class="ops-muted">Xe lạnh xuất bến từ xưởng Đắk Lắk (màn Xuất xe của xưởng) thì bảng kê hiện ở đây. Để thử nhanh: Bảng demo → "Tới giờ chốt sổ" → "Dựng chuyến xe mẫu" → "Tới D 02:00".</p>
+      <p class="ops-muted">Xe lạnh xuất bến từ xưởng Đắk Lắk (màn Xuất xe của xưởng) thì bảng kê hiện ở đây.</p>
     </section>
 
     <template v-if="cur">
@@ -88,7 +88,7 @@
             <li v-if="counts.damaged">Hỏng {{ counts.damaged }} thùng</li>
             <li v-if="cur.extra.length">Thừa {{ cur.extra.length }} thùng</li>
           </ul>
-          Khi chốt, mỗi thùng thiếu hoặc hỏng thành một ngoại lệ để điều phối xử lý (giao lại, giữ lạnh hoặc bù Fresh Credit). Cần 1 ảnh làm bằng chứng.
+          Khi chốt, mỗi thùng thiếu hoặc hỏng thành một ngoại lệ để điều phối xử lý (giao lại, giữ lạnh hoặc bù Fresh Credit). Ảnh lúc nhận được lưu vào sổ bàn giao.
         </section>
 
         <form class="ops-card" novalidate data-testid="arr-form" @submit.prevent="close">
@@ -105,12 +105,12 @@
               <p class="help" :class="{ 'ops-error': tempBad(frozenC, 'frozen') }">Ngưỡng ngăn đông ≤ {{ frozen.max }}°C.</p>
             </div>
           </div>
-          <label>Ảnh xe / thùng lúc nhận {{ needPhoto ? '(bắt buộc vì có thiếu, thừa, hỏng hoặc nhiệt độ vượt ngưỡng)' : '(tùy chọn)' }}</label>
+          <label>Ảnh xe / thùng lúc nhận (bắt buộc: là sổ bàn giao chuỗi lạnh bất biến của kho phụ)</label>
           <PhotoInput v-model="photo" testid="arr-photo" />
           <label for="arr-note">Ghi chú</label>
           <input id="arr-note" v-model="note" class="ops-input" />
           <p v-if="closeError" class="ops-error" role="alert" data-testid="arr-close-error">{{ closeError }}</p>
-          <button class="ops-btn ops-btn-primary ops-btn-block" type="submit" data-testid="arr-close">Chốt nhận xe</button>
+          <button class="ops-btn ops-btn-primary ops-btn-block" type="submit" data-testid="arr-close" :disabled="closing">{{ closing ? 'Đang chốt…' : 'Chốt nhận xe' }}</button>
         </form>
       </template>
 
@@ -135,7 +135,7 @@ import { evaluateTemp } from '../../../shared/domain/logistics';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
 import { shortDay } from '../../format';
-import { dt, tempText } from '../../logisticsUi';
+import { dt, logisticsError, tempText } from '../../logisticsUi';
 import PhotoInput from '../../components/PhotoInput.vue';
 
 const chill = BUSINESS.temperature.chill;
@@ -152,10 +152,11 @@ const frozenC = ref('');
 const photo = ref('');
 const note = ref('');
 const closeError = ref('');
+const closing = ref(false);
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.hub.arrivals(ctx.value, selDay.value);
+    data.value = await api.ops.hub.arrivals(ctx.value, selDay.value);
     selDay.value = data.value.day;
     if (!data.value.trips.some((t) => t.tripId === selTrip.value)) {
       const next = data.value.trips.find((t) => !t.closed) || data.value.trips[0];
@@ -176,7 +177,6 @@ const missing = computed(() => (cur.value ? cur.value.manifest.filter((m) => !m.
 const pct = computed(() => (cur.value && cur.value.manifest.length ? Math.round(((counts.value.ok + counts.value.damaged) / cur.value.manifest.length) * 100) : 0));
 const resultDamaged = computed(() => (cur.value ? cur.value.manifest.filter((m) => m.state === 'damaged').map((m) => m.orderId) : []));
 const tempBad = (v, cls) => v !== '' && v != null && Number.isFinite(Number(v)) && !evaluateTemp(cls, Number(v)).ok;
-const needPhoto = computed(() => missing.value.length > 0 || counts.value.damaged > 0 || (cur.value && cur.value.extra.length > 0) || tempBad(tempC.value, 'chill') || tempBad(frozenC.value, 'frozen'));
 
 watch(selTrip, () => {
   scanMsg.value = '';
@@ -189,48 +189,67 @@ function pickDay(d) {
   load();
 }
 
-function act(fn) {
+async function act(fn) {
   error.value = '';
   try {
-    return fn();
+    return await fn();
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
     return null;
   } finally {
-    load();
+    await load();
   }
 }
 
 const mark = (m, state) => act(() => api.ops.hub.scanArrival(ctx.value, { scope: cur.value.scope, code: m.orderId, state }));
 const removeExtra = (x) => act(() => api.ops.hub.scanArrival(ctx.value, { scope: cur.value.scope, code: x, state: 'clear' }));
-function tickAll() {
-  act(() => {
-    for (const m of cur.value.manifest) if (!m.state) api.ops.hub.scanArrival(ctx.value, { scope: cur.value.scope, code: m.orderId, state: 'ok' });
+async function tickAll() {
+  await act(async () => {
+    for (const m of cur.value.manifest) if (!m.state) await api.ops.hub.scanArrival(ctx.value, { scope: cur.value.scope, code: m.orderId, state: 'ok' });
   });
 }
 
-function scan() {
+async function scan() {
   const c = code.value.trim();
   code.value = '';
   if (!c) return;
-  const r = act(() => api.ops.hub.scanArrival(ctx.value, { scope: cur.value.scope, code: c, state: 'ok' }));
+  const r = await act(() => api.ops.hub.scanArrival(ctx.value, { scope: cur.value.scope, code: c, state: 'ok' }));
   scanOk.value = Boolean(r) && r.result === 'ok';
   if (!r) scanMsg.value = `${c}: không ghi được.`;
   else if (r.result === 'extra') scanMsg.value = `${r.code}: THỪA, không có trong bảng kê của ${cur.value.label}.`;
   else scanMsg.value = `${r.code}: đã nhận.`;
 }
 
-function close() {
+async function close() {
   closeError.value = '';
+  if (closing.value) return;
+  // Ảnh dỡ hàng LUÔN bắt buộc: nó là dòng sổ bàn giao chuỗi lạnh (nhiệt độ + ảnh + người + giờ) mở khóa bước thùng vào kho phụ.
+  if (tempC.value === '' || !Number.isFinite(Number(tempC.value))) {
+    closeError.value = 'Nhập nhiệt độ ngăn mát lúc nhận.';
+    return;
+  }
+  if (!photo.value) {
+    closeError.value = 'Cần chụp ảnh xe / thùng lúc nhận trước khi chốt.';
+    return;
+  }
+  closing.value = true;
   try {
-    api.ops.hub.closeArrival(ctx.value, { scope: cur.value.scope, tempC: tempC.value, frozenTempC: frozenC.value, photo: photo.value, note: note.value });
+    await api.ops.hub.closeArrival(ctx.value, {
+      scope: cur.value.scope,
+      tempC: Number(tempC.value),
+      frozenTempC: frozenC.value === '' || !Number.isFinite(Number(frozenC.value)) ? null : Number(frozenC.value),
+      photo: photo.value,
+      note: note.value
+    });
     tempC.value = '';
     frozenC.value = '';
     photo.value = '';
     note.value = '';
   } catch (e) {
-    closeError.value = e.message;
+    closeError.value = logisticsError(e);
+  } finally {
+    closing.value = false;
   }
-  load();
+  await load();
 }
 </script>

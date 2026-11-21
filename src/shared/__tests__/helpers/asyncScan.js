@@ -30,8 +30,8 @@ export function scanUnawaited(relPath) {
 
 export const read = (relPath) => readFileSync(resolve(ROOT, relPath), 'utf8');
 
-// Các hàm api.ops đã chạy trên backend thật (bất đồng bộ). Nhóm còn ở bản giả lập (kho phụ nhận xe/ghép hải sản/chia tuyến, logistics, finance, demo) không nằm đây.
-const REAL_OPS = String.raw`(?:summary|me|planning\.\w+|factory\.\w+|listOrders|listProductionPlans|getProductionPlan|batches\.\w+|paymentExceptions\.\w+|shortPick\.\w+|uploads\.\w+|costing\.\w+|cycleCapacity\.\w+|handovers\.\w+|transitionOrder|substituteDish|saveLot|listLots|listPurchaseOrders|listSuppliers|procurement\.\w+|supplierPortal\.\w+|hub\.(?:receivable|receive|receipts|stock|fefoPlan|issue|waste|count|traceLots|trace|recalls|createRecall|recall|holdOrders|notifyCustomers|compensate|wasteHeldStock|closeRecall))`;
+// Các hàm api.ops đã chạy trên backend thật (bất đồng bộ). Nhóm còn ở bản giả lập (finance, demo) không nằm đây.
+const REAL_OPS = String.raw`(?:summary|me|logistics\.\w+|routes\.\w+|shipper\.\w+|planning\.\w+|factory\.\w+|listOrders|listProductionPlans|getProductionPlan|batches\.\w+|paymentExceptions\.\w+|shortPick\.\w+|uploads\.\w+|costing\.\w+|cycleCapacity\.\w+|handovers\.\w+|transitionOrder|substituteDish|saveLot|listLots|listPurchaseOrders|listSuppliers|procurement\.\w+|supplierPortal\.\w+|hub\.(?:receivable|receive|receipts|stock|fefoPlan|issue|waste|count|traceLots|trace|recalls|createRecall|recall|holdOrders|notifyCustomers|compensate|wasteHeldStock|closeRecall|arrivals|scanArrival|closeArrival|seafood|tickSeafood|closeSeafood|sortBox|dispatchRoute|routeSheet))`;
 const CALL = new RegExp(String.raw`api\.ops\.${REAL_OPS}\(`, 'g');
 const READ_SYNC = new RegExp(String.raw`api\.ops\.${REAL_OPS}\([^)]*\)\s*\.(?!then|catch)\w+`);
 
