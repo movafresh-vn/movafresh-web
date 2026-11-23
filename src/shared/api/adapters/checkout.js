@@ -133,6 +133,12 @@ export function buildSubscriptionBody({ req, servings, weeksOfMeals }) {
   if (req.topup_pay_vnd) body.topup_pay_vnd = req.topup_pay_vnd;
   // Chiến dịch chốt món: backend bỏ qua nếu không có chiến dịch đang chạy; web chỉ gửi khi khách bấm nhận ưu đãi.
   if (req.lock_menu === true) body.lock_menu = true;
+  // Giao nhanh 24-36 giờ (ĐỀ XUẤT 2.4.0): tuần 1 giao đúng ngày của chỗ đã giữ, trừ Fresh Credit ngay. Các tuần sau giữ lịch khách chọn.
+  if (req.express && req.express.hold_id) {
+    body.express_hold_id = req.express.hold_id;
+    body.weeks[0].delivery_date = req.express.day;
+    body.payment_method = 'fresh_credit';
+  }
   return { body, perWeek, dates };
 }
 

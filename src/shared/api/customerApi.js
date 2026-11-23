@@ -110,6 +110,9 @@ export function createCustomerApi(deps = {}) {
   }
 
   // ---------- Bản nháp thực đơn → yêu cầu gửi máy chủ ----------
+  /** Bữa của tuần 1 ở dạng máy chủ nhận cho giao nhanh (chỉ món, suất, hệ số khẩu phần). */
+  const expressMeals = (body) => body.weeks[0].meals.map((m) => ({ dish_id: m.dish_id, servings: m.servings, ...(m.portion_factor ? { portion_factor: m.portion_factor } : {}) }));
+
   function subscriptionBody(req, extra = {}) {
     const profile = drafts.profileOf(req.profile_id);
     if (!profile) return { error: { code: 'PLAN_NOT_FOUND', message: 'Không tìm thấy hồ sơ hoặc thực đơn' } };
@@ -212,6 +215,29 @@ export function createCustomerApi(deps = {}) {
       return envelope(async () => adaptDeliveryOptions(await call('deliveryOptions', { query: { zone_id: profile.zoneId, weeks: cfg.subscription.defaultWeeks } }), { perWeek: req.deliveries_per_week === 2 ? 2 : 1 }));
     },
 
+    // ---------- Giao nhanh 24-36 giờ (ĐỀ XUẤT 2.4.0; máy chủ trả enabled=false khi tắt) ----------
+    /** Các khung giao nhanh THỰC HIỆN ĐƯỢC cho tuần 1. Dùng đúng địa chỉ và thực đơn tuần 1 của bản nháp. */
+    async expressOptions(req) {
+      if (!(await authed())) return needLogin();
+      const built = subscriptionBody({ ...req, payment_method: 'fresh_credit' });
+      if (built.error) return fail(built.error.code, built.error.message);
+      return envelope(async () => {
+        await ensureSetup(built.profile, req.schedule && req.schedule.shipping_address);
+        return call('expressOptions', { body: { shipping_address: built.body.schedule.shipping_address, meals: expressMeals(built.body) } });
+      });
+    },
+    async holdExpress(req) {
+      if (!(await authed())) return needLogin();
+      const built = subscriptionBody({ ...req, payment_method: 'fresh_credit' });
+      if (built.error) return fail(built.error.code, built.error.message);
+      // Mỗi lần giữ một khóa riêng: nhả rồi giữ lại cùng khung không được trả lại chỗ đã nhả.
+      const key = `xh-${req.request_id}-${req.day}-${req.slot_id}-${Date.now().toString(36)}`.slice(0, 120);
+      return envelope(() => call('expressHold', { body: { request_id: req.request_id, day: req.day, slot_id: req.slot_id, meals: expressMeals(built.body) }, key }));
+    },
+    releaseExpress(req) {
+      return envelope(() => call('expressRelease', { params: { id: req.hold_id } }));
+    },
+
     async previewSubscription(req) {
       if (!(await authed())) return needLogin();
       const built = subscriptionBody({ ...req, payment_method: req.payment_method || 'bank_transfer_4w', voucher_code: req.voucher_code ?? cfg.incentives.giftCardCode });
@@ -234,7 +260,7 @@ export function createCustomerApi(deps = {}) {
       return envelope(async () => {
         await ensureSetup(built.profile, req.schedule && req.schedule.shipping_address);
         // Khóa cố định theo (hồ sơ, thực đơn): bấm trả tiền hai lần hoặc gửi lại khi mạng chập chờn không tạo hai gói.
-        const key = `sub-${req.profile_id}-${req.plan_id}`.slice(0, 120);
+        const key = `sub-${req.profile_id}-${req.plan_id}${req.express && req.express.hold_id ? `-${req.express.hold_id}` : ''}`.slice(0, 120);
         const raw = await call('createSubscription', { body: built.body, key });
         const out = adaptCreated(raw, { perWeek: built.perWeek, slotId: built.body.schedule.preferred_time_slot });
         const overview = await call('getAccount').catch(() => null);

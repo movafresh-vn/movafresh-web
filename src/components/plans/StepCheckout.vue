@@ -102,6 +102,9 @@
       </div>
     </section>
 
+    <!-- Giao nhanh 24-36 giờ (tự ẩn khi tắt) -->
+    <ExpressPanel />
+
     <!-- 2. Người nhận -->
     <section class="pl-card sec">
       <h2 class="pl-h2">2. Nơi nhận hàng</h2>
@@ -421,6 +424,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import VietQrSvg from '../common/VietQrSvg.vue';
+import ExpressPanel from './ExpressPanel.vue';
 import DialSelect from '../modals/DialSelect.vue';
 import LinkCardSheet from '../dashboard/LinkCardSheet.vue';
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';

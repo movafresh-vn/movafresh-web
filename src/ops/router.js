@@ -63,7 +63,9 @@ const logisticsChildren = [
   { path: 'lap-tuyen', name: 'logistics-routes', component: () => import('./views/logistics/RoutesView.vue') },
   { path: 'giao-hang', name: 'logistics-exceptions', component: () => import('./views/logistics/ExceptionsView.vue') },
   { path: 'chuoi-lanh', name: 'logistics-cold', component: () => import('./views/logistics/ColdChainView.vue') },
-  { path: 'chi-phi-kpi', name: 'logistics-cost', component: () => import('./views/logistics/CostKpiView.vue') }
+  { path: 'chi-phi-kpi', name: 'logistics-cost', component: () => import('./views/logistics/CostKpiView.vue') },
+  // Giao nhanh 24-36 giờ (ĐỀ XUẤT, mặc định tắt)
+  { path: 'giao-nhanh', name: 'logistics-express', component: () => import('./views/logistics/ExpressView.vue'), meta: { perm: 'expressRead' } }
 ];
 
 // P2D: tài chính & kế toán (kế toán và admin)

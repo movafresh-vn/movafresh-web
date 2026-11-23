@@ -257,6 +257,29 @@ export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
       kpis: (_ctx, { from = null, to = null } = {}) => call('logKpis', { query: { from, to } })
     },
 
+    /**
+     * Giao nhanh 24-36 giờ (ĐỀ XUẤT 2.4.0). Hình dạng trả về là snake_case đúng hợp đồng. Chạy được khi cờ tắt để chuẩn bị dữ liệu
+     * (báo giá, năng lực hãng, QA lô); chỉ khách hàng bị cờ chặn.
+     */
+    express: {
+      settings: () => call('expSettings'),
+      saveSettings: (_ctx, body) => call('expSaveSettings', { body: compact(body) }),
+      quotes: (_ctx, { leg = null, includeRevoked = false } = {}) => call('expQuotes', { query: compact({ leg, include_revoked: includeRevoked ? 'true' : null }) }),
+      addQuote: (_ctx, body) => call('expAddQuote', { body: compact(body) }),
+      revokeQuote: (_ctx, { id, reason }) => call('expRevokeQuote', { params: { id }, body: { reason } }),
+      compare: (_ctx, body) => call('expCompare', { body: compact(body) }),
+      scenarios: (_ctx, body = {}) => call('expScenarios', { body }),
+      lastMileRequests: (_ctx, { status = null } = {}) => call('expLastMile', { query: compact({ status }) }),
+      confirmLastMile: (_ctx, { id, ...body }) => call('expLastMileConfirm', { params: { id }, body: compact(body) }),
+      rejectLastMile: (_ctx, { id, reason }) => call('expLastMileReject', { params: { id }, body: { reason } }),
+      capacity: (_ctx, { from = null, to = null } = {}) => call('expCapacity', { query: compact({ from, to }) }),
+      putCapacity: (_ctx, body) => call('expPutCapacity', { body: compact(body) }),
+      lotQa: () => call('expLotQa'),
+      setLotQa: (_ctx, body) => call('expSetLotQa', { body: compact(body) }),
+      orders: (_ctx, { status = null } = {}) => call('expOrders', { query: compact({ status }) }),
+      advance: (_ctx, { id, ...body }) => call('expAdvance', { params: { id }, body: compact(body) })
+    },
+
     routes: {
       board: (_ctx, day = null) => call('routeBoard', { query: { day } }),
       plan: (_ctx, { day, slotId, shipperIds = null }) => call('routePlan', { body: { day, slotId, ...(shipperIds ? { shipperIds } : {}) } }),

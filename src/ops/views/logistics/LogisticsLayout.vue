@@ -12,17 +12,19 @@
 <script setup>
 import { reactive } from 'vue';
 import { api } from '../../../shared/api';
-import { ctx } from '../../session';
+import { can, ctx } from '../../session';
 import { useLive } from '../../useLive';
 
-const tabs = [
+const ALL_TABS = [
   { key: 'capacity', to: '/logistics', title: 'Khu & sức chứa' },
   { key: 'trips', to: '/logistics/chuyen-xe', title: 'Chuyến xe' },
   { key: 'routes', to: '/logistics/lap-tuyen', title: 'Lập tuyến' },
   { key: 'exceptions', to: '/logistics/giao-hang', title: 'Giao hàng & ngoại lệ' },
   { key: 'cold', to: '/logistics/chuoi-lanh', title: 'Chuỗi lạnh' },
-  { key: 'cost', to: '/logistics/chi-phi-kpi', title: 'Chi phí & KPI' }
+  { key: 'cost', to: '/logistics/chi-phi-kpi', title: 'Chi phí & KPI' },
+  { key: 'express', to: '/logistics/giao-nhanh', title: 'Giao nhanh 24-36h', perm: 'expressRead' }
 ];
+const tabs = ALL_TABS.filter((t) => !t.perm || can(t.perm));
 
 // Số việc đang chờ điều phối: ngoại lệ chưa xử lý và cảnh báo nhiệt độ chưa có quyết định
 const badge = reactive({ exceptions: 0, cold: 0 });

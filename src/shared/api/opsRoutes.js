@@ -109,6 +109,24 @@ export const OPS_ROUTES = {
   logPublishedCosts: ['GET', '/ops/logistics/costs/published'],
   logKpis: ['GET', '/ops/logistics/kpis'],
 
+  // Giao nhanh 24-36 giờ (ĐỀ XUẤT 2.4.0, mặc định tắt): cài đặt/chính sách, báo giá, so sánh, kịch bản, chặng cuối thủ công, QA lô, đơn giao nhanh
+  expSettings: ['GET', '/ops/logistics/express/settings'],
+  expSaveSettings: ['PUT', '/ops/logistics/express/settings'],
+  expQuotes: ['GET', '/ops/logistics/express/quotes'],
+  expAddQuote: ['POST', '/ops/logistics/express/quotes'],
+  expRevokeQuote: ['POST', '/ops/logistics/express/quotes/:id/revoke'],
+  expCompare: ['POST', '/ops/logistics/express/long-haul/compare'],
+  expScenarios: ['POST', '/ops/logistics/express/scenarios'],
+  expLastMile: ['GET', '/ops/logistics/express/last-mile/requests'],
+  expLastMileConfirm: ['POST', '/ops/logistics/express/last-mile/requests/:id/confirm'],
+  expLastMileReject: ['POST', '/ops/logistics/express/last-mile/requests/:id/reject'],
+  expCapacity: ['GET', '/ops/logistics/express/carrier-capacity'],
+  expPutCapacity: ['POST', '/ops/logistics/express/carrier-capacity'],
+  expLotQa: ['GET', '/ops/logistics/express/lot-qa'],
+  expSetLotQa: ['POST', '/ops/logistics/express/lot-qa'],
+  expOrders: ['GET', '/ops/logistics/express/orders'],
+  expAdvance: ['POST', '/ops/logistics/express/orders/:id/advance'],
+
   // Lập tuyến
   routeBoard: ['GET', '/ops/routes/board'],
   routePlan: ['POST', '/ops/routes/plan'],

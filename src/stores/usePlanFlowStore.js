@@ -88,7 +88,9 @@ export const usePlanFlowStore = defineStore('planFlow', {
     busy: false,
     error: '',
     errorCode: '',
-    cardLinkNeeded: false // máy chủ báo chưa liên kết thẻ/ví (PAYMENT_TOKEN_REQUIRED): hiện nút liên kết
+    cardLinkNeeded: false, // máy chủ báo chưa liên kết thẻ/ví (PAYMENT_TOKEN_REQUIRED): hiện nút liên kết
+    // Giao nhanh 24-36 giờ (ĐỀ XUẤT 2.4.0, mặc định tắt ở máy chủ). offer = phản hồi options; hold = chỗ đã giữ cho tuần 1.
+    express: { offer: null, hold: null, busy: false, error: '' }
   }),
 
   getters: {
@@ -115,7 +117,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
 
     reset() {
       const refCode = this.refCode; // mã mời giữ lại khi khách làm lại từ đầu
-      Object.assign(this, freshState(), { refCode, plan: null, options: null, preview: null, capacity: null, busy: false, error: '', errorCode: '', cardLinkNeeded: false });
+      Object.assign(this, freshState(), { refCode, plan: null, options: null, preview: null, capacity: null, busy: false, error: '', errorCode: '', cardLinkNeeded: false, express: { offer: null, hold: null, busy: false, error: '' } });
       api.customer.reset();
       this.persist();
     },
@@ -385,6 +387,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
         });
         const ref = this.activeRef();
         if (ref) req.referral_code = ref;
+        if (this.express.hold) req.express = { hold_id: this.express.hold.hold_id, day: this.express.hold.day };
         const res = await api.customer.previewSubscription(req);
         if (res.status === 'error') {
           if (res.error.code === PAYMENT_TOKEN_REQUIRED && !retried) return this.recoverTokenRequired();
@@ -439,10 +442,20 @@ export const usePlanFlowStore = defineStore('planFlow', {
       if (c.lockMenu) req.lock_menu = true;
       const ref = this.activeRef();
       if (ref) req.referral_code = ref;
+      if (this.express.hold) {
+        req.express = { hold_id: this.express.hold.hold_id, day: this.express.hold.day };
+        req.payment_method = 'fresh_credit'; // giao nhanh trừ Fresh Credit ngay lúc đặt
+        req.auto_debit_enabled = true;
+      }
       try {
         const res = await api.customer.createSubscription(req);
         if (res.status === 'error') {
           const kind = errorKind(res);
+          // Chỗ giữ giao nhanh hết hạn hoặc không còn hợp lệ: bỏ chỗ giữ, khách chọn lại khung.
+          if (typeof res.error.code === 'string' && /^EXPRESS_|^LAST_MILE_/.test(res.error.code)) {
+            this.express.hold = null;
+            this.express.offer = null;
+          }
           if (kind === PAYMENT_TOKEN_REQUIRED) {
             recoverFromTokenRequired(c);
             clearPersistedPaymentChoice();
@@ -457,6 +470,63 @@ export const usePlanFlowStore = defineStore('planFlow', {
       } catch (e) {
         return { ok: false, kind: 'NETWORK_ERROR', message: messageOf(e) };
       }
+    },
+
+    /** Các khung giao nhanh thực hiện được (máy chủ trả enabled=false khi tính năng tắt: panel tự ẩn). Không làm hỏng luồng thường nếu lỗi. */
+    async loadExpress() {
+      const schedule = this.scheduleRequest();
+      const x = this.express;
+      if (!schedule) {
+        x.offer = null;
+        return;
+      }
+      x.busy = true;
+      x.error = '';
+      try {
+        const res = await api.customer.expressOptions({ profile_id: this.profileId, plan_id: this.planId, duration_weeks: BUSINESS.subscription.defaultWeeks, schedule });
+        x.offer = res.status === 'error' ? null : res.data;
+        if (res.status === 'error' && res.error.code !== 'AUTH_REQUIRED') x.error = res.error.message;
+      } catch (e) {
+        x.offer = null;
+      } finally {
+        x.busy = false;
+      }
+    },
+
+    /** Giữ chỗ một khung giao nhanh cho tuần 1 (có hạn). Thành công thì chuyển sang trả bằng Fresh Credit và tính lại giá. */
+    async chooseExpress(slot) {
+      const x = this.express;
+      const schedule = this.scheduleRequest();
+      if (!schedule || !x.offer || !x.offer.last_mile) return false;
+      x.busy = true;
+      x.error = '';
+      try {
+        const res = await api.customer.holdExpress({
+          profile_id: this.profileId, plan_id: this.planId, duration_weeks: BUSINESS.subscription.defaultWeeks, schedule,
+          request_id: x.offer.last_mile.request_id, day: slot.day, slot_id: slot.slot_id
+        });
+        if (res.status === 'error') {
+          x.error = res.error.message;
+          await this.loadExpress();
+          return false;
+        }
+        x.hold = res.data;
+        this.checkout.method = 'fresh_credit';
+        await this.loadPreview();
+        return true;
+      } finally {
+        x.busy = false;
+      }
+    },
+
+    /** Bỏ giao nhanh: nhả chỗ đã giữ (nếu có) và tính lại giá theo lịch thường. */
+    async dropExpress() {
+      const x = this.express;
+      const held = x.hold;
+      x.hold = null;
+      if (held) await api.customer.releaseExpress({ hold_id: held.hold_id }).catch(() => null);
+      await this.loadPreview();
+      await this.loadExpress();
     },
 
     /** Gói Suất ăn trả trước đang chọn ở bước thanh toán bằng Fresh Credit (mã gói máy chủ chọn sẵn hoặc một gói lớn hơn). */

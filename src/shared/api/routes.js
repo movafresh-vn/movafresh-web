@@ -18,6 +18,10 @@ export const CUSTOMER_ROUTES = {
   setConsents: ['PUT', '/account/consents'],
   saveSafetyProfile: ['PUT', '/account/profile'],
   previewSubscription: ['POST', '/subscription/preview'],
+  // Giao nhanh 24-36 giờ (ĐỀ XUẤT 2.4.0, mặc định tắt ở máy chủ)
+  expressOptions: ['POST', '/delivery/express/options'],
+  expressHold: ['POST', '/delivery/express/holds'],
+  expressRelease: ['POST', '/delivery/express/holds/:id/release'],
   createSubscription: ['POST', '/subscription/create-or-renew'],
   getAccount: ['GET', '/account/overview'],
   myWeeks: ['GET', '/subscription/weeks'],
