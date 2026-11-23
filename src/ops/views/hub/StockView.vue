@@ -134,49 +134,50 @@ const KIND = { receive: 'Nhập', issue: 'Xuất FEFO', waste: 'Xuất hủy', c
 const n = (v) => (Math.round((v || 0) * 100) / 100).toLocaleString('vi-VN');
 const reasonLabel = (k) => (d.value && (d.value.wasteReasons[k] || d.value.countReasons[k])) || '';
 
-function load() {
+async function load() {
   try {
-    d.value = api.ops.hub.stock(ctx.value);
+    d.value = await api.ops.hub.stock(ctx.value);
   } catch (e) {
     error.value = e.message;
   }
 }
 useLive(load, { every: 8000 });
 
-function run(fn, ok) {
+async function run(fn, ok) {
   msg.value = '';
   error.value = '';
   try {
-    fn();
+    await fn();
     msg.value = ok;
   } catch (e) {
     error.value = e.message;
   }
-  load();
+  await load();
 }
 
-function plan() {
+async function plan() {
   error.value = '';
   xp.value = null;
   try {
-    xp.value = api.ops.hub.fefoPlan(ctx.value, { sku: x.sku, qty: x.qty });
+    xp.value = await api.ops.hub.fefoPlan(ctx.value, { sku: x.sku, qty: x.qty });
     if (!xp.value.allocations.length) error.value = 'Không có lô nào dùng được để xuất.';
   } catch (e) {
     error.value = e.message;
   }
 }
 
-function issue() {
-  run(() => api.ops.hub.issue(ctx.value, { sku: x.sku, qty: x.qty, ref: x.ref }), `Đã xuất ${n(x.qty)} theo FEFO, trừ đúng các lô hết hạn trước.`);
+async function issue() {
+  const qty = x.qty;
+  await run(() => api.ops.hub.issue(ctx.value, { sku: x.sku, qty, ref: x.ref }), `Đã xuất ${n(qty)} theo FEFO, trừ đúng các lô hết hạn trước.`);
   xp.value = null;
-  x.qty = null;
+  if (!error.value) x.qty = null;
 }
 
 const startWaste = (l) => {
   w.value = { id: l.id, qty: l.qty, reason: '', note: '' };
 };
-function doWaste() {
-  run(() => api.ops.hub.waste(ctx.value, { stockId: w.value.id, qty: w.value.qty, reason: w.value.reason, note: w.value.note }), 'Đã xuất hủy, tính vào chi phí hao hụt.');
+async function doWaste() {
+  await run(() => api.ops.hub.waste(ctx.value, { stockId: w.value.id, qty: w.value.qty, reason: w.value.reason, note: w.value.note }), 'Đã xuất hủy, tính vào chi phí hao hụt.');
   if (!error.value) w.value = null;
 }
 
@@ -184,15 +185,15 @@ function toggleCount() {
   counting.value = !counting.value;
   if (counting.value) for (const l of d.value.lots) counted[l.id] = l.qty;
 }
-function saveCount() {
+async function saveCount() {
   try {
-    const r = api.ops.hub.count(ctx.value, { counted: { ...counted }, reason: countReason.value });
+    const r = await api.ops.hub.count(ctx.value, { counted: { ...counted }, reason: countReason.value });
     msg.value = r.diffs.length ? `Đã điều chỉnh ${r.diffs.length} lô theo kết quả kiểm kê.` : 'Kiểm kê khớp, không có lô nào lệch.';
     error.value = '';
     counting.value = false;
   } catch (e) {
     error.value = e.message;
   }
-  load();
+  await load();
 }
 </script>

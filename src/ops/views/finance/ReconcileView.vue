@@ -19,11 +19,8 @@
       <section class="ops-card" aria-label="Khoản chờ tiền về">
         <div class="head-row">
           <h2>Khoản chờ tiền về</h2>
-          <div class="fin-actions">
-            <button class="ops-btn ops-btn-small" data-testid="mock-stranger" @click="stranger">Mô phỏng tiền về không rõ nội dung</button>
-          </div>
         </div>
-        <p class="ops-muted">Bản demo: bút nạp / trả trọn gói có mã đối soát nhưng chưa thấy tiền trong sao kê. Nút "mô phỏng" gửi một giao dịch ngân hàng giả (webhook mock) để thử các tình huống.</p>
+        <p class="ops-muted">Các khoản có mã đối soát nhưng chưa thấy tiền trong sao kê. Tiền về qua webhook ngân hàng tự khớp; nếu webhook chậm, kế toán nhập dòng sao kê ở mục bên dưới.</p>
         <div class="ops-table-wrap">
           <table class="ops-table" data-testid="receipt-table">
             <thead><tr><th>Thời điểm</th><th>Khách</th><th>Mã đối soát</th><th class="r">Số tiền</th><th>Trạng thái</th><th></th></tr></thead>
@@ -37,18 +34,23 @@
                   <span class="ops-pill" :class="r.state === 'received' ? 'ops-pill-ok' : 'ops-pill-warn'">{{ r.state === 'received' ? (r.matchedBy === 'manual' ? 'Đã khớp tay' : 'Đã khớp tự động') : 'Chờ tiền về' }}</span>
                   <small v-if="r.diffVnd">lệch {{ signedVnd(r.diffVnd) }}</small>
                 </td>
-                <td>
-                  <div v-if="r.state === 'waiting'" class="fin-actions">
-                    <button class="ops-btn ops-btn-small" :data-sim-exact="r.ledgerId" @click="sim(r, 'exact')">Tiền về đúng mã</button>
-                    <button class="ops-btn ops-btn-small" :data-sim-content="r.ledgerId" @click="sim(r, 'wrong_content')">Sai nội dung</button>
-                    <button class="ops-btn ops-btn-small" :data-sim-amount="r.ledgerId" @click="sim(r, 'wrong_amount')">Lệch số tiền</button>
-                  </div>
-                </td>
+                <td></td>
               </tr>
               <tr v-if="!data.receipts.length"><td colspan="6" class="ops-muted">Chưa có khoản nào cần đối soát.</td></tr>
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section class="ops-card" aria-label="Nhập dòng sao kê">
+        <h2>Nhập dòng sao kê</h2>
+        <p class="ops-muted">Chỉ dùng khi ngân hàng chưa gửi webhook: dòng nhập đi cùng đường với webhook (mã giao dịch trùng thì không ghi hai lần).</p>
+        <form class="fin-tools" data-testid="import-form" @submit.prevent="importLine">
+          <div><label for="imp-txn">Mã giao dịch</label><input id="imp-txn" v-model="line.txnId" class="ops-input" placeholder="để trống: tự sinh" /></div>
+          <div><label for="imp-amount">Số tiền (đ)</label><input id="imp-amount" v-model.number="line.amountVnd" class="ops-input" type="number" min="1" step="1" required /></div>
+          <div style="flex: 1 1 260px"><label for="imp-content">Nội dung chuyển khoản</label><input id="imp-content" v-model="line.content" class="ops-input" style="width: 100%" /></div>
+          <button class="ops-btn ops-btn-primary" type="submit" data-testid="import-submit" :disabled="!(line.amountVnd > 0)">Nhập</button>
+        </form>
       </section>
 
       <section class="ops-card" aria-label="Hàng chờ khớp tay">
@@ -132,10 +134,10 @@ import { reactive, ref } from 'vue';
 import { api } from '../../../shared/api';
 import { fmt } from '../../../shared/utils/formatters';
 import { fmtDate, fmtDeadline } from '../../../shared/utils/time';
-import { BANK_STATUS_LABEL } from '../../../shared/domain/financeBank';
 import { signedVnd } from '../../format';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
+import { financeError } from '../../financeUi';
 
 const data = ref(null);
 const error = ref('');
@@ -143,39 +145,45 @@ const msg = ref('');
 const actionError = ref('');
 const pick = reactive({});
 const note = reactive({});
+const line = reactive({ txnId: '', amountVnd: null, content: '' });
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.finance.reconciliation(ctx.value);
+    data.value = await api.ops.finance.reconciliation(ctx.value);
     error.value = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 useLive(load, { every: 6000 });
 
-function run(fn, okText) {
+async function run(fn, okText) {
   msg.value = '';
   actionError.value = '';
   try {
-    const r = fn();
+    const r = await fn();
     msg.value = okText(r);
   } catch (e) {
-    actionError.value = e.message;
+    actionError.value = financeError(e);
   }
-  load();
+  await load();
 }
 
-const sim = (r, scenario) =>
-  run(() => api.ops.finance.mockBankTransfer(ctx.value, { ledgerId: r.ledgerId, scenario }), (t) => `Ngân hàng báo ${fmt(t.amountVnd)}: ${BANK_STATUS_LABEL[t.status] || t.status}${t.status === 'matched' ? ` (tự khớp mã ${r.ref})` : ''}.`);
-const stranger = () => run(() => api.ops.finance.mockBankTransfer(ctx.value, {}), (t) => `Nhận giao dịch lạ ${fmt(t.amountVnd)}: ${t.status === 'unmatched' ? 'vào hàng chờ khớp tay' : t.status}.`);
-const match = (q) => {
-  const w = data.value.waiting.find((x) => x.ledgerId === pick[q.id]);
-  const diff = w ? q.amountVnd - w.amountVnd : 0;
+const importLine = () =>
   run(
-    () => api.ops.finance.manualMatch(ctx.value, { bankId: q.id, ledgerId: pick[q.id], acceptDiff: diff !== 0, note: note[q.id] || '' }),
+    () => api.ops.finance.bankWebhook(ctx.value, { txnId: line.txnId.trim() || undefined, amountVnd: line.amountVnd, content: line.content }),
+    (r) => {
+      const t = r.txn;
+      line.txnId = '';
+      line.amountVnd = null;
+      line.content = '';
+      return r.duplicate ? `Giao dịch ${t.txnId} đã có từ trước, không ghi lại.` : `Đã nhập ${fmt(t.amountVnd)}: ${t.statusLabel}.`;
+    }
+  );
+const match = (q) =>
+  run(
+    () => api.ops.finance.manualMatch(ctx.value, { bankId: q.id, ledgerId: pick[q.id], note: note[q.id] || '' }),
     () => `Đã khớp tay giao dịch ${q.txnId}.`
   );
-};
 const ignore = (q) => run(() => api.ops.finance.ignoreBankTxn(ctx.value, { bankId: q.id, note: note[q.id] || '' }), () => `Đã loại giao dịch ${q.txnId}.`);
 </script>

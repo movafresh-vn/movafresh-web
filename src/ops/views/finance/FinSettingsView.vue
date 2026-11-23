@@ -59,6 +59,7 @@ import { reactive, ref } from 'vue';
 import { api } from '../../../shared/api';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
+import { financeError } from '../../financeUi';
 
 const data = ref(null);
 const error = ref('');
@@ -68,9 +69,9 @@ const form = reactive({ openingCashVnd: 0, issueOn: 'delivery' });
 const map = reactive({});
 let loaded = false;
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.finance.settings(ctx.value);
+    data.value = await api.ops.finance.settings(ctx.value);
     if (!loaded) {
       form.openingCashVnd = data.value.openingCashVnd;
       form.issueOn = data.value.issueOn;
@@ -79,22 +80,22 @@ function load() {
     }
     error.value = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 useLive(load, { every: 0 });
 
-function save(input, okText) {
+async function save(input, okText) {
   msg.value = '';
   actionError.value = '';
   try {
-    api.ops.finance.saveSettings(ctx.value, input);
+    await api.ops.finance.saveSettings(ctx.value, input);
     msg.value = okText;
   } catch (e) {
-    actionError.value = e.message;
+    actionError.value = financeError(e);
   }
   loaded = false;
-  load();
+  await load();
 }
 
 const saveGeneral = () => save({ openingCashVnd: Number(form.openingCashVnd), issueOn: form.issueOn }, 'Đã lưu cài đặt.');

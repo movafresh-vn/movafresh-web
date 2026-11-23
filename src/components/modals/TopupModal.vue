@@ -4,7 +4,10 @@
       <button class="mclose" type="button" @click="store.closeModal" aria-label="Đóng">×</button>
       <h2 id="topup-title" class="pl-h2">Mua Gói Suất ăn trả trước</h2>
 
-      <template v-if="!pending">
+      <p v-if="loading" class="pl-note" role="status">Đang tải các gói…</p>
+      <p v-else-if="!sum" class="pl-error" role="alert">{{ error || 'Không tải được danh sách gói. Bạn thử lại sau nhé.' }}</p>
+
+      <template v-else-if="!order">
         <p v-if="alert" class="pl-panel warn" role="status">
           Tuần {{ alert.week_index + 1 }} cần <b class="num">{{ fmt(alert.amount_vnd) }}</b>, bạn đang có <b class="num">{{ fmt(alert.balance_vnd) }}</b>.
           Bổ sung trước <b>{{ alert.charge_label }}</b> để MOVA trừ được điểm bữa ăn.
@@ -22,64 +25,75 @@
           </button>
         </div>
         <p v-if="error" class="pl-error" role="alert">{{ error }}</p>
-        <button class="pl-btn primary" type="button" :disabled="!choice" @click="prepare">Tiếp tục</button>
+        <button class="pl-btn primary" type="button" :disabled="!choice || busy" @click="prepare">{{ busy ? 'Đang tạo lệnh…' : 'Tiếp tục' }}</button>
       </template>
 
       <template v-else>
-        <p class="pl-lead">Quét mã bằng ứng dụng ngân hàng để chuyển <b class="num">{{ fmt(pending.pay_vnd) }}</b>.</p>
-        <div class="qr"><VietQrSvg :seed="pending.pay_vnd" /></div>
-        <p class="pl-note">Nội dung chuyển khoản: <b class="ref">{{ transferContent }}</b></p>
-        <p class="pl-note">Bản demo: bấm xác nhận để mô phỏng tiền đã về.</p>
-        <button class="pl-btn primary" type="button" @click="confirm">Tôi đã chuyển khoản</button>
-        <button class="pl-btn ghost" type="button" @click="pending = null">Chọn mức khác</button>
+        <p class="pl-lead">Quét mã bằng ứng dụng ngân hàng để chuyển đúng <b class="num">{{ fmt(order.pay_vnd) }}</b>.</p>
+        <div class="qr"><VietQrSvg :seed="order.pay_vnd" /></div>
+        <p class="pl-note">Nội dung chuyển khoản: <b class="ref">{{ order.transfer_content }}</b></p>
+        <p class="pl-note">
+          Chuyển đúng số tiền và nội dung trên. Khi ngân hàng báo tiền về, MOVA tự cộng <b class="num">{{ fmt(order.credit_received_vnd) }}</b> vào Fresh Credit của bạn
+          (lệnh có hiệu lực đến {{ fmtDeadline(new Date(order.expires_at)) }}).
+        </p>
+        <button class="pl-btn primary" type="button" @click="done">Đã hiểu</button>
+        <button class="pl-btn ghost" type="button" @click="order = null">Chọn gói khác</button>
       </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
+import { fmtDeadline } from '../../shared/utils/time';
 import VietQrSvg from '../common/VietQrSvg.vue';
-import { topupRefFor } from '../../shared/domain/financeBank';
 import { useMovaStore } from '../../stores/useMovaStore';
 
 const store = useMovaStore();
-const sum = api.customer.creditSummary(store.customerId).data;
-const alert = sum.alert;
-const choice = ref(alert && alert.suggested_topup ? 'need' : sum.packs[0].pack_id);
-const pending = ref(null);
+const sum = ref(null);
+const loading = ref(true);
+const choice = ref('');
+const order = ref(null);
 const error = ref('');
+const busy = ref(false);
+const alert = computed(() => (sum.value ? sum.value.alert : null));
 
-function prepare() {
-  error.value = '';
-  if (choice.value === 'need') pending.value = { pay_vnd: alert.suggested_topup.pay_vnd };
-  else {
-    const p = sum.packs.find((x) => x.pack_id === choice.value);
-    pending.value = { pay_vnd: p.pay_vnd, pack_id: p.pack_id };
-  }
-}
-
-// Mã đối soát: kế toán khớp tiền về theo mã này trong nội dung chuyển khoản
-const transferContent = computed(() => topupRefFor(store.customerId));
-
-function confirm() {
-  const res = api.customer.topUpCredit({ customer_id: store.customerId, ...(pending.value.pack_id ? { pack_id: pending.value.pack_id } : { pay_vnd: pending.value.pay_vnd }) });
-  if (res.status === 'error') {
-    error.value = res.error.message;
-    pending.value = null;
+onMounted(async () => {
+  const r = await api.customer.creditSummary();
+  loading.value = false;
+  if (r.status === 'error') {
+    error.value = r.error.message;
     return;
   }
-  store.refresh();
+  sum.value = r.data;
+  choice.value = alert.value && alert.value.suggested_topup ? 'need' : r.data.packs[0] ? r.data.packs[0].pack_id : '';
+});
+
+// MOVA chỉ bán Gói Suất ăn trả trước cố định (không nhận số tiền lẻ). Chọn gói là tạo một lệnh chờ chuyển khoản.
+async function prepare() {
+  error.value = '';
+  const packId = choice.value === 'need' ? alert.value.suggested_topup.pack_id : choice.value;
+  busy.value = true;
+  const res = await api.customer.topUpCredit({ pack_id: packId });
+  busy.value = false;
+  if (res.status === 'error') {
+    error.value = res.error.message;
+    return;
+  }
+  order.value = res.data;
+}
+
+function done() {
   store.closeModal();
-  store.toast(`Đã nạp ${fmt(res.data.pay_vnd)}. Fresh Credit hiện có ${fmt(res.data.balance.total_vnd)}`);
+  store.toast('MOVA sẽ cộng Fresh Credit ngay khi ngân hàng báo tiền về');
 }
 </script>
 
 <style scoped>
 .box { max-width: 480px; padding: 26px 22px; display: grid; gap: 14px; }
 .opts { margin-top: 2px; }
-.qr { width: 190px; height: 190px; margin: 0 auto; background: #fff; padding: 8px; border-radius: 12px; border: 1px solid var(--line); }
+.qr { width: 190px; height: 190px; margin: 0 auto; background: var(--white); padding: 8px; border-radius: 12px; border: 1px solid var(--line); }
 .ref { background: var(--butter); padding: 2px 8px; border-radius: 8px; letter-spacing: .03em; }
 </style>

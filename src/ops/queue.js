@@ -4,6 +4,8 @@ import {
   QUEUE_KEY, enqueue, failedOf, flush, makeEntry, networkError, newOpId, parse, pendingOf, removeEntry, retryFailed, serialize
 } from '../shared/domain/offlineQueue';
 import { ctx } from './session';
+import { serverNow } from '../shared/utils/time';
+import { preparePhotos } from './queuePhotos';
 
 /**
  * Hàng đợi thao tác của app vận hành. Mọi lần ghi của xưởng đi qua đây: lưu vào localStorage trước (nhãn "chưa gửi"),
@@ -43,13 +45,15 @@ function persist() {
   }
 }
 
-/** Thời điểm nghiệp vụ (đồng hồ giả lập) để ghi giờ thao tác đúng lúc bấm, kể cả khi gửi muộn. */
+/** Thời điểm nghiệp vụ theo giờ máy chủ (độ lệch đã đồng bộ ở lần gọi summary gần nhất) để ghi giờ đúng lúc bấm, kể cả khi gửi muộn. */
 export function clientNow() {
-  try {
-    return api.ops.summary(ctx.value).now;
-  } catch {
-    return new Date().toISOString();
-  }
+  return serverNow().toISOString();
+}
+
+/** Tải ảnh (data URL) của thao tác lên kho trước khi gửi; trả args mới hoặc null. Lỗi mạng thành NETWORK để hàng đợi giữ lại. */
+async function prepare(entry) {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) throw networkError();
+  return preparePhotos(entry, (dataUrl, purpose) => api.ops.uploads.photo(ctx.value, dataUrl, purpose));
 }
 
 async function send(entry) {
@@ -76,6 +80,7 @@ export async function flushNow() {
       await flush({
         items: items.value,
         send,
+        prepare,
         isOnline: () => online.value && (typeof navigator === 'undefined' || navigator.onLine !== false),
         onChange: (next, ev) => {
           if (ev.result === 'sent') items.value = removeEntry(items.value, ev.id);

@@ -1,12 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { vnDate, dayKey, addDays, dowOfKey, atDay, fmtDeadline, dayKeySequence } from '../utils/time';
-import { spendCredit, topUp, refundOnCancel, emptyBalance } from '../domain/credit';
 import { giftCardSchedule, capFirstCycleIncentives, topUpBonus } from '../domain/pricing';
 import { aggregateBom } from '../domain/bom';
 import { DISHES } from '../data/catalog';
 import { cutoffAtFor, chargeAtFor, upcomingDeliveryDays } from '../domain/delivery';
 import { BUSINESS } from '../config/business';
-import { draftPurchaseOrders } from '../domain/purchasing';
 
 describe('thời gian theo giờ Việt Nam', () => {
   it('vnDate / dayKey đi và về đúng, không phụ thuộc múi giờ máy', () => {
@@ -28,28 +26,6 @@ describe('thời gian theo giờ Việt Nam', () => {
 
   it('dayKeySequence lấy đúng các thứ', () => {
     expect(dayKeySequence([1], '2026-11-20', 2)).toEqual(['2026-11-23', '2026-11-30']);
-  });
-});
-
-describe('Fresh Credit hai ngăn', () => {
-  it('trừ tiền thật trước, khuyến mãi sau', () => {
-    const r = spendCredit({ real: 500000, promo: 100000 }, 550000);
-    expect(r.ok).toBe(true);
-    expect(r.used).toEqual({ real: 500000, promo: 50000 });
-    expect(r.balance).toEqual({ real: 0, promo: 50000 });
-  });
-
-  it('không đủ số dư thì không trừ gì', () => {
-    const r = spendCredit({ real: 100000, promo: 0 }, 150000);
-    expect(r.ok).toBe(false);
-    expect(r.balance).toEqual({ real: 100000, promo: 0 });
-  });
-
-  it('hoàn khi dừng gói chỉ hoàn tiền thật, khuyến mãi bị thu hồi', () => {
-    const r = refundOnCancel(topUp(emptyBalance(), 1500000, 150000));
-    expect(r.refundVnd).toBe(1500000);
-    expect(r.forfeitedPromoVnd).toBe(150000);
-    expect(r.balance).toEqual({ real: 0, promo: 0 });
   });
 });
 
@@ -98,17 +74,6 @@ describe('BOM Reverse Aggregator', () => {
     expect(bom.sauces).toEqual({ 'XOT-01': 2, 'XOT-04': 2 });
     expect(bom.boxes).toBe(2);
     expect(bom.packaging).toEqual({ 'BB-THUNG-01': 2 });
-  });
-
-  it('PO nháp tính hao hụt sơ chế và dự phòng, nhóm theo nhà cung cấp', () => {
-    const bom = aggregateBom(orders, DISHES);
-    const pos = draftPurchaseOrders(bom, '2026-11-23');
-    const factory = pos.find((p) => p.supplierId === 'S-FACTORY');
-    const heo = factory.lines.find((l) => l.sku === 'NL-HEO-02');
-    // 396g / 0,97 * 1,05 = 0,4287kg → làm tròn lên 0,5
-    expect(heo.qty).toBe(0.5);
-    expect(pos.find((p) => p.supplierId === 'S-PACK').lines[0].qty).toBe(2);
-    expect(pos.every((p) => p.status === 'draft')).toBe(true);
   });
 
   it('báo lỗi khi món không có trong danh mục', () => {

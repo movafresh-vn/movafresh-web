@@ -65,9 +65,7 @@
                 @click="choose(p.kind, o.dish_id)"
               >
                 <b class="sugg-name">{{ o.name }}</b>
-                <span class="num sugg-delta" :class="{ up: o.price_delta_vnd > 0, down: o.price_delta_vnd < 0 }">
-                  {{ deltaText(o.price_delta_vnd) }}
-                </span>
+                <span class="sugg-delta tier" data-testid="dish-tier">{{ tierText(o.dish_id) }}</span>
               </button>
             </div>
           </div>
@@ -79,8 +77,8 @@
                   <span class="opt-name">{{ o.name }}</span>
                   <small v-if="o.sauce_name" class="muted">Xốt: {{ o.sauce_name }}</small>
                 </div>
-                <span class="num delta" :class="{ up: o.price_delta_vnd > 0, down: o.price_delta_vnd < 0 }">
-                  {{ o.current ? 'Đang chọn' : deltaText(o.price_delta_vnd) }}
+                <span class="delta tier" data-testid="dish-tier">
+                  {{ o.current ? 'Đang chọn' : tierText(o.dish_id) }}
                 </span>
               </button>
             </li>
@@ -93,69 +91,14 @@
       Gói xốt MOVA đặc biệt: <b>{{ meal.highlight_sauce.name }}</b>
     </footer>
 
-    <!-- Modal Chi tiết món -->
-    <div v-if="detailDish" class="modal" role="dialog" aria-modal="true" @click.self="detailDish = null">
-      <div class="modal-box">
-        <button class="mclose" type="button" @click="detailDish = null" aria-label="Đóng">×</button>
-        <div class="modal-content">
-          <div class="detail-header">
-            <div class="badge-row">
-              <span class="category-pill" :class="detailDish.kind">{{ kindLabel(detailDish.kind) }}</span>
-              <span class="terroir-badge">📍 Vùng nguyên liệu: {{ detailDish.terroir_region || detailDish.terroir || 'Đắk Lắk' }}</span>
-            </div>
-            <h3 class="dish-title">{{ detailDish.name }}</h3>
-          </div>
-
-          <!-- Terroir Story & Chef's Tip (Grand Frais & Pizza 4P's style) -->
-          <div v-if="detailDish.terroir_story" class="terroir-story-box">
-            <p class="story-text">🌿 {{ detailDish.terroir_story }}</p>
-            <p v-if="detailDish.chef_note" class="chef-tip">
-              <b>👨‍🍳 Mẹo từ Đầu bếp MOVA:</b> {{ detailDish.chef_note }}
-            </p>
-          </div>
-
-          <div class="detail-grid">
-            <!-- 1. Định lượng & Quy cách -->
-            <div class="info-card">
-              <h4 class="card-title">⚖️ Định lượng chuẩn (cho {{ effectiveHouseholdSize }} người)</h4>
-              <ul class="bom-list">
-                <li v-for="(b, idx) in detailDish.bom" :key="idx">
-                  <b>{{ formatBomGrams(b.gramsPerPerson) }}</b>
-                  <span class="sku-name"> {{ getSkuName(b.sku) }}</span>
-                </li>
-              </ul>
-              <p v-if="detailDish.portion_specs?.size_detail || detailDish.spec" class="spec-text">
-                <b>Quy cách:</b> {{ detailDish.portion_specs?.size_detail || detailDish.spec }}
-              </p>
-              <p v-if="detailDish.portion_specs?.storage_guide" class="storage-text">
-                <b>Bảo quản:</b> {{ detailDish.portion_specs.storage_guide }}
-              </p>
-            </div>
-
-            <!-- 2. Dinh dưỡng -->
-            <div class="info-card">
-              <h4 class="card-title">🥗 Dinh dưỡng (1 khẩu phần)</h4>
-              <div class="nutri-grid">
-                <div class="nutri-item"><b class="num">{{ detailDish.nutrition_per_serving?.calories || detailDish.nutrition?.kcal || 0 }}</b><span>Calo (kcal)</span></div>
-                <div class="nutri-item"><b class="num">{{ detailDish.nutrition_per_serving?.protein_g || detailDish.nutrition?.protein || 0 }}g</b><span>Đạm</span></div>
-                <div class="nutri-item"><b class="num">{{ detailDish.nutrition_per_serving?.carbs_g || detailDish.nutrition?.carb || 0 }}g</b><span>Tinh bột</span></div>
-                <div class="nutri-item"><b class="num">{{ detailDish.nutrition_per_serving?.fat_g || detailDish.nutrition?.fat || 0 }}g</b><span>Chất béo</span></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 3. Công thức 3 bước 15 phút -->
-          <div class="recipe-card">
-            <h4 class="card-title">⏱️ 3 bước nấu nhanh trong 15 phút — 1 chảo</h4>
-            <ol class="recipe-steps">
-              <li v-for="(step, sIdx) in dishSteps" :key="sIdx">
-                <span>{{ step }}</span>
-              </li>
-            </ol>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Modal Chi tiết món dùng chung -->
+    <DishDetailModal
+      v-if="detailDish"
+      :dish="detailDish"
+      :household-size="effectiveHouseholdSize"
+      :show-select="false"
+      @close="detailDish = null"
+    />
 
     <!-- Modal Toàn bộ thực đơn nhà máy -->
     <FactoryMenuModal
@@ -175,8 +118,10 @@ import { computed, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { DISHES, SKUS } from '../../shared/data/catalog';
+import { tierLabelById } from '../../shared/domain/mealTier';
 import { recipeFor } from '../../shared/data/recipes';
 import FactoryMenuModal from '../modals/FactoryMenuModal.vue';
+import DishDetailModal from '../modals/DishDetailModal.vue';
 
 const props = defineProps({
   meal: { type: Object, required: true },
@@ -228,14 +173,14 @@ const parts = computed(() => {
   return list;
 });
 
-function toggle(kind) {
+async function toggle(kind) {
   if (open.value === kind) {
     open.value = '';
     return;
   }
   searchQuery.value = '';
   showAllDishes.value = false;
-  const res = api.customer.swapOptions({ plan_id: props.planId, meal_index: props.meal.meal_index, kind });
+  const res = await api.customer.swapOptions({ plan_id: props.planId, meal_index: props.meal.meal_index, kind });
   options.value = res.status === 'success' ? res.data.options : [];
   open.value = kind;
 }
@@ -289,9 +234,9 @@ function choose(kind, dishId) {
   emit('swap', props.meal.meal_index, kind, dishId);
 }
 
-function deltaText(v) {
-  if (!v) return 'Giá như nhau';
-  return `${v > 0 ? '+' : '−'}${fmt(Math.abs(v))}`;
+// Giá lẻ từng món không hiện cho khách: hiện hạng món thay cho chênh lệch giá (tiền vẫn do máy chủ tính).
+function tierText(dishId) {
+  return tierLabelById(DISHES, dishId);
 }
 
 function openDishDetail(dishId) {
@@ -344,7 +289,7 @@ function kindLabel(kind) {
   height: 100%;
   gap: 10px;
 }
-.meal.west { background: #FFFBF6; border-color: #F1C7B1; }
+.meal.west { background: var(--amber-soft); border-color: var(--red-line); }
 .meal-h { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
 .meal-h > div { display: grid; gap: 6px; justify-items: start; }
 .meal-t { font-size: 17px; }
@@ -375,7 +320,7 @@ function kindLabel(kind) {
   font-weight: 600;
   cursor: pointer;
 }
-.detail-btn:hover { background: #e2e8f0; }
+.detail-btn:hover { background: var(--line); }
 
 .swap-btn {
   min-width: 58px;
@@ -412,7 +357,7 @@ function kindLabel(kind) {
   border: 1px solid var(--line);
   border-radius: 8px;
   font-size: 14px;
-  background: #fff;
+  background: var(--white);
 }
 .view-all-btn {
   padding: 7px 12px;
@@ -428,11 +373,11 @@ function kindLabel(kind) {
 }
 .view-all-btn:hover {
   background: var(--green-d);
-  color: #FFFFFF;
+  color: var(--white);
 }
 
 .cross-suggestions {
-  background: #fff;
+  background: var(--white);
   border: 1px solid var(--line-2);
   border-radius: 10px;
   padding: 10px;
@@ -526,14 +471,14 @@ function kindLabel(kind) {
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 6px;
-  background: var(--muted-bg, #f1f5f9);
+  background: var(--muted-bg, var(--line-2));
   color: var(--ink);
 }
-.category-pill.protein { background: #fee2e2; color: #991b1b; }
-.category-pill.veg { background: #dcfce7; color: #166534; }
-.category-pill.soup { background: #e0f2fe; color: #075985; }
-.category-pill.carb { background: #fef3c7; color: #92400e; }
-.category-pill.dessert { background: #f3e8ff; color: #6b21a8; }
+.category-pill.protein { background: var(--red-soft); color: var(--red); }
+.category-pill.veg { background: var(--green-soft); color: var(--green-d); }
+.category-pill.soup { background: var(--blue-soft); color: var(--blue-ink); }
+.category-pill.carb { background: var(--amber-soft); color: var(--amber-ink); }
+.category-pill.dessert { background: var(--violet-soft); color: var(--violet); }
 
 .terroir-badge {
   display: inline-block;
@@ -548,7 +493,7 @@ function kindLabel(kind) {
 .dish-title { font-size: 20px; font-weight: 800; margin: 0; }
 
 .terroir-story-box {
-  background: #f8fafc;
+  background: var(--surface);
   border-left: 3px solid var(--green);
   border-radius: 8px;
   padding: 10px 14px;
@@ -556,9 +501,9 @@ function kindLabel(kind) {
   display: grid;
   gap: 6px;
 }
-.story-text { font-size: 14px; color: #334155; line-height: 1.5; margin: 0; }
-.chef-tip { font-size: 13px; color: #0f766e; background: #f0fdfa; padding: 6px 10px; border-radius: 6px; margin: 0; line-height: 1.4; }
-.storage-text { font-size: 13px; color: #0284c7; margin: 4px 0 0; }
+.story-text { font-size: 14px; color: var(--ink-2); line-height: 1.5; margin: 0; }
+.chef-tip { font-size: 13px; color: var(--green-d); background: var(--green-tint); padding: 6px 10px; border-radius: 6px; margin: 0; line-height: 1.4; }
+.storage-text { font-size: 13px; color: var(--blue); margin: 4px 0 0; }
 
 .detail-grid { display: grid; gap: 12px; margin-bottom: 14px; }
 .info-card {
@@ -572,13 +517,13 @@ function kindLabel(kind) {
 .spec-text { font-size: 14px; margin: 6px 0 0; color: var(--muted); }
 
 .nutri-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
-.nutri-item { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 4px; display: flex; flex-direction: column; }
+.nutri-item { background: var(--white); border: 1px solid var(--line); border-radius: 8px; padding: 6px 4px; display: flex; flex-direction: column; }
 .nutri-item b { font-size: 16px; color: var(--green-d); }
 .nutri-item span { font-size: 11px; color: var(--muted); }
 
 .recipe-card {
-  background: #FFFBF6;
-  border: 1px solid #F1C7B1;
+  background: var(--amber-soft);
+  border: 1px solid var(--red-line);
   border-radius: 12px;
   padding: 12px 14px;
 }

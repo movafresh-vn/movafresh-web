@@ -8,8 +8,11 @@
           Đắk Lắk, xe lạnh xuyên đêm, tận cửa nhà bạn. Đầu bếp MOVA tuyển chọn thực đơn theo số người ăn, khẩu vị và thể trạng gia đình bạn, sơ chế sạch sẽ 100% và giao tận cửa.
         </p>
         <div class="cta">
-          <router-link to="/plans" class="pl-btn primary big">Thiết kế thực đơn của tôi</router-link>
-          <p class="hint">Mất khoảng 2 phút. Bạn xem thực đơn trước, hài lòng rồi mới trả tiền.</p>
+          <div class="cta-row">
+            <BaseButton tag="router-link" to="/plans" class="big">Thiết kế thực đơn của tôi</BaseButton>
+            <BaseButton tag="router-link" to="/menus" variant="secondary" class="big">Xem thực đơn tuần</BaseButton>
+          </div>
+          <p class="hint">Mất khoảng 1–2 phút. Bạn xem thực đơn trước, hài lòng rồi mới trả tiền.</p>
         </div>
 
         <!-- 3 Thẻ giá trị cốt lõi -->
@@ -81,6 +84,7 @@
 
 <script setup>
 import MealKitVideoHook from './MealKitVideoHook.vue';
+import BaseButton from '../ui/BaseButton.vue';
 </script>
 
 <style scoped>
@@ -89,7 +93,7 @@ import MealKitVideoHook from './MealKitVideoHook.vue';
 .copy { display: flex; flex-direction: column; justify-content: space-between; }
 .hero-visual { display: flex; flex-direction: column; gap: 16px; justify-content: space-between; }
 .kicker { display: inline-block; font-size: 13px; font-weight: 700; color: var(--orange-ink); background: var(--orange-soft); border-radius: 999px; padding: 6px 12px; margin-bottom: 14px; align-self: flex-start; }
-.hero h1 { font-size: clamp(28px, 4.4vw, 46px); font-weight: 800; line-height: 1.15; letter-spacing: -0.025em; }
+.hero h1 { font-size: clamp(28px, 4.4vw, var(--fs-display)); font-weight: var(--fw-semibold); line-height: 1.08; letter-spacing: -0.025em; }
 .sub { margin-top: 14px; font-size: 17px; color: var(--muted); max-width: 52ch; }
 .cta { margin-top: 20px; display: grid; gap: 10px; justify-items: start; }
 .big { min-height: 56px; font-size: 18px; padding: 14px 28px; }
@@ -146,9 +150,9 @@ import MealKitVideoHook from './MealKitVideoHook.vue';
   gap: 12px;
   margin-top: 20px;
   padding: 16px;
-  background: linear-gradient(135deg, rgba(28, 51, 37, 0.05) 0%, rgba(45, 90, 61, 0.08) 100%);
+  background: linear-gradient(135deg, var(--green-tint) 0%, var(--green-soft) 100%);
   border: 1px solid var(--green-soft);
-  border-radius: 16px;
+  border-radius: var(--r-card);
   text-align: center;
 }
 .stat-col {
@@ -173,7 +177,7 @@ import MealKitVideoHook from './MealKitVideoHook.vue';
 .route li:not(:last-child)::after { content: ''; position: absolute; left: 21px; top: 50px; bottom: -12px; width: 2px; background: repeating-linear-gradient(180deg, var(--green) 0 6px, transparent 6px 11px); opacity: .6; }
 .pin { width: 44px; height: 44px; border-radius: 50%; background: var(--green-soft); border: 2px solid var(--green); color: var(--green-d); font-weight: 800; font-size: 18px; display: grid; place-items: center; }
 .pin.pot { background: var(--orange); border-color: var(--orange); position: relative; }
-.pin.pot::after { content: ''; width: 18px; height: 10px; border: 3px solid #fff; border-top: 0; border-radius: 0 0 10px 10px; }
+.pin.pot::after { content: ''; width: 18px; height: 10px; border: 3px solid var(--white); border-top: 0; border-radius: 0 0 10px 10px; }
 .route b { display: block; font-size: 18px; }
 .route small { display: block; font-size: 15px; color: var(--muted); }
 

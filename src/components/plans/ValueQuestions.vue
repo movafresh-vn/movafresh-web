@@ -48,11 +48,11 @@ function deltaText(q) {
 </script>
 
 <style scoped>
-.vq { background: var(--butter); border: 1px solid #EBDDB0; border-radius: 18px; padding: 16px 18px; display: grid; gap: 12px; }
+.vq { background: var(--butter); border: 1px solid var(--amber-line); border-radius: 18px; padding: 16px 18px; display: grid; gap: 12px; }
 .vq-h { font-size: 17px; font-weight: 800; }
 .done { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .done li { display: grid; grid-template-columns: 24px 1fr auto; gap: 8px; align-items: center; min-height: 44px; font-size: 16px; }
-.mark { width: 24px; height: 24px; border-radius: 50%; background: var(--green); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 800; }
+.mark { width: 24px; height: 24px; border-radius: 50%; background: var(--green-d); color: var(--white); display: grid; place-items: center; font-size: 14px; font-weight: 800; }
 .mark.no { background: var(--line); color: var(--muted); }
 .txt small { font-size: 15px; color: var(--green-d); font-weight: 600; }
 .redo { min-height: 44px; padding: 0 8px; border: 0; background: none; color: var(--green-d); font-size: 15px; font-weight: 700; text-decoration: underline; }

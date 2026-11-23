@@ -9,6 +9,9 @@
       <div><dt>Khung giờ giao</dt><dd>{{ slot }}</dd></div>
       <div><dt>Ngày giao</dt><dd>{{ fmtDay(list.deliveryDay) }}</dd></div>
       <div><dt>Chuyến xe</dt><dd>{{ tripLabel }}</dd></div>
+      <div v-if="lab"><dt>Batch_ID</dt><dd class="mono" data-testid="label-batch">{{ lab.batchId }}</dd></div>
+      <div v-if="lab"><dt>Route_ID</dt><dd class="mono" data-testid="label-route">{{ lab.routeId || '—' }}</dd></div>
+      <div v-if="lab"><dt>Lot_IDs</dt><dd class="mono" data-testid="label-lots">{{ lab.lotIds.length ? lab.lotIds.join(', ') : '—' }}</dd></div>
     </dl>
     <div class="box-label-bags">
       <div v-for="g in groups" :key="g.temp" class="box-label-bag" :class="`box-bag-${g.color}`">
@@ -27,7 +30,7 @@ import { computed } from 'vue';
 import QrCode from '../../components/common/QrCode.vue';
 import { BUSINESS } from '../../shared/config/business';
 import { fmtDay } from '../../shared/utils/time';
-import { slotLabel, zoneName } from '../factoryStore';
+import { labels, slotLabel, zoneName } from '../factoryStore';
 import { hhmm } from '../format';
 
 // Nhãn thùng của xưởng chỉ có mã đơn, khu, khung giờ và số túi mỗi màu: KHÔNG có tên, SĐT, địa chỉ khách.
@@ -42,6 +45,8 @@ const groups = computed(() =>
     .filter((t) => props.list.bagsByTemp[t] > 0)
     .map((t) => ({ temp: t, n: props.list.bagsByTemp[t], text: TEXT[t], color: (BUSINESS.stickers[t] && BUSINESS.stickers[t].color) || 'none' }))
 );
+// Order_Code, Batch_ID, Route_ID, Lot_IDs của máy chủ (GET /ops/batches/:date/labels). Không bao giờ có tên, SĐT, địa chỉ khách.
+const lab = computed(() => labels.value[props.list.orderId] || null);
 const zone = computed(() => zoneName(props.list.zoneId));
 const slot = computed(() => slotLabel(props.list.zoneId, props.list.slotId));
 const tripLabel = computed(() => (props.trip ? `${props.trip.label} · xe rời ${hhmm(props.trip.departAt)}` : props.list.tripId));

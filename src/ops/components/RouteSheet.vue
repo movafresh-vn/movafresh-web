@@ -5,7 +5,7 @@
       <button class="ops-btn" type="button" @click="$emit('close')">Đóng</button>
     </div>
     <h2 class="doc-title">PHIẾU TUYẾN GIAO HÀNG</h2>
-    <p class="doc-sub">Mã tuyến <span class="mono">{{ sheet.id }}</span> · {{ fmtDay(sheet.day) }} · {{ sheet.slotLabel }}</p>
+    <p class="doc-sub">Mã tuyến <span class="mono" :title="sheet.id">{{ routeLabel(sheet.id) }}</span> · {{ fmtDay(sheet.day) }} · {{ sheet.slotLabel }}</p>
     <dl class="kv">
       <div><dt>Shipper</dt><dd>{{ sheet.shipperName }}</dd></div>
       <div><dt>Số thùng</dt><dd>{{ sheet.boxes }}</dd></div>
@@ -30,7 +30,7 @@
         </tr>
       </tbody>
     </table>
-    <p v-if="sheet.mock" class="doc-sub">Thứ tự điểm do bản mock lập tuyến ({{ sheet.engine }}).</p>
+    <p v-if="sheet.mock" class="doc-sub">Thứ tự điểm theo cụm khu - phường ({{ sheet.engine }}).</p>
     <div class="sign-row">
       <div>Thủ kho phụ<br /><small>(ký, ghi họ tên)</small></div>
       <div>Shipper<br /><small>(ký, ghi họ tên)</small></div>
@@ -41,6 +41,7 @@
 
 <script setup>
 import { fmtDay, fmtDeadline } from '../../shared/utils/time';
+import { routeLabel } from '../logisticsUi';
 
 defineProps({ sheet: { type: Object, required: true } });
 defineEmits(['close']);

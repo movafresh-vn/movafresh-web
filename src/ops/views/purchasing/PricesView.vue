@@ -8,7 +8,7 @@
     <template v-if="data">
       <section class="ops-card">
         <h2>Đặt giá mới</h2>
-        <form class="inline-form" novalidate @submit.prevent="add">
+        <form class="inline-form" novalidate @submit.prevent="add(false)">
           <div><label for="n-sku">SKU</label>
             <select id="n-sku" v-model="n.sku" class="ops-input" data-testid="n-sku"><option v-for="r in data.rows" :key="r.sku" :value="r.sku">{{ r.name }}</option></select>
           </div>
@@ -17,6 +17,14 @@
           <div><label for="n-note">Ghi chú</label><input id="n-note" v-model="n.note" class="ops-input" /></div>
           <button class="ops-btn ops-btn-primary" type="submit" data-testid="n-save">Lưu giá</button>
         </form>
+        <div v-if="flagged.length" class="alert-warn gap-top" role="alert" data-testid="price-flagged">
+          <p><strong>Giá này làm {{ flagged.length }} món vượt trần giá vốn 35%:</strong></p>
+          <ul class="history"><li v-for="f in flagged" :key="f.dish_id">{{ f.name || f.dish_id }}<template v-if="f.food_cost_bp != null"> · giá vốn {{ (Number(f.food_cost_bp) / 100).toFixed(1) }}%</template></li></ul>
+          <div class="ops-actions">
+            <button class="ops-btn ops-btn-primary" type="button" data-testid="price-confirm" @click="confirmAdd">Vẫn lưu giá</button>
+            <button class="ops-btn" type="button" data-testid="price-cancel" @click="cancelAdd">Hủy</button>
+          </div>
+        </div>
       </section>
 
       <section class="ops-card">
@@ -74,9 +82,9 @@ const openSku = ref(null);
 const n = reactive({ sku: 'NL-BO-01', priceVnd: null, effectiveFrom: '', note: '' });
 const unitOf = computed(() => (SKUS[n.sku] ? SKUS[n.sku].unit : 'kg'));
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.procurement.prices(ctx.value);
+    data.value = await api.ops.procurement.prices(ctx.value);
     if (!n.effectiveFrom) n.effectiveFrom = data.value.today;
     error.value = '';
   } catch (e) {
@@ -89,18 +97,32 @@ const toggle = (sku) => {
   openSku.value = openSku.value === sku ? null : sku;
 };
 
-function add() {
+// Giá mới làm một số món vượt trần giá vốn 35%: máy chủ trả CONFIRM_REQUIRED kèm danh sách món. Hiện danh sách, chờ xác nhận rồi gửi lại.
+const flagged = ref([]);
+
+async function add(confirm = false) {
   msg.value = '';
   try {
-    api.ops.procurement.addPrice(ctx.value, { sku: n.sku, priceVnd: n.priceVnd, effectiveFrom: n.effectiveFrom, note: n.note });
+    await api.ops.procurement.addPrice(ctx.value, { sku: n.sku, priceVnd: n.priceVnd, effectiveFrom: n.effectiveFrom, note: n.note, confirm });
     msg.value = `Đã lưu giá mới cho ${SKUS[n.sku].name}, hiệu lực từ ${dmy(n.effectiveFrom)}.`;
     error.value = '';
+    flagged.value = [];
     n.priceVnd = null;
     n.note = '';
     openSku.value = n.sku;
-    load();
+    await load();
   } catch (e) {
+    if (e && e.code === 'CONFIRM_REQUIRED') {
+      flagged.value = (e.details && e.details.newly_flagged) || [];
+      error.value = '';
+      return;
+    }
+    flagged.value = [];
     error.value = e.message;
   }
 }
+const confirmAdd = () => add(true);
+const cancelAdd = () => {
+  flagged.value = [];
+};
 </script>

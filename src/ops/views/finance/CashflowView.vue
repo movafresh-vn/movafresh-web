@@ -71,6 +71,7 @@ import { fmt } from '../../../shared/utils/formatters';
 import { dmy } from '../../labels';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
+import { financeError } from '../../financeUi';
 
 const data = ref(null);
 const error = ref('');
@@ -86,12 +87,12 @@ function barHeight(v) {
   return Math.max(4, Math.round(((v - min) / (max - min)) * 96) + 4);
 }
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.finance.cashflow(ctx.value);
+    data.value = await api.ops.finance.cashflow(ctx.value);
     error.value = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 useLive(load, { every: 8000 });

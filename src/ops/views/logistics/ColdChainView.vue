@@ -84,7 +84,7 @@ import { BUSINESS } from '../../../shared/config/business';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
 import { shortDay } from '../../format';
-import { dt, tempText } from '../../logisticsUi';
+import { dt, logisticsError, tempText } from '../../logisticsUi';
 
 const t = BUSINESS.temperature;
 const data = ref(null);
@@ -93,12 +93,12 @@ const ok = ref('');
 const sel = ref(null);
 const notes = reactive({});
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.logistics.coldChain(ctx.value, { day: sel.value });
+    data.value = await api.ops.logistics.coldChain(ctx.value, { day: sel.value });
     sel.value = data.value.day;
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
 }
 useLive(load, { every: 6000 });
@@ -116,15 +116,15 @@ function pick(d) {
   load();
 }
 
-function decide(a, decision) {
+async function decide(a, decision) {
   error.value = '';
   ok.value = '';
   try {
-    const r = api.ops.logistics.decideCold(ctx.value, { id: a.id, decision, note: notes[a.id] || '' });
+    const r = await api.ops.logistics.decideCold(ctx.value, { id: a.id, decision, note: notes[a.id] || '' });
     ok.value = decision === 'keep' ? 'QC đã quyết định giữ hàng.' : `QC đã quyết định hủy hàng; ${r.exceptions.length} thùng thành ngoại lệ chờ điều phối.`;
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
-  load();
+  await load();
 }
 </script>

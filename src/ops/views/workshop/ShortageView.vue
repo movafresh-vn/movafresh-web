@@ -31,6 +31,11 @@
         <button type="button" class="ops-btn" :class="{ on: kind === 'damaged' }" data-testid="kind-damaged" @click="kind = 'damaged'">Hàng hỏng</button>
       </fieldset>
 
+      <fieldset v-if="kind === 'damaged'" class="verdict" data-testid="damage-scale">
+        <legend>Mức độ hỏng (ước lượng theo thang)</legend>
+        <button v-for="step in DAMAGE_LEVEL_STEPS" :key="step" type="button" class="ops-btn" :class="{ on: damagePct === step }" :aria-pressed="damagePct === step" :data-testid="`damage-${step}`" @click="damagePct = step">{{ damageLevelLabel(step) }}</button>
+      </fieldset>
+
       <label>Ảnh {{ kind === 'damaged' ? '(bắt buộc với hàng hỏng)' : '(nên chụp nếu có)' }}</label>
       <PhotoInput v-model="photo" testid="s-photo" />
       <label for="s-note">Ghi chú</label>
@@ -50,7 +55,7 @@
           <span v-if="r.status === 'closed'" class="ops-pill">Đã đóng</span>
         </div>
         <div class="ops-muted">{{ r.id }} · {{ r.qty }} {{ r.unit === 'bag' ? 'túi' : 'kg' }} · {{ fmtDeadline(new Date(r.at)) }}{{ r.note ? ` · ${r.note}` : '' }}</div>
-        <img v-if="r.photo" :src="r.photo" alt="Ảnh báo cáo" class="receipt-photo" />
+        <PhotoThumbnail v-if="r.photo" :photo="r.photo" alt="Ảnh báo cáo" cls="receipt-photo" />
       </header>
 
       <p v-if="r.pending" class="ops-muted">Báo cáo chưa gửi lên hệ thống. Khi có mạng sẽ tự gửi, sau đó danh sách đơn bị ảnh hưởng hiện ra ở đây.</p>
@@ -93,6 +98,31 @@
           </div>
         </template>
       </template>
+      <section v-if="!r.pending && sp[r.id] && spGrams(r) && can('shortPickPreview')" class="shortpick" :data-shortpick="r.id" aria-label="Hoàn tiền thiếu hàng">
+        <h3>Hoàn tiền thiếu hàng loạt</h3>
+        <p class="ops-muted">Món nào không đủ nguyên liệu thì hoàn đúng phần tiền của món đó, theo đúng ngăn đã trả (tiền thật / khuyến mãi). Xem trước không ghi gì; xác nhận chạy một lần cho tất cả đơn.</p>
+        <div class="ops-actions">
+          <button class="ops-btn" :disabled="sp[r.id].loading" data-testid="sp-preview" @click="spPreview(r)">Xem trước hoàn tiền ({{ kgText(spGrams(r)) }})</button>
+        </div>
+        <template v-if="sp[r.id].summary">
+          <p data-testid="sp-summary">
+            <strong>{{ sp[r.id].summary.orders }}</strong> đơn sẽ được hoàn, tổng <strong>{{ fmt(sp[r.id].summary.totalVnd) }}</strong>
+            <span class="ops-muted">(tiền thật {{ fmt(sp[r.id].summary.realVnd) }} · khuyến mãi {{ fmt(sp[r.id].summary.promoVnd) }}<template v-if="sp[r.id].summary.uncoveredG > 0"> · {{ kgText(sp[r.id].summary.uncoveredG) }} thiếu nằm ngoài các đơn</template>)</span>
+          </p>
+          <ul class="ops-list" data-testid="sp-orders">
+            <li v-for="o in sp[r.id].preview.orders" :key="o.order_code"><span class="mono">{{ o.order_code }}</span> · hoàn {{ fmt(o.refund_vnd) }}</li>
+          </ul>
+          <template v-if="can('shortPickConfirm')">
+            <label :for="`sp-reason-${r.id}`">Lý do hoàn tiền</label>
+            <input :id="`sp-reason-${r.id}`" v-model="sp[r.id].reason" class="ops-input" autocomplete="off" data-testid="sp-reason" />
+            <div class="ops-actions">
+              <button class="ops-btn ops-btn-primary" :disabled="sp[r.id].loading || !sp[r.id].summary.orders" data-testid="sp-confirm" @click="spConfirm(r)">Xác nhận hoàn tiền</button>
+            </div>
+          </template>
+          <p v-else class="ops-muted">Chỉ mua hàng hoặc admin xác nhận hoàn tiền.</p>
+        </template>
+        <p v-if="sp[r.id].msg" :class="sp[r.id].kind === 'done' ? 'ops-ok' : 'ops-error'" role="status" data-testid="sp-msg">{{ sp[r.id].msg }}</p>
+      </section>
       <div v-if="!r.pending && r.status === 'open'" class="ops-actions">
         <button class="ops-btn" @click="apply('closeShortage', { id: r.id })">Đóng báo cáo</button>
       </div>
@@ -106,22 +136,27 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { api } from '../../../shared/api';
 import { fmt } from '../../../shared/utils/formatters';
 import { fmtDay, fmtDeadline } from '../../../shared/utils/time';
-import { nextDailyId } from '../../../shared/domain/factory';
-import { ctx } from '../../session';
+import { DAMAGE_LEVEL_STEPS, damageLevelLabel, nextDailyId } from '../../../shared/domain/factory';
+import { can, ctx } from '../../session';
+import { confirmOutcome, previewSummary, shortageGramsOf } from '../../shortPickFlow';
+import { photoSrc } from '../../../shared/api/uploads';
 import { apply, clientNow, hasUnsent, onQueueChange, online, submit as submitCall } from '../../queue';
 import { catalog, factory, selDay, slotLabel, zoneName } from '../../factoryStore';
 import { shortDay } from '../../format';
 import PhotoInput from '../../components/PhotoInput.vue';
+import PhotoThumbnail from '../../components/PhotoThumbnail.vue';
 
 const key = ref('');
 const qty = ref('');
 const unit = ref('bag');
 const kind = ref('short');
+const damagePct = ref(null); // chọn theo thang DAMAGE_LEVEL_STEPS, không nhập tay
 const photo = ref('');
 const note = ref('');
 const error = ref('');
 const impacts = reactive({});
 const choice = reactive({});
+const sp = reactive({});
 
 const itemOptions = computed(() => (catalog.value ? Object.values(catalog.value.items).filter((i) => !i.hub) : []));
 const nameOf = (k) => (catalog.value && catalog.value.items[k] ? catalog.value.items[k].name : k);
@@ -140,15 +175,20 @@ function submit() {
   if (!key.value) return (error.value = 'Chọn mặt hàng.');
   if (!(n > 0)) return (error.value = 'Nhập số lượng lớn hơn 0.');
   if (unit.value === 'bag' && !Number.isInteger(n)) return (error.value = 'Số túi phải là số nguyên.');
+  if (kind.value === 'damaged' && damagePct.value === null) return (error.value = 'Chọn mức độ hỏng.');
   if (kind.value === 'damaged' && !photo.value) return (error.value = 'Hàng hỏng cần 1 ảnh.');
   if (!selDay.value) return (error.value = 'Chưa có ngày giao đã chốt.');
   const at = clientNow();
   const id = nextDailyId('SH', factory.value.shortages.map((s) => s.id), at);
-  apply('shortage', { at, id, key: key.value, qty: n, unit: unit.value, kind: kind.value, note: note.value.trim(), photo: photo.value || null, day: selDay.value });
+  const damaged = kind.value === 'damaged';
+  // Mức hỏng vẫn gửi dạng số %; đồng thời ghi vào ghi chú để không mất nếu máy chủ chưa lưu trường riêng.
+  const noteText = [damaged ? `Mức hỏng ${damageLevelLabel(damagePct.value)}` : '', note.value.trim()].filter(Boolean).join('. ');
+  apply('shortage', { at, id, key: key.value, qty: n, unit: unit.value, kind: kind.value, note: noteText, photo: photo.value || null, day: selDay.value, ...(damaged ? { damagePct: damagePct.value } : {}) });
   key.value = '';
   qty.value = '';
   photo.value = '';
   note.value = '';
+  damagePct.value = null;
 }
 
 // Đơn bị ảnh hưởng của một báo cáo, mỗi dòng là một món cần thay
@@ -169,17 +209,70 @@ function rowsOf(r) {
   return out;
 }
 
-function refresh() {
+async function refresh() {
   if (!online.value) return;
   for (const r of reports.value) {
+    if (!sp[r.id]) sp[r.id] = { loading: false, preview: null, summary: null, reason: '', msg: '', kind: '' };
     if (r.pending) continue;
     try {
-      const im = api.ops.factory.impact(ctx.value, r.id);
+      const im = await api.ops.factory.impact(ctx.value, r.id);
       impacts[r.id] = im;
       for (const row of rowsOf(r)) if (!(row.k in choice) || !row.options.some((o) => o.dishId === choice[row.k])) choice[row.k] = row.suggested;
     } catch (e) {
       impacts[r.id] = { error: e.message };
     }
+  }
+}
+
+// ---- Hoàn tiền thiếu hàng loạt (rule 6): xem trước -> xác nhận bằng mã băm của bản xem trước ----
+const spGrams = (r) => shortageGramsOf(r, catalog.value && catalog.value.items[r.key]);
+const spBody = (r) => ({ date: r.day, skuId: r.key, shortageG: spGrams(r) });
+
+async function spPreview(r) {
+  const st = sp[r.id];
+  st.loading = true;
+  st.msg = '';
+  try {
+    st.preview = await api.ops.shortPick.preview(ctx.value, spBody(r));
+    st.summary = previewSummary(st.preview);
+  } catch (e) {
+    st.preview = null;
+    st.summary = null;
+    st.kind = 'error';
+    st.msg = confirmOutcome(e).message;
+  } finally {
+    st.loading = false;
+  }
+}
+
+async function spConfirm(r) {
+  const st = sp[r.id];
+  if (!st.preview) return;
+  if (!st.reason.trim()) {
+    st.kind = 'error';
+    st.msg = 'Nhập lý do hoàn tiền.';
+    return;
+  }
+  st.loading = true;
+  st.msg = '';
+  try {
+    const out = await api.ops.shortPick.confirm(ctx.value, { ...spBody(r), previewHash: st.preview.preview_hash, reason: st.reason.trim() });
+    st.kind = 'done';
+    st.msg = `${out.replayed ? 'Đã hoàn từ trước: ' : 'Đã hoàn '}${out.orders.length} đơn, tổng ${fmt(out.total_vnd)}.`;
+    st.preview = null;
+    st.summary = null;
+  } catch (e) {
+    const o = confirmOutcome(e);
+    st.kind = o.kind;
+    st.msg = o.message;
+    // Bản xem trước đã cũ: tải lại ngay để người duyệt thấy số mới trước khi xác nhận lại
+    if (o.kind === 'stale') {
+      await spPreview(r);
+      st.kind = 'stale';
+      st.msg = o.message;
+    }
+  } finally {
+    st.loading = false;
   }
 }
 

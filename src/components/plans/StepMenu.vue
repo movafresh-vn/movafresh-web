@@ -3,7 +3,7 @@
     <header class="m-head">
       <h1 class="pl-h1">Bếp trưởng lên thực đơn trước</h1>
       <p class="pl-lead">
-        Đồng ý gửi câu trả lời khảo sát để Bếp trưởng chọn món trong danh mục MOVA. Nếu AI chưa sẵn sàng hoặc thiếu món, MOVA vẫn có thực đơn gợi ý theo khảo sát.
+        Đồng ý chia sẻ thông tin khảo sát để Bếp trưởng MOVA chọn món trong danh mục thực đơn. Nếu dịch vụ chưa sẵn sàng hoặc thiếu món, MOVA vẫn luôn có thực đơn gợi ý cân đối theo khảo sát.
       </p>
     </header>
 
@@ -18,14 +18,14 @@
     <p v-if="fallbackNotice" class="menu-fallback" role="status">{{ fallbackNotice }}</p>
     <p v-if="store.error" class="pl-error" role="alert">{{ store.error }}</p>
     <p v-if="!menuReady && !store.error" class="menu-gate" role="status">
-      Menu món ăn và giá đang ẩn. Hãy nhờ Bếp trưởng tạo thực đơn trước khi tiếp tục.
+      Thực đơn chi tiết đang chờ xếp món. Hãy nhờ Bếp trưởng gợi ý thực đơn trước khi tiếp tục.
     </p>
 
     <template v-if="menuReady && plan">
       <header class="m-head">
         <h2 class="pl-h1">Thực đơn tuần 1 của bạn</h2>
         <p class="pl-lead">
-          {{ fallbackNotice ? 'MOVA gợi ý' : 'Bếp trưởng đã chọn' }} {{ plan.meals_per_week }} bữa cho {{ plan.household_size }} người từ danh mục MOVA. Bạn có thể đổi món trước khi thanh toán.
+          {{ fallbackNotice ? 'MOVA gợi ý' : 'Bếp trưởng MOVA đã chọn' }} {{ plan.meals_per_week }} bữa cho {{ plan.household_size }} người từ danh mục đặc sản. Bạn có thể đổi món linh hoạt trước khi thanh toán.
         </p>
       </header>
 
@@ -65,6 +65,25 @@
         </section>
       </div>
 
+      <!-- Add-on đồ Tết: chỉ hiện khi chiến dịch đang chạy. GIÁ LÀ GIẢ ĐỊNH (xem campaign.js), chưa có đường thu tiền add-on ở backend. -->
+      <section v-if="addons.length" class="pl-card addons" data-testid="tet-addons" aria-label="Đồ Tết bán kèm">
+        <h2 class="pl-h2">Đồ Tết bán kèm</h2>
+        <p class="pl-note">Chọn món bạn quan tâm, MOVA xác nhận giá và cách thanh toán khi chiến dịch Tết chạy. Giá dưới đây là giá dự kiến.</p>
+        <ul class="addon-list">
+          <li v-for="a in addons" :key="a.id">
+            <label class="addon" :class="{ on: store.checkout.addons.includes(a.id) }">
+              <input type="checkbox" :checked="store.checkout.addons.includes(a.id)" @change="onAddon(a.id)" />
+              <span class="addon-name">{{ a.name }} <small class="muted">({{ a.unit }})</small></span>
+              <span class="num addon-price">~{{ fmt(a.priceVnd) }} <small class="muted">dự kiến</small></span>
+            </label>
+          </li>
+        </ul>
+      </section>
+
+      <p v-if="store.checkout.lockMenu" class="pl-panel good" role="status" data-testid="lock-menu-on">
+        Bạn đã chọn chốt món theo ưu đãi chiến dịch. <button type="button" class="link-btn" @click="onLockMenu(false)">Bỏ chốt món</button>
+      </p>
+
       <div class="cta">
         <div class="cta-sum">
           <small>Gói {{ plan.quote.weeks }} tuần trị giá {{ fmt(plan.quote.package_value_vnd) }}</small>
@@ -78,11 +97,14 @@
       </div>
     </template>
     <div v-else-if="!plan" class="pl-card">Đang tải hồ sơ khảo sát...</div>
+
+    <!-- Popup món theo nguyên liệu mùa + ưu đãi chốt món 72h: chỉ mở khi chiến dịch đang chạy, mỗi phiên một lần -->
+    <SeasonalOfferModal v-if="offerOpen" :picks="seasonalPicks" @accept="onLockMenu(true)" @decline="closeOffer" @close="closeOffer" />
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import MealCard from './MealCard.vue';
 import PriceBlock from './PriceBlock.vue';
 import ValueQuestions from './ValueQuestions.vue';
@@ -92,6 +114,9 @@ import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
 import { useMovaStore } from '../../stores/useMovaStore';
 import { trackAiEvents } from '../../services/aiApi';
 import { fmt } from '../../shared/utils/formatters';
+import SeasonalOfferModal from '../modals/SeasonalOfferModal.vue';
+import { DISHES, SKUS } from '../../shared/data/catalog';
+import { campaignActive, seasonalDishes, tetAddons, toggleAddon } from '../../shared/domain/campaign';
 
 defineEmits(['next']);
 const store = usePlanFlowStore();
@@ -101,28 +126,67 @@ const assistant = ref(null);
 const hasAiConfig = Boolean(import.meta.env.VITE_API_BASE_URL);
 const menuReady = ref(store.chefMenuApplied || !hasAiConfig);
 const fallbackNotice = ref(!store.chefMenuApplied && !hasAiConfig
-  ? 'Trợ lý Bếp trưởng chưa được cấu hình; đang dùng thực đơn MOVA gợi ý theo khảo sát.'
+  ? 'Dịch vụ Bếp trưởng chưa được cấu hình; đang dùng thực đơn MOVA gợi ý theo khảo sát.'
   : '');
 const behaviorTrackingEnabled = ref(false);
 const trackedSwapCount = ref(0);
 
-function useSuggestedMenu(reason = 'Bếp trưởng chưa tạo được thực đơn đầy đủ; đang dùng thực đơn MOVA gợi ý theo khảo sát.') {
-  if (!store.useSuggestedMenu()) return;
+// Chiến dịch (mặc định tắt): add-on Tết và popup chốt món chỉ hiện khi máy chủ/cấu hình báo chiến dịch đang chạy.
+const campaignOn = computed(() => campaignActive({ plan: store.plan, preview: store.preview }));
+const addons = computed(() => tetAddons(campaignOn.value));
+const seasonalPicks = computed(() => seasonalDishes(DISHES, new Date().getMonth() + 1, { skus: SKUS }));
+const OFFER_SEEN = 'mova_seasonal_offer_seen';
+const offerOpen = ref(false);
+
+function offerSeen() {
+  try {
+    return sessionStorage.getItem(OFFER_SEEN) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function closeOffer() {
+  offerOpen.value = false;
+  try {
+    sessionStorage.setItem(OFFER_SEEN, '1');
+  } catch {
+    // bỏ qua
+  }
+}
+
+function onLockMenu(on) {
+  store.checkout.lockMenu = on;
+  store.persist();
+  closeOffer();
+}
+
+function onAddon(id) {
+  store.checkout.addons = toggleAddon(store.checkout.addons || [], id);
+  store.persist();
+}
+
+watch([campaignOn, menuReady], ([on, ready]) => {
+  if (on && ready && plan.value && !offerSeen()) offerOpen.value = true;
+}, { immediate: true });
+
+async function useSuggestedMenu(reason = 'Bếp trưởng chưa tạo được thực đơn đầy đủ; đang dùng thực đơn MOVA gợi ý theo khảo sát.') {
+  if (!(await store.useSuggestedMenu())) return;
   menuReady.value = true;
   fallbackNotice.value = reason;
 }
 
-function applyChefMenu(chefPlan) {
+async function applyChefMenu(chefPlan) {
   store.error = '';
   menuReady.value = false;
   store.setChefMenuApplied(false);
 
   if (!plan.value || !Array.isArray(chefPlan?.meals) || chefPlan.meals.length !== plan.value.meals.length) {
-    useSuggestedMenu('Bếp trưởng chưa tạo đủ số bữa an toàn; đang dùng thực đơn MOVA gợi ý theo khảo sát.');
+    await useSuggestedMenu('Bếp trưởng chưa tạo đủ số bữa an toàn; đang dùng thực đơn MOVA gợi ý theo khảo sát.');
     return;
   }
   if (!chefPlan.meals.every((meal, index) => meal?.meal_index === plan.value.meals[index].meal_index)) {
-    useSuggestedMenu('Kết quả Bếp trưởng chưa khớp với thực đơn MOVA; đang dùng thực đơn gợi ý theo khảo sát.');
+    await useSuggestedMenu('Kết quả Bếp trưởng chưa khớp với thực đơn MOVA; đang dùng thực đơn gợi ý theo khảo sát.');
     return;
   }
 
@@ -137,9 +201,9 @@ function applyChefMenu(chefPlan) {
       dessert: meal.meal_structure?.dessert?.dish_id
     }
   }));
-  if (!store.applyChefMenu(meals)) {
+  if (!(await store.applyChefMenu(meals))) {
     const reason = store.error || 'Món Bếp trưởng chọn chưa khớp danh mục MOVA.';
-    useSuggestedMenu(`${reason} Đang dùng thực đơn MOVA gợi ý theo khảo sát.`);
+    await useSuggestedMenu(`${reason} Đang dùng thực đơn MOVA gợi ý theo khảo sát.`);
     return;
   }
   fallbackNotice.value = '';
@@ -150,7 +214,7 @@ async function onSwap(mealIndex, kind, dishId) {
   const meal = plan.value?.meals.find((item) => item.meal_index === mealIndex);
   const partName = { protein: 'protein_dish', veg: 'veggie_dish', soup: 'soup_dish', carb: 'carb_dish' }[kind];
   const previousDishId = partName ? meal?.meal_structure?.[partName]?.dish_id : null;
-  const changed = store.swap(mealIndex, kind, dishId);
+  const changed = await store.swap(mealIndex, kind, dishId);
   if (!changed || !behaviorTrackingEnabled.value || !previousDishId || previousDishId === dishId) return;
 
   try {
@@ -188,6 +252,13 @@ const staples = computed(() => {
 
 <style scoped>
 .m-head { margin-bottom: 14px; }
+.addons { display: grid; gap: 10px; margin-top: 16px; }
+.addon-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.addon { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 12px; }
+.addon.on { border-color: var(--green); background: var(--green-soft); }
+.addon-name { flex: 1; }
+.addon-price { font-weight: 700; }
+.link-btn { background: none; border: 0; padding: 0; font: inherit; text-decoration: underline; cursor: pointer; color: inherit; }
 .menu-gate { margin: 18px 0 0; padding: 14px 18px; border-radius: 12px; background: var(--green-soft); color: var(--green-d); }
 .menu-fallback { margin: 18px 0 0; padding: 14px 18px; border-radius: 12px; background: var(--green-soft); color: var(--green-d); }
 .m-grid {

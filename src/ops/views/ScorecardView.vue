@@ -3,7 +3,7 @@
     <h1>Giám sát nhà cung cấp</h1>
     <p class="ops-muted fin-note">
       Thẻ điểm tính từ PO, phiếu nhập và khiếu nại: giao đúng hạn, tỷ lệ đáp ứng PO, tỷ lệ đạt QC, chênh khối lượng, vượt nhiệt, khiếu nại. Điểm tổng 0–100 là bình quân có trọng số
-      (chỉ các chỉ số đã có dữ liệu); dưới {{ data ? data.warnBelow : 80 }} thì cảnh báo. Chênh giá so với thị trường (dữ liệu mock của pricing agent) chỉ để xem, không vào điểm.
+      (chỉ các chỉ số đã có dữ liệu); dưới {{ data ? data.warnBelow : 80 }} thì cảnh báo. Chênh giá so với thị trường chỉ để xem, không vào điểm.
     </p>
     <p v-if="error" class="ops-error" role="alert">{{ error }}</p>
     <div class="fin-tools">
@@ -55,6 +55,7 @@ import { fmt } from '../../shared/utils/formatters';
 import { pct } from '../format';
 import { ctx } from '../session';
 import { useLive } from '../useLive';
+import { financeError } from '../financeUi';
 
 const LABEL = { onTime: 'đúng hạn', fill: 'đáp ứng', qc: 'QC', weight: 'khối lượng', temp: 'nhiệt độ', claims: 'khiếu nại' };
 const data = ref(null);
@@ -64,12 +65,12 @@ const to = ref('');
 
 const issues = computed(() => (data.value ? data.value.rows.flatMap((r) => r.issues.map((i) => ({ ...i, supplier: r.name }))) : []));
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.monitoring.scorecard(ctx.value, { from: from.value || null, to: to.value || null });
+    data.value = await api.ops.monitoring.scorecard(ctx.value, { from: from.value || null, to: to.value || null });
     error.value = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 useLive(load, { every: 10000 });

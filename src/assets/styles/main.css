@@ -1,22 +1,10 @@
+@import "./tokens.css";
+
+/* Tên token cũ ánh xạ sang tokens.css (nguồn duy nhất); 869 chỗ dùng var(--…) không phải sửa. */
 :root {
-  --bg: #FAF9F5;
-  --card: #FFFFFF;
-  --line: #E6E2D6;
-  --line-2: #EFEBE0;
-  --ink: #1E241D;
-  --muted: #626B60;
-  --green: #146C43;
-  --green-d: #0F5534;
-  --green-soft: #E4F0E8;
-  --orange: #D9531E;
-  --orange-soft: #FCEDE4;
-  --orange-ink: #A33C12;
-  --wood: #E9D9BF;
-  --butter: #FBF1D6;
-  --red: #B3261E;
-  --blue: #1D6FA5;
-  --blue-soft: #E5F2FB;
-  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --bg: var(--cream);
+  --card: var(--white);
+  --ink: var(--brown);
   color-scheme: light;
   box-sizing: border-box;
 }
@@ -109,23 +97,23 @@ a {
 }
 
 .btn.primary {
-  background: var(--green);
-  border-color: var(--green);
-  color: #fff;
+  background: var(--green-d);
+  border-color: var(--green-d);
+  color: var(--white);
 }
 
 .btn.primary:hover {
-  background: var(--green-d);
+  background: var(--green-dd);
 }
 
 .btn.orange {
-  background: var(--orange);
-  border-color: var(--orange);
-  color: #fff;
+  background: var(--red-orange-d);
+  border-color: var(--red-orange-d);
+  color: var(--white);
 }
 
 .btn.orange:hover {
-  background: #BF4414;
+  background: var(--red-orange-dd);
 }
 
 .btn.sm {
@@ -137,7 +125,7 @@ a {
 .btn.ghost {
   background: none;
   border-color: transparent;
-  color: var(--green);
+  color: var(--green-d);
   padding-left: 4px;
   padding-right: 4px;
 }
@@ -235,7 +223,7 @@ a {
 }
 
 .tag.spicy {
-  background: #FBE5E2;
+  background: var(--red-soft);
   color: var(--red);
 }
 
@@ -292,7 +280,7 @@ a {
   height: 34px;
   border: 0;
   background: var(--card);
-  color: var(--green);
+  color: var(--green-d);
   font-size: 17px;
   font-weight: 700;
 }
@@ -343,7 +331,7 @@ a {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(30, 25, 15, .5);
+  background: rgba(84, 63, 24, .5);
   display: grid;
   place-items: center;
   padding: 16px;
@@ -381,8 +369,8 @@ a {
 
 /* OKHEAD CSS CHO MODAL THÀNH CÔNG (BUG 1 FIX) */
 .okhead {
-  background: var(--green);
-  color: #fff;
+  background: var(--green-d);
+  color: var(--white);
   padding: 22px 24px;
   border-radius: 22px 22px 0 0;
   position: relative;
@@ -460,8 +448,8 @@ a {
 .pay .badge {
   font-size: 11px;
   font-weight: 700;
-  color: #fff;
-  background: var(--orange);
+  color: var(--white);
+  background: var(--red-orange-d);
   border-radius: 999px;
   padding: 3px 8px;
   white-space: nowrap;

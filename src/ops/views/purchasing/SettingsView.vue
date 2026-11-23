@@ -41,9 +41,9 @@ const msg = ref('');
 const form = reactive({ statementTemplate: 'internal', customTitle: '', customNote: '' });
 let loaded = false;
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.procurement.settings(ctx.value);
+    data.value = await api.ops.procurement.settings(ctx.value);
     if (!loaded) {
       Object.assign(form, data.value.settings);
       loaded = true;
@@ -55,10 +55,10 @@ function load() {
 }
 useLive(load, { every: 0 });
 
-function save() {
+async function save() {
   msg.value = '';
   try {
-    api.ops.procurement.saveSettings(ctx.value, { ...form });
+    await api.ops.procurement.saveSettings(ctx.value, { ...form });
     msg.value = 'Đã lưu mẫu bảng kê thu mua.';
     error.value = '';
   } catch (e) {

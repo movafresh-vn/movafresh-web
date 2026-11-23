@@ -84,6 +84,7 @@ import { fmt } from '../../../shared/utils/formatters';
 import { dm, pct, signedVnd } from '../../format';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
+import { financeError } from '../../financeUi';
 
 const blocks = [
   { id: 'weeks', title: 'Theo tuần (các tuần thường)', head: 'Tuần' },
@@ -98,18 +99,27 @@ const to = ref('');
 
 const tone = (p) => (p == null ? '' : p < 0.2 ? 'bad' : 'ok');
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.finance.margins(ctx.value, { from: from.value || null, to: to.value || null });
-    if (detail.value) detail.value = api.ops.finance.boxCost(ctx.value, detail.value.orderId);
+    data.value = await api.ops.finance.margins(ctx.value, { from: from.value || null, to: to.value || null });
+    if (detail.value) detail.value = await api.ops.finance.boxCost(ctx.value, detail.value.orderId);
     error.value = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 useLive(load, { every: 10000 });
 
-function open(orderId) {
-  detail.value = detail.value && detail.value.orderId === orderId ? null : api.ops.finance.boxCost(ctx.value, orderId);
+async function open(orderId) {
+  if (detail.value && detail.value.orderId === orderId) {
+    detail.value = null;
+    return;
+  }
+  try {
+    detail.value = await api.ops.finance.boxCost(ctx.value, orderId);
+    error.value = '';
+  } catch (e) {
+    error.value = financeError(e);
+  }
 }
 </script>

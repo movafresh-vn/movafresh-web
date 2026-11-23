@@ -38,7 +38,7 @@
               <thead><tr><th>Mã khách</th><th class="r">Tiền thật</th><th class="r">Khuyến mãi</th></tr></thead>
               <tbody>
                 <tr v-for="c in sum.customers" :key="c.customerId" class="row-click" :class="{ 'row-on': customerId === c.customerId }" :data-customer="c.customerId" tabindex="0" @click="pick(c.customerId)" @keydown.enter="pick(c.customerId)">
-                  <td class="mono">{{ c.customerId }}</td><td class="r">{{ fmt(c.realVnd) }}</td><td class="r">{{ fmt(c.promoVnd) }}</td>
+                  <td class="mono" :title="c.customerId">{{ c.customerCode || c.customerId }}</td><td class="r">{{ fmt(c.realVnd) }}</td><td class="r">{{ fmt(c.promoVnd) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -49,7 +49,7 @@
           <h2>Điều chỉnh Fresh Credit</h2>
           <p class="ops-muted">Kế toán đề nghị, <strong>admin duyệt</strong> thì mới đổi số dư và ghi bút. Người đề nghị không tự duyệt.</p>
           <form v-if="adj && adj.canRequest" class="fin-tools" novalidate @submit.prevent="request">
-            <div><label for="a-c">Mã khách</label><input id="a-c" v-model.trim="form.customerId" class="ops-input" placeholder="C-0001" data-testid="adj-customer" /></div>
+            <div><label for="a-c">Mã khách</label><input id="a-c" v-model.trim="form.customerId" class="ops-input" placeholder="bấm một khách ở bảng bên" data-testid="adj-customer" /></div>
             <div>
               <label for="a-b">Ngăn</label>
               <select id="a-b" v-model="form.bucket" class="ops-input" data-testid="adj-bucket"><option value="real">Tiền thật</option><option value="promo">Khuyến mãi</option></select>
@@ -123,6 +123,7 @@ import { fmtDeadline } from '../../../shared/utils/time';
 import { signedVnd } from '../../format';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
+import { financeError } from '../../financeUi';
 
 const STATUS = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' };
 const sum = ref(null);
@@ -139,14 +140,13 @@ const cls = (n) => (n > 0 ? 'fin-pos' : n < 0 ? 'fin-neg' : '');
 const orderText = computed(() => (sum.value ? sum.value.spendOrder.map((b) => (b === 'real' ? 'tiền thật' : 'khuyến mãi')).join(' trước, rồi ') : ''));
 const groupLabel = computed(() => ((sum.value && sum.value.groupList.find((g) => g.id === group.value)) || {}).label || '');
 
-function load() {
+async function load() {
   try {
-    sum.value = api.ops.finance.creditSummary(ctx.value);
-    adj.value = api.ops.finance.adjustments(ctx.value);
-    ledger.value = api.ops.finance.creditLedger(ctx.value, { customerId: customerId.value, group: group.value, limit: 120 });
+    const q = { customerId: customerId.value, group: group.value, limit: 120 };
+    [sum.value, adj.value, ledger.value] = await Promise.all([api.ops.finance.creditSummary(ctx.value), api.ops.finance.adjustments(ctx.value), api.ops.finance.creditLedger(ctx.value, q)]);
     error.value = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 useLive(load, { every: 8000 });
@@ -155,29 +155,29 @@ const setGroup = (id) => { group.value = group.value === id ? null : id; load();
 const pick = (id) => { customerId.value = customerId.value === id ? null : id; if (customerId.value) form.customerId = customerId.value; load(); };
 const clear = () => { group.value = null; customerId.value = null; load(); };
 
-function request() {
+async function request() {
   msg.value = '';
   adjError.value = '';
   try {
-    const a = api.ops.finance.requestAdjustment(ctx.value, { customerId: form.customerId, bucket: form.bucket, deltaVnd: Number(form.deltaVnd), reason: form.reason });
+    const a = await api.ops.finance.requestAdjustment(ctx.value, { customerId: form.customerId, bucket: form.bucket, deltaVnd: Number(form.deltaVnd), reason: form.reason });
     msg.value = `Đã gửi đề nghị ${a.id}, chờ admin duyệt.`;
     form.reason = '';
     form.deltaVnd = 0;
   } catch (e) {
-    adjError.value = e.message;
+    adjError.value = financeError(e);
   }
-  load();
+  await load();
 }
 
-function decide(a, approve) {
+async function decide(a, approve) {
   msg.value = '';
   adjError.value = '';
   try {
-    api.ops.finance.decideAdjustment(ctx.value, { id: a.id, approve });
+    await api.ops.finance.decideAdjustment(ctx.value, { id: a.id, approve });
     msg.value = approve ? `Đã duyệt ${a.id}: số dư và sổ đã cập nhật.` : `Đã từ chối ${a.id}.`;
   } catch (e) {
-    adjError.value = e.message;
+    adjError.value = financeError(e);
   }
-  load();
+  await load();
 }
 </script>

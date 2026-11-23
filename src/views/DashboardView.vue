@@ -2,14 +2,25 @@
   <div class="dash-view">
     <div class="wrap">
       <!-- Chưa có khách: mời đăng nhập hoặc thiết kế gói -->
-      <section v-if="store.loaded && !store.isLoggedIn" class="pl-card gate">
+      <BaseCard v-if="store.loaded && !store.hasMovaSession" tag="section" class="gate">
         <h1 class="pl-h1">Gói của tôi</h1>
         <p class="pl-lead">Đăng nhập bằng số điện thoại đã dùng khi đăng ký để xem các tuần giao, đổi món và Fresh Credit.</p>
         <div class="gate-btns">
-          <button class="pl-btn primary" type="button" @click="store.openModal('login')">Đăng nhập</button>
-          <router-link to="/plans" class="pl-btn">Thiết kế thực đơn và đăng ký gói</router-link>
+          <BaseButton @click="store.openModal('login')">Đăng nhập</BaseButton>
+          <BaseButton tag="router-link" to="/plans" variant="secondary">Thiết kế thực đơn và đăng ký gói</BaseButton>
         </div>
-      </section>
+      </BaseCard>
+
+      <!-- Đã đăng nhập nhưng chưa có gói ăn/hồ sơ (tài khoản mới) -->
+      <BaseCard v-else-if="store.loaded && !store.account" tag="section" class="gate">
+        <h1 class="pl-h1">Gói của tôi</h1>
+        <p class="pl-lead">
+          Tài khoản <b>{{ store.authUser?.phone || store.authUser?.email || 'của bạn' }}</b> chưa có gói ăn hoặc thực đơn nào.
+        </p>
+        <div class="gate-btns">
+          <BaseButton tag="router-link" to="/plans">Thiết kế thực đơn và đăng ký gói</BaseButton>
+        </div>
+      </BaseCard>
 
       <template v-else-if="store.isLoggedIn">
         <DashHeader @tab="setTab" />
@@ -37,7 +48,6 @@
           <ProfileTab v-else />
         </div>
 
-        <DemoTools v-if="demo" />
       </template>
     </div>
   </div>
@@ -48,12 +58,13 @@ import { computed, ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMovaStore } from '../stores/useMovaStore';
 import { fmt } from '../shared/utils/formatters';
+import BaseButton from '../components/ui/BaseButton.vue';
+import BaseCard from '../components/ui/BaseCard.vue';
 import DashHeader from '../components/dashboard/DashHeader.vue';
 import WeeksTab from '../components/dashboard/WeeksTab.vue';
 import CreditTab from '../components/dashboard/CreditTab.vue';
 import RewardsTab from '../components/dashboard/RewardsTab.vue';
 import ProfileTab from '../components/dashboard/ProfileTab.vue';
-import DemoTools from '../components/dashboard/DemoTools.vue';
 
 const TABS = [
   { id: 'weeks', label: 'Các tuần của tôi' },
@@ -68,7 +79,6 @@ const router = useRouter();
 
 const tab = ref(TABS.some((t) => t.id === route.query.tab) ? route.query.tab : 'weeks');
 const alert = computed(() => (store.account ? store.account.alert : null));
-const demo = computed(() => route.query.demo === '1');
 
 function setTab(id) {
   tab.value = id;
@@ -118,7 +128,7 @@ onMounted(() => {
   position: relative;
 }
 .dash-tab-btn:hover { color: var(--ink); }
-.dash-tab-btn.active { color: var(--green); font-weight: 700; }
+.dash-tab-btn.active { color: var(--green-d); font-weight: var(--fw-bold); }
 .dash-tab-btn.active::after {
   content: "";
   position: absolute;

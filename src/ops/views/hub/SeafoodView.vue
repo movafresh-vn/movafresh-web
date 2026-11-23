@@ -64,6 +64,7 @@ import { api } from '../../../shared/api';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
 import { shortDay } from '../../format';
+import { logisticsError } from '../../logisticsUi';
 import StickerTag from '../../components/StickerTag.vue';
 
 const ARRIVAL = { waiting: 'Thùng chưa về kho phụ', missing: 'Thùng thiếu', damaged: 'Thùng hỏng', ok: 'Đã về kho phụ' };
@@ -71,12 +72,12 @@ const data = ref(null);
 const error = ref('');
 const sel = ref(null);
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.hub.seafood(ctx.value, sel.value);
+    data.value = await api.ops.hub.seafood(ctx.value, sel.value);
     sel.value = data.value.day;
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
 }
 useLive(load, { every: 7000 });
@@ -86,14 +87,14 @@ function pick(d) {
   load();
 }
 
-function act(fn) {
+async function act(fn) {
   error.value = '';
   try {
-    fn();
+    await fn();
   } catch (e) {
-    error.value = e.message;
+    error.value = logisticsError(e);
   }
-  load();
+  await load();
 }
 const tick = (o, it, count) => act(() => api.ops.hub.tickSeafood(ctx.value, { orderId: o.orderId, key: it.key, count }));
 const closeBox = (o) => act(() => api.ops.hub.closeSeafood(ctx.value, { orderId: o.orderId }));

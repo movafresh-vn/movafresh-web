@@ -1,5 +1,6 @@
 <template>
   <section class="proc">
+    <BrandLogo class="ops-logo-sm ops-noprint" variant="onWhite" :width="72" />
     <nav class="ops-subnav ops-noprint" aria-label="Kho phụ TP.HCM">
       <RouterLink v-for="t in tabs" :key="t.to" :to="t.to" class="ops-subtab" exact-active-class="active" :data-tab="t.key">{{ t.title }}</RouterLink>
       <RouterLink v-if="canBuy" to="/mua-hang" class="ops-subtab" data-tab="mua-hang">← Mua hàng</RouterLink>
@@ -16,6 +17,7 @@
 import { computed, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { session } from '../../session';
+import BrandLogo from '../../../components/common/BrandLogo.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -32,8 +34,8 @@ const ALL = [
   { key: 'recall', to: '/kho/thu-hoi', title: 'Thu hồi lô', roles: ['hub', 'purchasing', 'admin'] }
 ];
 
-const tabs = computed(() => ALL.filter((t) => t.roles.includes(session.value.role)));
-const canBuy = computed(() => ['purchasing', 'admin'].includes(session.value.role));
+const tabs = computed(() => (session.value ? ALL.filter((t) => t.roles.includes(session.value.role)) : []));
+const canBuy = computed(() => Boolean(session.value && ['purchasing', 'admin'].includes(session.value.role)));
 
 // Vai trò không có tab "Nhận hàng" (điều phối) thì vào /kho được chuyển tới tab đầu tiên của mình
 watchEffect(() => {

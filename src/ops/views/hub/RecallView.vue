@@ -116,6 +116,7 @@
           <h2>Đóng đợt thu hồi</h2>
           <form class="inline-form" novalidate @submit.prevent="close">
             <div><label for="c-note">Ghi chú kết thúc</label><input id="c-note" v-model="closeNote" class="ops-input" style="min-width: 260px" data-testid="close-note" /></div>
+            <label class="ops-check" for="c-release"><input id="c-release" v-model="releaseStock" type="checkbox" data-testid="close-release" /> Lô đã kiểm an toàn: nhả luôn tồn kho đang giữ</label>
             <button class="ops-btn" type="submit" data-testid="act-close">Đóng đợt (bỏ giữ các đơn)</button>
           </form>
         </section>
@@ -195,6 +196,8 @@ const grp = ref('');
 const form = reactive({ lotCode: route.query.lot || '', reason: '' });
 const compAmount = ref('');
 const closeNote = ref('');
+// Mặc định đóng đợt vẫn GIỮ tồn kho của lô (an toàn thực phẩm); chỉ nhả khi người đóng xác nhận lô đã an toàn.
+const releaseStock = ref(false);
 const picks = reactive({});
 const showReport = ref(false);
 const now = ref(new Date().toISOString());
@@ -205,12 +208,11 @@ const LOG = { create: 'Tạo đợt', hold: 'Giữ hàng', notify: 'Báo khách'
 const shown = computed(() => (cur.value ? cur.value.orders.filter((o) => !grp.value || o.group === grp.value) : []));
 const count = (g) => (cur.value ? cur.value.groups.find((x) => x.id === g).count : 0);
 
-function load() {
+async function load() {
   try {
-    recalls.value = api.ops.hub.recalls(ctx.value);
-    lots.value = api.ops.hub.traceLots(ctx.value);
+    [recalls.value, lots.value] = await Promise.all([api.ops.hub.recalls(ctx.value), api.ops.hub.traceLots(ctx.value)]);
     if (curId.value) {
-      cur.value = api.ops.hub.recall(ctx.value, curId.value);
+      cur.value = await api.ops.hub.recall(ctx.value, curId.value);
       for (const o of cur.value.orders) for (const h of o.suggestions) { const k = `${o.orderId}|${h.mealIndex}|${h.kind}`; if (!picks[k]) picks[k] = h.suggestedDishId; }
     }
   } catch (e) {
@@ -220,38 +222,39 @@ function load() {
 useLive(load, { every: 7000 });
 watch(() => route.query.lot, (v) => { if (v) form.lotCode = v; });
 
-function open(id) {
+async function open(id) {
   curId.value = id;
   grp.value = '';
   showReport.value = false;
   msg.value = '';
-  load();
+  await load();
 }
 
-function create() {
+async function create() {
   msg.value = '';
   error.value = '';
   try {
-    const r = api.ops.hub.createRecall(ctx.value, { lotCode: form.lotCode, reason: form.reason });
+    const r = await api.ops.hub.createRecall(ctx.value, { lotCode: form.lotCode, reason: form.reason });
     form.reason = '';
-    open(r.id);
+    await open(r.id);
     msg.value = `Đã tạo đợt thu hồi ${r.id}. Tồn kho của lô đã bị giữ, FEFO không xuất lô này nữa.`;
   } catch (e) {
     error.value = e.message;
-    if (e.recallId) open(e.recallId);
+    const dup = e && e.code === 'RECALL_EXISTS' && e.details && e.details.recallId;
+    if (dup) await open(dup);
   }
 }
 
-function act(fn, text) {
+async function act(fn, text) {
   msg.value = '';
   error.value = '';
   try {
-    const r = fn();
+    const r = await fn();
     msg.value = text(r);
   } catch (e) {
     error.value = e.message;
   }
-  load();
+  await load();
 }
 
 function swap(o, h) {
@@ -259,7 +262,7 @@ function swap(o, h) {
 }
 
 function close() {
-  act(() => api.ops.hub.closeRecall(ctx.value, { recallId: cur.value.recall.id, note: closeNote.value }), () => 'Đã đóng đợt thu hồi, các đơn hết bị giữ.');
+  act(() => api.ops.hub.closeRecall(ctx.value, { recallId: cur.value.recall.id, note: closeNote.value, releaseStock: releaseStock.value }), () => (releaseStock.value ? 'Đã đóng đợt thu hồi, các đơn hết bị giữ và tồn kho của lô được nhả.' : 'Đã đóng đợt thu hồi, các đơn hết bị giữ. Tồn kho của lô vẫn được giữ.'));
 }
 
 async function printReport() {
@@ -272,6 +275,6 @@ async function printReport() {
 
 <style scoped>
 .group-pill-not_shipped { background: var(--amber-soft); color: var(--amber); }
-.group-pill-in_transit { background: var(--sticker-blue-soft); color: #14507a; }
-.group-pill-delivered { background: #fbe4e2; color: var(--red); }
+.group-pill-in_transit { background: var(--sticker-blue-soft); color: var(--blue-ink); }
+.group-pill-delivered { background: var(--red-soft); color: var(--red); }
 </style>

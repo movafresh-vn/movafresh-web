@@ -86,11 +86,11 @@
             <template v-if="preview.delta_vnd === 0">Giá tuần không đổi.</template>
             <template v-else>Chênh lệch: <b class="big">{{ preview.delta_vnd > 0 ? '+' : '−' }}{{ fmt(Math.abs(preview.delta_vnd)) }}</b></template>
           </p>
-          <p v-if="preview.settle.mode === 'charge'" class="num">
+          <p v-if="preview.settle?.mode === 'charge'" class="num">
             Tuần này đã bị trừ tiền, nên phần chênh lệch trừ thêm vào Fresh Credit:
             còn <b>{{ fmt(preview.settle.balance_before_vnd) }}</b> → <b>{{ fmt(preview.settle.balance_after_vnd) }}</b>.
           </p>
-          <p v-else-if="preview.settle.mode === 'refund'" class="num">
+          <p v-else-if="preview.settle?.mode === 'refund'" class="num">
             Tuần này đã bị trừ tiền, nên MOVA hoàn phần chênh lệch vào Fresh Credit:
             từ <b>{{ fmt(preview.settle.balance_before_vnd) }}</b> lên <b>{{ fmt(preview.settle.balance_after_vnd) }}</b>.
           </p>
@@ -99,61 +99,28 @@
           </p>
         </div>
 
-        <p v-if="!preview.settle.enough" class="pl-error" role="alert">
+        <p v-if="preview.settle && !preview.settle.enough" class="pl-error" role="alert">
           Fresh Credit còn thiếu {{ fmt(preview.settle.short_vnd) }} cho phần chênh lệch này. Nạp thêm rồi đổi lại, hoặc chọn món khác.
         </p>
         <p v-if="error" class="pl-error" role="alert">{{ error }}</p>
 
         <div class="btns">
-          <button v-if="preview.settle.enough" class="pl-btn primary" type="button" :disabled="busy" @click="confirm">Xác nhận đổi món</button>
+          <button v-if="!preview.settle || preview.settle.enough" class="pl-btn primary" type="button" :disabled="busy" @click="confirm">Xác nhận đổi món</button>
           <button v-else class="pl-btn orange" type="button" @click="topup">Nạp thêm Fresh Credit</button>
           <button class="pl-btn" type="button" @click="preview = null">Chọn món khác</button>
         </div>
       </template>
 
-      <!-- Mini Modal Chi tiết món -->
-      <div v-if="selectedDishDetail" class="sub-modal" @click.self="selectedDishDetail = null">
-        <div class="sub-modal-box">
-          <button class="mclose" type="button" @click="selectedDishDetail = null">×</button>
-          <div class="detail-header">
-            <span class="terroir-pill">📍 Vùng nguyên liệu: {{ selectedDishDetail.terroir_region || selectedDishDetail.terroir || 'Đắk Lắk' }}</span>
-            <h3 class="detail-name">{{ selectedDishDetail.name }}</h3>
-          </div>
-
-          <div v-if="selectedDishDetail.terroir_story" class="detail-story">
-            <p>🌿 {{ selectedDishDetail.terroir_story }}</p>
-            <p v-if="selectedDishDetail.chef_note" class="chef-note">
-              <b>👨‍🍳 Đầu bếp MOVA:</b> {{ selectedDishDetail.chef_note }}
-            </p>
-          </div>
-
-          <div class="detail-section">
-            <b>⚖️ Định lượng &amp; Quy cách:</b>
-            <p class="spec-line">{{ selectedDishDetail.portion_specs?.size_detail || selectedDishDetail.spec }}</p>
-            <p v-if="selectedDishDetail.portion_specs?.storage_guide" class="storage-line">
-              {{ selectedDishDetail.portion_specs.storage_guide }}
-            </p>
-          </div>
-
-          <div class="nutri-bar">
-            <span><b>{{ selectedDishDetail.nutrition_per_serving?.calories || selectedDishDetail.nutrition?.kcal || 0 }}</b> kcal</span> ·
-            <span>Đạm: <b>{{ selectedDishDetail.nutrition_per_serving?.protein_g || selectedDishDetail.nutrition?.protein || 0 }}g</b></span> ·
-            <span>Carb: <b>{{ selectedDishDetail.nutrition_per_serving?.carbs_g || selectedDishDetail.nutrition?.carb || 0 }}g</b></span> ·
-            <span>Béo: <b>{{ selectedDishDetail.nutrition_per_serving?.fat_g || selectedDishDetail.nutrition?.fat || 0 }}g</b></span>
-          </div>
-
-          <div v-if="detailSteps.length" class="detail-steps">
-            <b>⏱️ 3 bước nấu nhanh (15 phút):</b>
-            <ol>
-              <li v-for="(st, idx) in detailSteps" :key="idx">{{ st }}</li>
-            </ol>
-          </div>
-
-          <div class="detail-actions">
-            <button class="pl-btn primary" type="button" @click="chooseFromDetail(selectedDishDetail)">Chọn món này</button>
-          </div>
-        </div>
-      </div>
+      <!-- Modal Chi tiết món dùng chung -->
+      <DishDetailModal
+        v-if="selectedDishDetail"
+        :dish="selectedDishDetail"
+        :household-size="target.meal.household_size || 2"
+        :show-select="true"
+        :is-current="selectedDishDetail.id === target.dish.dish_id"
+        @close="selectedDishDetail = null"
+        @select="chooseFromDetail(selectedDishDetail)"
+      />
 
       <!-- Modal Danh sách thực đơn toàn bộ nhà máy -->
       <FactoryMenuModal
@@ -170,13 +137,15 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
+import { checkoutErrorMessage } from '../../shared/domain/checkoutError';
 import { useMovaStore } from '../../stores/useMovaStore';
 import { DISHES, SKUS } from '../../shared/data/catalog';
 import { recipeFor } from '../../shared/data/recipes';
 import FactoryMenuModal from '../modals/FactoryMenuModal.vue';
+import DishDetailModal from '../modals/DishDetailModal.vue';
 
 const props = defineProps({
   week: { type: Object, required: true },
@@ -185,11 +154,19 @@ const props = defineProps({
 const emit = defineEmits(['close', 'done']);
 const store = useMovaStore();
 
-const base = { customer_id: store.customerId, week_index: props.week.week_index, meal_index: props.target.meal.meal_index, kind: props.target.dish.kind };
-const res = api.customer.mealOptions(base);
-const loadError = ref(res.status === 'error' ? res.error.message : '');
-const options = ref(res.status === 'success' ? res.data.options : []);
-const deadline = res.status === 'success' ? res.data.deadline_label : '';
+const base = { week_index: props.week.week_index, meal_index: props.target.meal.meal_index, kind: props.target.dish.kind };
+const loadError = ref('');
+const options = ref([]);
+const deadline = ref('');
+onMounted(async () => {
+  const res = await api.customer.mealOptions(base);
+  if (res.status === 'success') {
+    options.value = res.data.options;
+    deadline.value = res.data.deadline_label;
+  } else {
+    loadError.value = res.error.message;
+  }
+});
 const preview = ref(null);
 const error = ref('');
 const busy = ref(false);
@@ -198,10 +175,10 @@ const showFactoryModal = ref(false);
 const selectedDishDetail = ref(null);
 let picked = null;
 
-function onFactorySelect(dish) {
+async function onFactorySelect(dish) {
   showFactoryModal.value = false;
   const o = options.value.find((x) => x.dish_id === dish.id) || { dish_id: dish.id, name: dish.name };
-  choose(o);
+  await choose(o);
 }
 
 const deltaText = (v) => (v === 0 ? 'Cùng giá' : `${v > 0 ? '+' : '−'}${fmt(Math.abs(v))}`);
@@ -235,11 +212,11 @@ const filteredOptions = computed(() => {
   });
 });
 
-function choose(o) {
+async function choose(o) {
   error.value = '';
   picked = o;
-  const p = api.customer.previewMealChange({ ...base, dish_id: o.dish_id });
-  if (p.status === 'error') error.value = p.error.message;
+  const p = await api.customer.previewMealChange({ ...base, dish_id: o.dish_id });
+  if (p.status === 'error') error.value = checkoutErrorMessage(p.error.code, p.error.message);
   else preview.value = p.data;
 }
 
@@ -259,15 +236,16 @@ function chooseFromDetail(dish) {
   if (o) choose(o);
 }
 
-function confirm() {
+async function confirm() {
   busy.value = true;
-  const r = api.customer.changeMeal({ ...base, dish_id: picked.dish_id });
+  const r = await api.customer.changeMeal({ ...base, dish_id: picked.dish_id });
   busy.value = false;
   if (r.status === 'error') {
-    error.value = r.error.message;
+    // MENU_LOCKED: tuần đã chốt món theo ưu đãi chiến dịch nên không đổi được
+    error.value = checkoutErrorMessage(r.error.code, r.error.message);
     return;
   }
-  store.refresh();
+  await store.refresh();
   store.toast(`Đã đổi sang ${picked.name}`);
   emit('done');
 }
@@ -302,8 +280,8 @@ function topup() {
   white-space: nowrap;
 }
 .open-factory-btn:hover {
-  background: var(--green-d);
-  color: #FFFFFF;
+  background: var(--green-dd);
+  color: var(--white);
 }
 
 .cross-box {
@@ -318,7 +296,7 @@ function topup() {
 .cross-chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .sugg-chip {
   padding: 6px 8px;
-  background: #fff;
+  background: var(--white);
   border: 1px solid var(--line);
   border-radius: 8px;
   text-align: left;
@@ -342,7 +320,7 @@ function topup() {
   cursor: pointer;
   font-size: 16px;
 }
-.detail-mini-btn:hover { background: #e2e8f0; }
+.detail-mini-btn:hover { background: var(--line); }
 
 .sub-modal {
   position: absolute;
@@ -356,7 +334,7 @@ function topup() {
   z-index: 10;
 }
 .sub-modal-box {
-  background: #fff;
+  background: var(--white);
   border-radius: 16px;
   padding: 20px;
   width: 100%;
@@ -371,14 +349,14 @@ function topup() {
 .detail-header { display: grid; gap: 4px; }
 .terroir-pill { font-size: 12px; font-weight: 700; color: var(--green-d); background: var(--green-soft); padding: 2px 8px; border-radius: 6px; width: fit-content; }
 .detail-name { font-size: 18px; font-weight: 800; margin: 0; }
-.detail-story { background: #f8fafc; border-left: 3px solid var(--green); padding: 8px 10px; border-radius: 6px; font-size: 13px; line-height: 1.45; color: #334155; display: grid; gap: 4px; }
+.detail-story { background: var(--surface); border-left: 3px solid var(--green); padding: 8px 10px; border-radius: 6px; font-size: 13px; line-height: 1.45; color: var(--ink-2); display: grid; gap: 4px; }
 .detail-story p { margin: 0; }
-.chef-note { color: #0f766e; background: #f0fdfa; padding: 4px 8px; border-radius: 4px; }
+.chef-note { color: var(--green-d); background: var(--green-tint); padding: 4px 8px; border-radius: 4px; }
 .detail-section { font-size: 13px; display: grid; gap: 2px; }
 .spec-line { font-size: 13px; color: var(--muted); margin: 0; }
-.storage-line { font-size: 12px; color: #0284c7; margin: 0; }
+.storage-line { font-size: 12px; color: var(--blue); margin: 0; }
 .nutri-bar { font-size: 13px; color: var(--ink); background: var(--bg); padding: 6px 10px; border-radius: 6px; }
-.detail-steps { font-size: 13px; background: #fffbf6; border: 1px solid #fed7aa; padding: 8px 10px; border-radius: 8px; }
+.detail-steps { font-size: 13px; background: var(--amber-soft); border: 1px solid var(--amber-line); padding: 8px 10px; border-radius: 8px; }
 .detail-steps ol { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; }
 .detail-actions { margin-top: 6px; }
 </style>

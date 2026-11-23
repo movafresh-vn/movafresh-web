@@ -39,7 +39,7 @@ const weeks = BUSINESS.subscription.defaultWeeks;
 .sec-h p { color: var(--muted); font-size: 16px; margin-top: 4px; }
 .cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .cards li { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 8px; align-content: start; }
-.n { width: 40px; height: 40px; border-radius: 50%; background: var(--green); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 18px; }
+.n { width: 40px; height: 40px; border-radius: 50%; background: var(--green-d); color: var(--white); display: grid; place-items: center; font-weight: 800; font-size: 18px; }
 .cards b { font-size: 18px; }
 .cards p { font-size: 16px; color: var(--muted); }
 @media (max-width: 820px) { .cards { grid-template-columns: minmax(0, 1fr); } }

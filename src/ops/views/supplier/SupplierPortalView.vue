@@ -243,7 +243,7 @@ const cert = reactive({ type: 'attp', number: '', expiresAt: '' });
 
 const CERT_TYPES = BUSINESS.suppliers.certTypes;
 const SUPPLIER_LIST = Object.values(SUPPLIERS);
-const isAdmin = computed(() => session.value.role === 'admin');
+const isAdmin = computed(() => Boolean(session.value && session.value.role === 'admin'));
 const certType = (k) => CERT_TYPES[k] || k;
 const skuName = (k) => (SKUS[k] ? SKUS[k].name : k);
 const qty = (n) => (Math.round((n || 0) * 10) / 10).toLocaleString('vi-VN');
@@ -272,10 +272,10 @@ const tabs = computed(() => [
   { id: 'profile', label: 'Hồ sơ', badge: 0 }
 ]);
 
-function load() {
+async function load() {
   if (isAdmin.value && !asId.value) return;
   try {
-    d.value = api.ops.supplierPortal.overview(ctx.value, { asSupplierId: asId.value || null });
+    d.value = await api.ops.supplierPortal.overview(ctx.value, { asSupplierId: asId.value || null });
     for (const p of d.value.pos) {
       if (!inv[p.id] && p.canInvoice) inv[p.id] = { number: '', issuedAt: d.value.now.slice(0, 10), file: null, lines: p.lines.map((l) => ({ sku: l.sku, qty: l.qty, unitPriceVnd: l.unitPriceVnd })) };
     }
@@ -289,16 +289,16 @@ watch(() => route.query.po, (v) => { if (v) tab.value = 'po'; });
 
 const as = () => ({ asSupplierId: asId.value || null });
 
-function guard(fn, ok) {
+async function guard(fn, ok) {
   msg.value = '';
   error.value = '';
   try {
-    fn();
+    await fn();
     msg.value = ok;
   } catch (e) {
     error.value = e.message;
   }
-  load();
+  await load();
 }
 
 function setPct(p, pc) {

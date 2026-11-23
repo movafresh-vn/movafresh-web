@@ -14,7 +14,8 @@ export function networkError(message = 'Không có mạng') {
   e.code = 'NETWORK';
   return e;
 }
-export const isNetworkError = (e) => Boolean(e) && e.code === 'NETWORK';
+// 'NETWORK' là mã của hàng đợi; 'NETWORK_ERROR' là mã client HTTP (http.js) khi không tới được máy chủ.
+export const isNetworkError = (e) => Boolean(e) && (e.code === 'NETWORK' || e.code === 'NETWORK_ERROR');
 
 let seq = 0;
 /** Mã thao tác duy nhất trên máy: thời gian + bộ đếm + số ngẫu nhiên. */
@@ -77,11 +78,13 @@ export function parse(text) {
  * @param {object} p
  * @param {Array} p.items hàng đợi hiện tại
  * @param {(entry) => Promise<any>|any} p.send hàm gửi một mục; ném Error (code 'NETWORK' nếu mất mạng)
+ * @param {(entry) => Promise<object|null>|object|null} [p.prepare] chạy TRƯỚC `send`: trả `args` mới (ví dụ ảnh đã tải lên kho đổi từ data URL
+ *   sang đường dẫn) hoặc null nếu không đổi. `args` mới được ghi lại vào hàng đợi (onChange 'prepared') nên lần gửi lại không tải ảnh lần nữa.
  * @param {() => boolean} [p.isOnline] false thì không gửi gì
  * @param {(items, event) => void} [p.onChange] gọi sau mỗi mục được xử lý, với hàng đợi mới
  * @returns {Promise<{ items: Array, sent: number, failed: number, stopped: null|'offline'|'network' }>}
  */
-export async function flush({ items, send, isOnline = () => true, onChange = () => {} }) {
+export async function flush({ items, send, prepare = null, isOnline = () => true, onChange = () => {} }) {
   let current = items;
   let sent = 0;
   let failed = 0;
@@ -90,7 +93,16 @@ export async function flush({ items, send, isOnline = () => true, onChange = () 
   for (const entry of pendingOf(items)) {
     if (!isOnline()) return { items: current, sent, failed, stopped: 'offline' };
     try {
-      await send(entry);
+      let toSend = entry;
+      if (prepare) {
+        const args = await prepare(entry);
+        if (args) {
+          toSend = { ...entry, args };
+          current = current.map((i) => (i.id === entry.id ? toSend : i));
+          onChange(current, { id: entry.id, result: 'prepared' });
+        }
+      }
+      await send(toSend);
       current = removeEntry(current, entry.id);
       sent++;
       onChange(current, { id: entry.id, result: 'sent' });

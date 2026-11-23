@@ -111,7 +111,7 @@
               <button v-if="d.po.status !== 'draft'" class="ops-btn" data-testid="po-print" @click="printPo">In PO</button>
             </div>
             <div v-if="d.po.sentVia === 'link' || d.po.status === 'approved'" class="gap-top ops-noprint">
-              <p class="ops-muted tight">Link gửi nhà cung cấp (đăng nhập bằng PIN của họ):</p>
+              <p class="ops-muted tight">Link gửi nhà cung cấp (nhà cung cấp đăng nhập bằng tài khoản riêng):</p>
               <p class="link-box" data-testid="po-link">{{ link }}</p>
             </div>
             <p v-if="d.po.status === 'sent'" class="ops-muted" data-testid="po-waiting">Đã gửi {{ fmtDeadline(new Date(d.po.sentAt)) }}. Chờ nhà cung cấp xác nhận đủ hoặc thiếu.</p>
@@ -273,8 +273,9 @@
 
     <!-- Bản in PO -->
     <section v-if="showSheet && d" class="ops-card ops-print-block doc-sheet" data-testid="po-sheet">
+      <BrandLogo class="doc-logo" variant="onWhite" :width="110" />
       <h2 class="doc-title">ĐƠN ĐẶT HÀNG {{ d.po.id }}</h2>
-      <p class="doc-sub">MOVA Fresh · Ngày giao {{ fmtDay(d.po.deliveryDay) }} · Kỳ công nợ {{ d.po.termDays }} ngày</p>
+      <p class="doc-sub">MOVA FRESH · Ngày giao {{ fmtDay(d.po.deliveryDay) }} · Kỳ công nợ {{ d.po.termDays }} ngày</p>
       <p><strong>Nhà cung cấp:</strong> {{ d.po.supplierName }}<template v-if="d.supplier"> · MST {{ d.supplier.taxId || d.supplier.cccd }} · {{ d.supplier.address }}</template></p>
       <table class="doc-table">
         <thead><tr><th>Mặt hàng</th><th>Mã</th><th class="r">Số lượng</th><th class="r">Đơn giá</th><th class="r">Thành tiền</th></tr></thead>
@@ -294,6 +295,7 @@ import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../../../shared/api';
 import { BUSINESS } from '../../../shared/config/business';
+import BrandLogo from '../../../components/common/BrandLogo.vue';
 import { SKUS } from '../../../shared/data/catalog';
 import { matchIssueLabel } from '../../../shared/domain/procurement';
 import { fmt } from '../../../shared/utils/formatters';
@@ -324,7 +326,7 @@ const showSheet = ref(false);
 
 const buffer = BUSINESS.purchasing.wasteBufferPct;
 const cashLimit = BUSINESS.alerts.cashPaymentVatLimitVnd;
-const role = computed(() => session.value.role);
+const role = computed(() => (session.value ? session.value.role : ''));
 const canWrite = computed(() => ['purchasing', 'admin'].includes(role.value));
 const canPay = computed(() => ['purchasing', 'accounting', 'admin'].includes(role.value));
 const canSubstitute = computed(() => ['purchasing', 'admin'].includes(role.value));
@@ -380,14 +382,14 @@ const optionCount = (im) => im.affected.reduce((n, a) => n + a.hits.filter((h) =
 const noOptionCount = (im) => im.affected.reduce((n, a) => n + a.hits.filter((h) => !h.options.length).length, 0);
 const pickKey = (im, a, h) => `${im.shortageId}|${a.orderId}|${h.mealIndex}|${h.kind}`;
 
-function load() {
+async function load() {
   try {
-    list.value = api.ops.procurement.listPos(ctx.value);
+    list.value = await api.ops.procurement.listPos(ctx.value);
     if (!selId.value || !list.value.some((p) => p.id === selId.value)) {
       const first = shown.value[0];
       selId.value = first ? first.id : null;
     }
-    d.value = selId.value ? api.ops.procurement.getPo(ctx.value, selId.value) : null;
+    d.value = selId.value ? await api.ops.procurement.getPo(ctx.value, selId.value) : null;
     if (d.value) {
       for (const im of d.value.impacts) for (const a of im.affected) for (const h of a.hits) { const k = pickKey(im, a, h); if (!picks[k]) picks[k] = h.suggestedDishId; }
       if (!inv.issuedAt) inv.issuedAt = d.value.po.deliveryDay;
@@ -408,16 +410,18 @@ function select(id) {
   load();
 }
 
-function act(fn, okText) {
+async function act(fn, okText) {
   msg.value = '';
   error.value = '';
   try {
-    fn();
+    await fn();
     msg.value = okText;
   } catch (e) {
     error.value = e.message;
+    // Đối chiếu lệch: máy chủ trả bảng đối chiếu mới nhất trong details.match, hiện luôn để người dùng thấy dòng lệch.
+    if (e && (e.code === 'MATCH_DIFF' || e.code === 'NOTE_REQUIRED') && e.details && e.details.match && d.value) d.value = { ...d.value, match: e.details.match };
   }
-  load();
+  await load();
 }
 
 function saveQty(l) {
@@ -443,12 +447,12 @@ function apply(im, a, h) {
   act(() => api.ops.substituteDish(ctx.value, { orderId: a.orderId, mealIndex: h.mealIndex, kind: h.kind, toDishId, shortageId: im.shortageId, reason: `${d.value.po.supplierName} thiếu hàng` }), `Đã đổi món cho đơn ${a.orderId} và báo khách.`);
 }
 
-function applyAll() {
+async function applyAll() {
   let n = 0;
   error.value = '';
   for (const { im, a, h } of pendingHits.value) {
     try {
-      api.ops.substituteDish(ctx.value, { orderId: a.orderId, mealIndex: h.mealIndex, kind: h.kind, toDishId: picks[pickKey(im, a, h)], shortageId: im.shortageId, reason: `${d.value.po.supplierName} thiếu hàng` });
+      await api.ops.substituteDish(ctx.value, { orderId: a.orderId, mealIndex: h.mealIndex, kind: h.kind, toDishId: picks[pickKey(im, a, h)], shortageId: im.shortageId, reason: `${d.value.po.supplierName} thiếu hàng` });
       n += 1;
     } catch (e) {
       error.value = e.message;
@@ -471,11 +475,11 @@ function pay() {
   act(() => api.ops.procurement.payPo(ctx.value, { poId: d.value.po.id, method: payMethod.value, ref: payRef.value }), 'Đã ghi nhận thanh toán.');
 }
 
-function openInvoice() {
+// Tệp hóa đơn nằm trong kho riêng tư; máy chủ trả đường dẫn lưu (chưa có URL tải có chữ ký), nên chỉ báo đã lưu kèm tên tệp.
+async function openInvoice() {
   try {
-    const f = api.ops.procurement.invoiceFile(ctx.value, d.value.invoice.id);
-    const w = window.open();
-    if (w) w.document.write(f.type === 'application/pdf' ? `<iframe src="${f.dataUrl}" style="border:0;width:100%;height:100vh"></iframe>` : `<img src="${f.dataUrl}" style="max-width:100%">`);
+    const f = await api.ops.procurement.invoiceFile(ctx.value, d.value.invoice.id);
+    msg.value = `Hóa đơn đã lưu trong kho riêng tư: ${f.name || f.path}.`;
   } catch (e) {
     error.value = e.message;
   }

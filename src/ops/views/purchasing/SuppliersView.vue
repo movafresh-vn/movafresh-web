@@ -110,9 +110,9 @@ const cert = reactive({ type: 'attp', number: '', issuer: '', expiresAt: '' });
 
 const rows = computed(() => (data.value ? data.value.suppliers.filter((s) => !fKind.value || s.kind === fKind.value) : []));
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.procurement.suppliers(ctx.value);
+    data.value = await api.ops.procurement.suppliers(ctx.value);
     if (sel.value) {
       const fresh = data.value.suppliers.find((s) => s.id === sel.value.id);
       // Làm mới danh sách giấy chứng nhận nhưng không ghi đè phần đang gõ trong form
@@ -139,39 +139,39 @@ function startNew() {
   form.value = { id: null, kind: 'htx', name: '', taxId: '', cccd: '', address: '', bank: { bankName: '', accountNo: '', accountName: '' }, termDays: 15, contact: { name: '', phone: '' }, certs: [] };
 }
 
-function save() {
+async function save() {
   msg.value = '';
   try {
     const f = form.value;
-    const saved = api.ops.procurement.saveSupplier(ctx.value, { id: f.id, kind: f.kind, name: f.name, taxId: f.taxId, cccd: f.cccd, address: f.address, bank: f.bank, termDays: f.termDays, contact: f.contact });
+    const saved = await api.ops.procurement.saveSupplier(ctx.value, { id: f.id, kind: f.kind, name: f.name, taxId: f.taxId, cccd: f.cccd, address: f.address, bank: f.bank, termDays: f.termDays, contact: f.contact });
     msg.value = `Đã lưu hồ sơ ${saved.name}.`;
     error.value = '';
-    load();
+    await load();
     open(saved.id);
   } catch (e) {
     error.value = e.message;
   }
 }
 
-function addCert() {
+async function addCert() {
   try {
-    api.ops.procurement.addCert(ctx.value, { supplierId: form.value.id, cert: { ...cert } });
+    await api.ops.procurement.addCert(ctx.value, { supplierId: form.value.id, cert: { ...cert } });
     cert.number = '';
     cert.issuer = '';
     cert.expiresAt = '';
     msg.value = 'Đã thêm giấy chứng nhận.';
     error.value = '';
-    load();
+    await load();
     open(form.value.id);
   } catch (e) {
     error.value = e.message;
   }
 }
 
-function removeCert(c) {
+async function removeCert(c) {
   try {
-    api.ops.procurement.removeCert(ctx.value, { supplierId: form.value.id, certId: c.id });
-    load();
+    await api.ops.procurement.removeCert(ctx.value, { supplierId: form.value.id, certId: c.id });
+    await load();
     open(form.value.id);
   } catch (e) {
     error.value = e.message;

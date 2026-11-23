@@ -27,17 +27,17 @@ const mod = computed(() => route.meta.module);
 const preview = ref(null);
 const error = ref('');
 
-function load() {
+async function load() {
   error.value = '';
   preview.value = null;
   const kind = mod.value.preview;
   try {
     let list = null;
-    if (kind === 'orders') list = api.ops.listOrders(ctx.value);
-    else if (kind === 'plans') list = api.ops.listProductionPlans(ctx.value);
-    else if (kind === 'pos') list = api.ops.listPurchaseOrders(ctx.value);
-    else if (kind === 'suppliers') list = api.ops.listSuppliers(ctx.value);
-    else if (kind === 'summary') list = [api.ops.summary(ctx.value)];
+    if (kind === 'orders') list = await api.ops.listOrders(ctx.value);
+    else if (kind === 'plans') list = await api.ops.listProductionPlans(ctx.value);
+    else if (kind === 'pos') list = await api.ops.listPurchaseOrders(ctx.value);
+    else if (kind === 'suppliers') list = await api.ops.listSuppliers(ctx.value);
+    else if (kind === 'summary') list = [await api.ops.summary(ctx.value)];
     if (list) preview.value = { total: list.length, sample: JSON.stringify(list.slice(0, 2), null, 2) };
   } catch (e) {
     error.value = e.message;

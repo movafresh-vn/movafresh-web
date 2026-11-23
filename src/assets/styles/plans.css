@@ -2,14 +2,14 @@
 .pl-card {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: var(--r-card);
   padding: 26px 24px;
 }
 
 .pl-stack { display: grid; gap: 14px; }
 
-.pl-h1 { font-size: clamp(24px, 4.6vw, 32px); font-weight: 800; margin-bottom: 10px; }
-.pl-h2 { font-size: clamp(21px, 4vw, 26px); font-weight: 800; }
+.pl-h1 { font-size: clamp(24px, 4.6vw, 32px); font-weight: var(--fw-bold); margin-bottom: 10px; }
+.pl-h2 { font-size: clamp(21px, 4vw, 26px); font-weight: var(--fw-bold); }
 .pl-lead { font-size: 17px; color: var(--ink); margin-bottom: 18px; }
 .pl-note { font-size: 15px; color: var(--muted); }
 .pl-error { font-size: 15px; font-weight: 600; color: var(--red); }
@@ -20,13 +20,13 @@
   width: 100%;
   min-height: 52px;
   border: 1.5px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-ctl);
   background: var(--bg);
   padding: 10px 14px;
   font-size: 17px;
   outline: none;
 }
-.pl-input:focus { border-color: var(--green); background: #fff; }
+.pl-input:focus { border-color: var(--green); background: var(--white); }
 .pl-input.num { font-variant-numeric: tabular-nums; }
 
 .pl-btn {
@@ -46,10 +46,10 @@
   transition: .15s;
 }
 .pl-btn:hover:not(:disabled) { background: var(--line-2); }
-.pl-btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
-.pl-btn.primary:hover:not(:disabled) { background: var(--green-d); }
-.pl-btn.orange { background: var(--orange); border-color: var(--orange); color: #fff; }
-.pl-btn.orange:hover:not(:disabled) { background: #BF4414; }
+.pl-btn.primary { background: var(--green-d); border-color: var(--green-d); color: var(--white); }
+.pl-btn.primary:hover:not(:disabled) { background: var(--green-dd); }
+.pl-btn.orange { background: var(--red-orange-d); border-color: var(--red-orange-d); color: var(--white); }
+.pl-btn.orange:hover:not(:disabled) { background: var(--red-orange-dd); }
 .pl-btn.ghost { background: none; border-color: transparent; color: var(--green-d); }
 .pl-btn.sm { min-height: 44px; padding: 8px 14px; font-size: 16px; }
 .pl-btn:disabled { opacity: .45; cursor: not-allowed; }
@@ -91,8 +91,8 @@
   gap: 10px;
   font-size: 16px;
 }
-.pl-panel.warn { background: var(--orange-soft); border-color: #F1C7B1; }
-.pl-panel.good { background: var(--green-soft); border-color: #BBD8C5; }
+.pl-panel.warn { background: var(--orange-soft); border-color: var(--red-line); }
+.pl-panel.good { background: var(--green-soft); border-color: var(--green-line); }
 
 .pl-pill {
   display: inline-block;

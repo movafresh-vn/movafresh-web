@@ -77,6 +77,7 @@ import { downloadText } from '../../download';
 import { dmy } from '../../labels';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
+import { financeError } from '../../financeUi';
 
 const data = ref(null);
 const error = ref('');
@@ -89,43 +90,43 @@ const groups = ref([]);
 const shown = computed(() => (data.value ? data.value.entries.slice(-60).reverse() : []));
 const query = () => ({ from: from.value || null, to: to.value || null, groups: groups.value.length ? groups.value : null });
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.finance.journal(ctx.value, query());
+    data.value = await api.ops.finance.journal(ctx.value, query());
     error.value = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 useLive(load, { every: 10000 });
 
-function applyPreset() {
-  // Hôm nay theo đồng hồ giả lập của hệ thống, không theo máy
-  const today = api.ops.finance.cashflow(ctx.value).today;
+async function applyPreset() {
+  // Hôm nay theo giờ nghiệp vụ của máy chủ, không theo máy
+  const today = (await api.ops.finance.cashflow(ctx.value)).today;
   if (preset.value === 'all') { from.value = ''; to.value = ''; }
   if (preset.value === 'today') { from.value = today; to.value = today; }
   if (preset.value === 'week') { from.value = weekStartOf(today); to.value = addDays(weekStartOf(today), 6); }
   if (preset.value === 'lastweek') { from.value = addDays(weekStartOf(today), -7); to.value = addDays(weekStartOf(today), -1); }
-  load();
+  await load();
 }
 
-function downloadJournal() {
+async function downloadJournal() {
   try {
-    const f = api.ops.finance.journalCsv(ctx.value, query());
+    const f = await api.ops.finance.journalCsv(ctx.value, query());
     downloadText(f.filename, f.csv);
     msg.value = `Đã tải ${f.filename}: ${f.count} chứng từ, ${f.totals.balanced ? 'cân Nợ = Có' : 'CÓ CHỨNG TỪ LỆCH'}${f.unmapped.length ? `, ${f.unmapped.length} tài khoản chưa ánh xạ` : ''}.`;
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 
-function downloadStatements() {
+async function downloadStatements() {
   try {
-    const f = api.ops.finance.statementsCsv(ctx.value);
+    const f = await api.ops.finance.statementsCsv(ctx.value);
     downloadText(f.filename, f.csv);
     msg.value = `Đã tải ${f.filename}: ${f.count} bảng kê.`;
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 

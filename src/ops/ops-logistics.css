@@ -1,7 +1,7 @@
 /* P2C: logistics, kho phụ (nhận xe, ghép hải sản, chia tuyến, xuất kho) và app shipper. Dùng chung biến, bảng, nút của ops.css / ops-factory.css. */
 
 .ops .lg h1, .ops .rb h1 { margin-bottom: 4px; }
-.ops .lg-badge { display: inline-block; min-width: 24px; margin-left: 8px; padding: 0 7px; border-radius: 999px; background: var(--red); color: #fff; font-size: 14px; text-align: center; }
+.ops .lg-badge { display: inline-block; min-width: 24px; margin-left: 8px; padding: 0 7px; border-radius: 999px; background: var(--red); color: var(--white); font-size: 14px; text-align: center; }
 .ops .chips-card { padding: 10px 16px; }
 .ops .check-row { min-height: 44px; }
 .ops .alert-bad strong { display: block; }
@@ -10,8 +10,8 @@
 .ops .cap-table td, .ops .cap-table th { vertical-align: top; }
 .ops .cap-table th small { font-weight: 500; }
 .ops .cap-cell { min-width: 170px; }
-.ops .cap-cell.over { background: #fff4f3; }
-.ops .cap-cell.full { background: #fffaf0; }
+.ops .cap-cell.over { background: var(--red-soft); }
+.ops .cap-cell.full { background: var(--amber-soft); }
 .ops .cap-n { font-size: 18px; margin-bottom: 4px; }
 .ops .cap-btn { margin-top: 6px; min-height: 40px; }
 .ops .cap-edit .ops-input { margin: 4px 0 6px; }
@@ -20,10 +20,10 @@
 
 /* Chuyến xe */
 .ops .temp-line { list-style: none; margin: 4px 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
-.ops .temp-line li { padding: 8px 12px; border-radius: 12px; border: 2px solid var(--line); background: #fff; font-size: 16px; }
+.ops .temp-line li { padding: 8px 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--white); font-size: 16px; }
 .ops .temp-line li b { display: block; }
 .ops .temp-line .pt-ok { border-color: var(--green); background: var(--green-soft); }
-.ops .temp-line .pt-bad { border-color: #e9a8a3; background: #fff4f3; color: #7c1f19; }
+.ops .temp-line .pt-bad { border-color: var(--red-line); background: var(--red-soft); color: var(--red); }
 .ops .temp-line .pt-na { color: var(--muted); }
 .ops .trip-save { display: flex; align-items: flex-end; }
 .ops .trip-save .ops-btn { margin-bottom: 12px; }
@@ -34,8 +34,8 @@
 .ops .rb-plan { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 16px; margin: 8px 0 12px; }
 .ops .rb-shippers { border: 1px solid var(--line); border-radius: 12px; padding: 4px 12px 8px; display: flex; flex-wrap: wrap; gap: 0 16px; }
 .ops .rb-shippers .check-row { min-height: 40px; }
-.ops .rb-route { border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px 12px; margin: 10px 0; background: #fff; }
-.ops .rb-route.st-dispatched { border-color: var(--green); background: #f4faf6; }
+.ops .rb-route { border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px 12px; margin: 10px 0; background: var(--white); }
+.ops .rb-route.st-dispatched { border-color: var(--green); background: var(--green-tint); }
 .ops .rb-route.st-done { background: var(--line-2); }
 .ops .rb-route h3 { margin: 0; font-size: 17px; }
 .ops .rb-meta { margin: 4px 0 6px; }
@@ -44,14 +44,14 @@
 .ops .rb-sort .ops-input-sm { width: 90px; min-height: 44px; }
 .ops .rb-dispatch { margin-top: 10px; }
 .ops .route-sheet .sign-cell { min-width: 80px; }
-.ops .load-row.bad { border-color: #e9a8a3; background: #fff4f3; }
+.ops .load-row.bad { border-color: var(--red-line); background: var(--red-soft); }
 .ops .load-actions { margin: 0; }
 .ops .load-actions .ops-btn { flex: 0 0 auto; min-width: 100px; }
 
 /* Ghép hải sản */
-.ops .sf-order.done { background: #f4faf6; border-color: var(--green); }
-.ops .sf-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 12px; background: #fff; margin: 0 0 8px; }
-.ops .sf-item.count-done { border-color: var(--green); background: #f4faf6; }
+.ops .sf-order.done { background: var(--green-tint); border-color: var(--green); }
+.ops .sf-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 12px; background: var(--white); margin: 0 0 8px; }
+.ops .sf-item.count-done { border-color: var(--green); background: var(--green-tint); }
 .ops .sf-count { grid-row: 1 / 3; grid-column: 2; align-self: center; font-size: 26px; font-weight: 800; }
 .ops .sf-actions { grid-column: 1 / 3; margin: 4px 0 0; }
 
@@ -76,10 +76,10 @@
 .ops .sp-route-head h2 { margin: 0 0 2px; }
 .ops .sp-stop { border-width: 2px; }
 .ops .sp-stop.next { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
-.ops .sp-stop.s-delivered { background: #f4faf6; opacity: .85; }
-.ops .sp-stop.s-failed { background: #fff4f3; border-color: #e9a8a3; }
+.ops .sp-stop.s-delivered { background: var(--green-tint); opacity: .85; }
+.ops .sp-stop.s-failed { background: var(--red-soft); border-color: var(--red-line); }
 .ops .sp-stop-top { display: flex; align-items: center; gap: 10px; }
-.ops .sp-seq { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.ops .sp-seq { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: var(--white); font-weight: 800; display: flex; align-items: center; justify-content: center; }
 .ops .sp-who2 { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .ops .sp-who2 strong { overflow-wrap: anywhere; }
 .ops .sp-addr { margin: 8px 0 2px; font-size: 18px; }

@@ -2,101 +2,45 @@
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title" @click.self="store.closeModal">
     <div class="mbox box">
       <button class="mclose" type="button" @click="store.closeModal" aria-label="Đóng">×</button>
-      <h2 id="login-title" class="pl-h2">Tài khoản MOVA Fresh</h2>
+      <BrandLogo class="login-logo" variant="onWhite" :width="96" />
+      <h2 id="login-title" class="pl-h2">Tài khoản MOVA FRESH</h2>
 
-      <template v-if="store.isLoggedIn">
-        <p class="pl-lead">Bạn đang vào tài khoản <b>{{ store.userName }}</b>.</p>
+      <template v-if="store.isLoggedIn || store.authUser">
+        <p class="pl-lead">
+          Bạn đang vào tài khoản <b>{{ store.userName || store.authUser?.phone || store.authUser?.email }}</b>.
+        </p>
         <div class="stack">
           <router-link to="/account" class="pl-btn primary" @click="store.closeModal">Xem gói của tôi</router-link>
-          <button class="pl-btn" type="button" @click="logout">Đổi sang tài khoản khác</button>
+          <button class="pl-btn" type="button" :disabled="busy" @click="logout">Đăng xuất</button>
         </div>
       </template>
 
       <template v-else>
-        <p class="pl-lead">Nhập số điện thoại hoặc email bạn đã dùng khi đăng ký gói. Bản demo không cần mật khẩu.</p>
-
-        <!-- Nút tiếp tục nhanh MXH chuẩn Shopee / Grab / Notion -->
-        <div class="social-fast-actions">
-          <button type="button" class="social-btn zalo-primary" @click="quickSocialLogin('Zalo')">
-            <div class="social-btn-content">
-              <svg class="social-icon zalo-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <rect width="24" height="24" rx="5" fill="#FFFFFF"/>
-                <text x="12" y="15.8" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="900" fill="#0068FF" letter-spacing="-0.3px">Zalo</text>
-              </svg>
-              <span class="btn-text">Tiếp tục với Zalo</span>
-            </div>
-            <span class="rec-badge">Khuyên dùng</span>
-          </button>
-          <div class="social-grid">
-            <button type="button" class="social-btn google-btn" @click="quickSocialLogin('Google')">
-              <svg class="social-icon" width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.3 9 5 12 5z"/>
-                <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
-                <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 10.8 0 12.5s.7 2.8 1.9 5.2l3.7-2.9z"/>
-                <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.3-6.4-5.2L1.9 17C3.7 20.7 7.5 24 12 24z"/>
-              </svg>
-              <span class="btn-text">Google</span>
-            </button>
-            <button type="button" class="social-btn facebook-btn" @click="quickSocialLogin('Facebook')">
-              <svg class="social-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="12" fill="#1877F2"/>
-                <path d="M16 12.3h-2.5v7.7h-3.2v-7.7H8.5V9.6h1.8V7.5c0-2.3 1.4-3.5 3.5-3.5 1 0 1.9.1 2.2.1v2.5h-1.5c-1.1 0-1.3.5-1.3 1.3v1.7H16l-.4 2.7z" fill="#FFFFFF"/>
-              </svg>
-              <span class="btn-text">Facebook</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="divider">
-          <span>Hoặc đăng nhập bằng số điện thoại / email</span>
-        </div>
-
-        <form class="stack" @submit.prevent="submit">
-          <label class="pl-label" for="login-contact">Số điện thoại hoặc email</label>
-          <input id="login-contact" v-model="contact" class="pl-input" inputmode="email" autocomplete="username" placeholder="0908 123 456" />
-          <p v-if="error" class="pl-error" role="alert">{{ error }}</p>
-          <button class="pl-btn primary" type="submit">Vào tài khoản</button>
-        </form>
-
-        <div v-if="samples.length" class="samples">
-          <h3>Hoặc xem thử một tài khoản mẫu</h3>
-          <button v-for="s in samples" :key="s.customer_id" type="button" class="pl-chip big sample" @click="store.loginAs(s.customer_id)">
-            <b>{{ s.name }}</b>
-            <small>{{ s.hint }}</small>
-          </button>
-        </div>
-        <router-link to="/plans" class="pl-btn ghost" @click="store.closeModal">Chưa có gói? Thiết kế thực đơn</router-link>
-      </template>
-
-      <section class="web-auth" aria-labelledby="web-auth-title">
-        <div class="divider">
-          <span id="web-auth-title">Đăng nhập tài khoản MOVA bằng mã OTP</span>
-        </div>
-        <p class="pl-note">
-          Không cần đăng nhập để dùng Bếp trưởng. Đăng nhập giúp Gu lưu khẩu vị theo tài khoản web của bạn.
+        <p class="pl-lead">
+          Nhập số điện thoại (hoặc email) bạn dùng đăng ký gói. MOVA gửi mã OTP để xác nhận đúng là bạn, không cần mật khẩu.
         </p>
-        <template v-if="store.authUser">
-          <p class="web-auth-status">Đang đăng nhập MOVA bằng {{ store.authUser.phone || store.authUser.email }}.</p>
-          <button class="pl-btn" type="button" @click="logoutMova">Đăng xuất MOVA</button>
-        </template>
-        <form v-else-if="supabase" class="stack" @submit.prevent="submitMovaOtp">
-          <label class="pl-label" for="mova-login-contact">Số điện thoại hoặc email</label>
-          <input
-            id="mova-login-contact"
-            v-model="authContact"
-            class="pl-input"
-            type="text"
-            autocomplete="username"
-            placeholder="0908 123 456 hoặc ten@email.com"
-            :disabled="otpSent || authLoading"
-            required
-          />
-          <template v-if="otpSent">
-            <label class="pl-label" for="mova-login-otp">Mã OTP</label>
+        <form v-if="supabase" class="stack" @submit.prevent="submit">
+          <label class="pl-label" for="login-contact">Số điện thoại hoặc email</label>
+          <div class="contact-row">
+            <DialSelect v-if="!isEmail" v-model="dial" :disabled="otpSent || busy" />
             <input
-              id="mova-login-otp"
-              v-model="otp"
+              id="login-contact"
+              v-model="contact"
               class="pl-input"
+              type="text"
+              inputmode="tel"
+              autocomplete="username"
+              placeholder="0908 123 456"
+              :disabled="otpSent || busy"
+              required
+            />
+          </div>
+          <template v-if="otpSent">
+            <label class="pl-label" for="login-otp">Mã OTP</label>
+            <input
+              id="login-otp"
+              v-model="otp"
+              class="pl-input num"
               type="text"
               inputmode="numeric"
               autocomplete="one-time-code"
@@ -105,234 +49,91 @@
               required
             />
           </template>
-          <p v-if="authError" class="pl-error" role="alert">{{ authError }}</p>
-          <button class="pl-btn primary" type="submit" :disabled="authLoading">
-            {{ authLoading ? 'Đang xử lý…' : otpSent ? 'Xác thực OTP' : 'Gửi mã OTP' }}
+          <p v-if="error" class="pl-error" role="alert">{{ error }}</p>
+          <button class="pl-btn primary" type="submit" :disabled="busy">
+            {{ busy ? 'Đang xử lý…' : otpSent ? 'Xác thực OTP' : 'Gửi mã OTP' }}
           </button>
-          <button v-if="otpSent" class="pl-btn" type="button" :disabled="authLoading" @click="resetOtp">
-            Đổi số điện thoại
-          </button>
+          <button v-if="otpSent" class="pl-btn" type="button" :disabled="busy" @click="reset">Đổi số điện thoại</button>
         </form>
-        <p v-else class="pl-note">Cần cấu hình Supabase Auth để đăng nhập và đồng bộ Gu theo tài khoản.</p>
-      </section>
+        <!-- Đăng nhập bằng Google: khách chưa có số điện thoại đã xác thực vẫn vào được, đến lúc thanh toán sẽ được hướng dẫn xác thực số -->
+        <div v-if="supabase" class="google-block">
+          <p class="pl-note or">hoặc</p>
+          <button class="pl-btn" type="button" data-testid="google-signin" :disabled="busy" @click="google">Tiếp tục với Google</button>
+          <p class="pl-note">Dùng Google thì bạn vẫn cần xác thực số điện thoại bằng mã OTP khi thanh toán gói.</p>
+        </div>
+        <p v-else class="pl-note" role="alert">Chưa cấu hình đăng nhập (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY).</p>
+        <router-link to="/plans" class="pl-btn ghost" @click="store.closeModal">Chưa có gói? Thiết kế thực đơn</router-link>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
-import { api } from '../../shared/api';
-import { requestOtp, supabase, verifyOtp } from '../../services/supabase';
+import { computed, ref } from 'vue';
+import DialSelect from './DialSelect.vue';
+import BrandLogo from '../common/BrandLogo.vue';
+import { signInWithGoogle, supabase } from '../../services/supabase';
 import { useMovaStore } from '../../stores/useMovaStore';
 
 const store = useMovaStore();
 const contact = ref('');
-const error = ref('');
-const samples = api.customer.sampleAccounts();
-const authContact = ref('');
-const normalizedAuthContact = ref('');
+const dial = ref('84');
+const isEmail = computed(() => contact.value.includes('@'));
 const otp = ref('');
 const otpSent = ref(false);
-const authLoading = ref(false);
-const authError = ref('');
-let authSubscription;
+const busy = ref(false);
+const error = ref('');
 
-onMounted(async () => {
-  if (!supabase) return;
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-    store.setAuthUser(session?.user ?? null);
-  });
-  authSubscription = data.subscription;
-  try {
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    store.setAuthUser(sessionData.session?.user ?? null);
-  } catch (cause) {
-    authError.value = cause instanceof Error ? cause.message : 'Không thể tải phiên đăng nhập MOVA.';
-  }
-});
-
-onUnmounted(() => authSubscription?.unsubscribe());
-
-function submit() {
-  error.value = store.loginWithContact(contact.value);
-}
-
-function quickSocialLogin(provider) {
-  if (samples.length) {
-    store.loginAs(samples[0].customer_id);
-    store.closeModal();
-  } else {
-    submit();
-  }
-}
-
-function logout() {
-  store.logout();
-}
-
-function normalizedContact(value) {
-  const raw = value.trim();
-  if (raw.includes('@')) {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) throw new Error('Email chưa đúng định dạng.');
-    return raw.toLowerCase();
-  }
-  const phone = raw.replace(/[()\s-]/g, '');
-  if (/^0\d{9,10}$/.test(phone)) return `+84${phone.slice(1)}`;
-  if (/^\+[1-9]\d{7,14}$/.test(phone)) return phone;
-  throw new Error('Nhập email hợp lệ hoặc số điện thoại, ví dụ 0908 123 456.');
-}
-
-async function submitMovaOtp() {
-  authLoading.value = true;
-  authError.value = '';
+async function submit() {
+  if (busy.value) return;
+  busy.value = true;
+  error.value = '';
   try {
     if (!otpSent.value) {
-      normalizedAuthContact.value = normalizedContact(authContact.value);
-      await requestOtp(normalizedAuthContact.value);
-      otpSent.value = true;
-      return;
+      error.value = await store.requestOtp(contact.value, { dial: dial.value });
+      otpSent.value = !error.value;
+    } else {
+      error.value = await store.verifyOtp(contact.value, otp.value, { dial: dial.value });
     }
-    const user = await verifyOtp(normalizedAuthContact.value, otp.value.trim());
-    store.setAuthUser(user);
-    const demoLoginError = store.loginWithContact(authContact.value);
-    if (!demoLoginError) return;
-    store.toast('Đăng nhập MOVA thành công.');
-    store.closeModal();
-  } catch (cause) {
-    authError.value = cause instanceof Error ? cause.message : 'Không thể xác thực mã OTP.';
   } finally {
-    authLoading.value = false;
+    busy.value = false;
   }
 }
 
-function resetOtp() {
+function reset() {
   otpSent.value = false;
   otp.value = '';
-  normalizedAuthContact.value = '';
-  authError.value = '';
+  error.value = '';
 }
 
-async function logoutMova() {
-  if (!supabase) return;
+async function google() {
+  if (busy.value) return;
+  busy.value = true;
+  error.value = '';
   try {
-    const { error: signOutError } = await supabase.auth.signOut();
-    if (signOutError) throw signOutError;
-    store.setAuthUser(null);
-    store.toast('Đã đăng xuất MOVA.');
-  } catch (cause) {
-    authError.value = cause instanceof Error ? cause.message : 'Không thể đăng xuất MOVA.';
+    await signInWithGoogle();
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Chưa đăng nhập được bằng Google.';
+    busy.value = false;
+  }
+}
+
+async function logout() {
+  busy.value = true;
+  try {
+    await store.logout();
+  } finally {
+    busy.value = false;
   }
 }
 </script>
 
 <style scoped>
 .box { max-width: 480px; padding: 26px 22px; }
+.login-logo { margin-bottom: 12px; height: auto; }
 .stack { display: grid; gap: 12px; margin-top: 8px; }
-.samples { margin-top: 20px; display: grid; gap: 10px; }
-.samples h3 { font-size: 16px; font-weight: 700; color: var(--muted); }
-.sample { width: 100%; }
-.web-auth { margin-top: 20px; padding-top: 4px; border-top: 1px solid var(--line); }
-.web-auth-status { margin: 8px 0 12px; font-size: 14px; color: var(--green-d); }
-
-.social-fast-actions {
-  display: grid;
-  gap: 12px;
-  margin: 16px 0 14px;
-}
-.social-btn {
-  height: 48px;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease;
-  user-select: none;
-}
-.social-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
-}
-.social-btn:active {
-  transform: scale(0.99);
-}
-
-.social-btn.zalo-primary {
-  width: 100%;
-  background: #0068FF;
-  border: none;
-  color: #FFFFFF;
-  padding: 0 16px;
-  position: relative;
-  justify-content: space-between;
-}
-.social-btn.zalo-primary:hover {
-  background: #0056D6;
-  box-shadow: 0 4px 14px rgba(0, 104, 255, 0.35);
-}
-.social-btn-content {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-.rec-badge {
-  background: rgba(255, 255, 255, 0.22);
-  color: #FFFFFF;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-  letter-spacing: 0.02em;
-}
-
-.social-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  height: 48px;
-}
-.social-btn.google-btn,
-.social-btn.facebook-btn {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  color: #1E293B;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
-  padding: 0 16px;
-}
-.social-btn.google-btn:hover,
-.social-btn.facebook-btn:hover {
-  background: #F8FAFC;
-  border-color: #CBD5E1;
-}
-
-.social-icon {
-  flex-shrink: 0;
-  display: block;
-}
-.btn-text {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: 14px 0 16px;
-  color: var(--muted);
-  font-size: 13px;
-}
-.divider::before, .divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--line);
-}
-.divider span {
-  padding: 0 10px;
-}
+.contact-row { display: flex; gap: 8px; align-items: center; }
+.contact-row .pl-input:last-child { flex: 1; min-width: 0; }
+.google-block { display: grid; gap: 8px; margin-top: 10px; }
+.or { text-align: center; margin: 0; }
 </style>

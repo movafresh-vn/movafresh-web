@@ -55,7 +55,7 @@ const faqs = [
 .faq details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; }
 .faq summary { list-style: none; cursor: pointer; padding: 16px 18px; min-height: 52px; font-weight: 700; font-size: 17px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: "+"; font-size: 24px; line-height: 1; color: var(--green); font-weight: 500; }
+.faq summary::after { content: "+"; font-size: 24px; line-height: 1; color: var(--green-d); font-weight: 500; }
 .faq details[open] summary::after { content: "−"; }
 .faq details p { padding: 0 18px 16px; color: var(--muted); max-width: 72ch; font-size: 16px; }
 </style>

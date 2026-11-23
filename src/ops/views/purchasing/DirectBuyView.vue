@@ -117,10 +117,10 @@ const tplId = ref(BUSINESS.purchasing.defaultStatementTemplate);
 const tplLabel = computed(() => (BUSINESS.purchasing.statementTemplates[tplId.value] || {}).label || '');
 const total = computed(() => items.value.reduce((s, it) => s + Math.round((Number(it.qty) || 0) * (Number(it.unitPriceVnd) || 0)), 0));
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.procurement.directPurchases(ctx.value);
-    tplId.value = api.ops.procurement.settings(ctx.value).settings.statementTemplate;
+    data.value = await api.ops.procurement.directPurchases(ctx.value);
+    tplId.value = (await api.ops.procurement.settings(ctx.value)).settings.statementTemplate;
     error.value = '';
   } catch (e) {
     error.value = e.message;
@@ -136,10 +136,10 @@ function pickSeller() {
 const addItem = () => items.value.push({ sku: data.value.agriSkus[0].id, qty: null, unitPriceVnd: null });
 const payload = () => ({ seller: { ...seller }, items: items.value.map((i) => ({ ...i })), method: method.value, intoStock: intoStock.value, location: location.value });
 
-function preview() {
+async function preview() {
   msg.value = '';
   try {
-    sheet.value = api.ops.procurement.previewStatement(ctx.value, payload());
+    sheet.value = await api.ops.procurement.previewStatement(ctx.value, payload());
     error.value = '';
   } catch (e) {
     error.value = e.message;
@@ -147,15 +147,15 @@ function preview() {
   }
 }
 
-function record() {
+async function record() {
   msg.value = '';
   try {
-    const p = api.ops.procurement.recordDirectPurchase(ctx.value, payload());
+    const p = await api.ops.procurement.recordDirectPurchase(ctx.value, payload());
     sheet.value = p.statement;
     msg.value = `Đã lập bảng kê ${p.id}${p.stockIds.length ? ` và nhập kho ${p.stockIds.length} lô` : ''}.`;
     error.value = '';
     items.value = [{ sku: 'NL-KHOAI-01', qty: null, unitPriceVnd: null }];
-    load();
+    await load();
   } catch (e) {
     error.value = e.message;
   }

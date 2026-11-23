@@ -12,7 +12,9 @@
         <div><dt>Mã gói</dt><dd>{{ r.subscription_id }}</dd></div>
         <div v-if="r.planSummary"><dt>Thực đơn</dt><dd class="num">{{ r.planSummary.meals_per_week }} bữa mỗi tuần cho {{ r.planSummary.household_size }} người</dd></div>
         <div><dt>Gói trị giá</dt><dd class="num">{{ fmt(r.package_value_vnd) }}</dd></div>
-        <div><dt>Bạn đã trả hôm nay</dt><dd class="num">{{ fmt(r.paid_now_vnd) }}</dd></div>
+        <div v-if="r.week1_charged" data-testid="week1-charged"><dt>Đã trừ tuần 1 từ Fresh Credit</dt><dd class="num">{{ fmt(r.paid_now_vnd) }}</dd></div>
+        <div v-else-if="r.payment_method === 'fresh_credit'" data-testid="week1-pending"><dt>Tuần 1</dt><dd>Chưa trừ: MOVA trừ khi Fresh Credit đủ, trước giờ giao {{ r.auto_debit_cutoff_hours || 72 }} giờ</dd></div>
+        <div v-else><dt>Bạn đã trả hôm nay</dt><dd class="num">{{ fmt(r.paid_now_vnd) }}</dd></div>
         <div><dt>Cách trả</dt><dd>{{ methodLabel }}</dd></div>
         <div v-if="r.payment_method === 'bank_transfer_4w'"><dt>Mã đối soát</dt><dd><b class="ref">{{ r.payment_ref }}</b></dd></div>
         <div v-if="r.payment_method === 'fresh_credit'"><dt>Fresh Credit còn lại</dt><dd class="num">{{ fmt(r.fresh_credit_balance_remaining_vnd) }}</dd></div>
@@ -37,7 +39,7 @@
         Bạn bè đăng ký gói đầu tiên, bạn nhận <b class="num">{{ fmt(rewards.referrer) }}</b> Fresh Credit
         và bạn bè nhận <b class="num">{{ fmt(rewards.referee) }}</b>.
       </p>
-      <button class="pl-btn" type="button" @click="invite">{{ copied ? 'Đã sao chép liên kết' : 'Mời bạn bè' }}</button>
+      <button class="pl-btn" type="button" :disabled="!r.referral_code" @click="invite">{{ copied ? 'Đã sao chép liên kết' : 'Mời bạn bè' }}</button>
     </section>
 
     <div class="go">
@@ -51,7 +53,6 @@
 import { computed, ref } from 'vue';
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
 import { BUSINESS } from '../../shared/config/business';
-import { referralCodeFor } from '../../shared/domain/rewards';
 import { fmt } from '../../shared/utils/formatters';
 import { fmtDay, fmtDeadline } from '../../shared/utils/time';
 
@@ -65,7 +66,9 @@ const METHODS = { fresh_credit: 'Nạp Fresh Credit', bank_transfer_4w: 'Chuyể
 const methodLabel = computed(() => METHODS[r.value.payment_method] || '');
 
 async function invite() {
-  const url = `${location.origin}/plans?${new URLSearchParams({ ref: referralCodeFor(r.value.customer_id) })}`;
+  const code = r.value.referral_code;
+  if (!code) return;
+  const url = `${location.origin}/plans?${new URLSearchParams({ ref: code })}`;
   const text = 'Mình đang dùng MOVA Fresh: nguyên liệu sơ chế sẵn từ Đắk Lắk, nấu cơm nhà 15 phút. Đăng ký qua link này nhé:';
   try {
     if (navigator.share) {
@@ -82,8 +85,8 @@ async function invite() {
 
 <style scoped>
 .done { display: grid; gap: 16px; max-width: 680px; margin: 0 auto; }
-.hero { text-align: center; background: var(--green-soft); border-color: #BBD8C5; }
-.tick { width: 60px; height: 60px; border-radius: 50%; background: var(--green); color: #fff; display: inline-grid; place-items: center; font-size: 32px; font-weight: 800; margin-bottom: 10px; }
+.hero { text-align: center; background: var(--green-soft); border-color: var(--green-line); }
+.tick { width: 60px; height: 60px; border-radius: 50%; background: var(--green); color: var(--white); display: inline-grid; place-items: center; font-size: 32px; font-weight: 800; margin-bottom: 10px; }
 .sum { display: grid; gap: 14px; }
 dl { margin: 0; display: grid; gap: 0; }
 dl > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line-2); font-size: 16px; }

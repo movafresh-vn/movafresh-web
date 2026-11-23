@@ -1,7 +1,7 @@
 # MOVA FRESH — AGENT RUNTIME & SYSTEM DIRECTIVES
 
 > **TÀI LIỆU KHỞI ĐỘNG BẮT BUỘC CHO MỌI AI AGENT TRƯỚC KHI THỰC THI BẤT KỲ TÁC VỤ NÀO.**
-> Cập nhật lần cuối: 19/11/2026 | Phiên bản kiến trúc: V2.2.1 (Meeting 17/11 Fine-Tuning Sync)
+> Cập nhật lần cuối: 19/11/2026 | Phiên bản kiến trúc: V2.3 (backend thật, Meeting 17/11 Fine-Tuning Sync)
 > Repository chính thức: `github.com/movafresh-vn/movafresh-web` | Nhánh: `feat/v2-customer-and-ops-apps`
 > Production URL: `https://movafresh-web.netlify.app`
 
@@ -13,8 +13,8 @@ Mọi AI Agent (Gemini, Claude, GPT, Cursor, Roo, v.v.) khi được kích hoạ
 
 1. [`.agent/01_PRODUCT_SOUL_AND_BUSINESS_MODEL.md`](file:///.agent/01_PRODUCT_SOUL_AND_BUSINESS_MODEL.md): Linh hồn sản phẩm, mô hình dòng tiền FinTech 2 đầu, Unit Economics chuẩn V2.2 (Nguyên liệu + Vận chuyển $\le 50\%$).
 2. [`.agent/02_USER_FLOW_AND_UX_SPEC.md`](file:///.agent/02_USER_FLOW_AND_UX_SPEC.md): Đặc tả luồng người dùng V2.2 (Khảo sát Đầu bếp MOVA, Mâm cơm Việt 5 món, Terroir đặc sản, Subscription 4 tuần, OTP SĐT & Khung giờ xanh).
-3. [`.agent/03_OPERATIONS_FACTORY_AND_AGENTS.md`](file:///.agent/03_OPERATIONS_FACTORY_AND_AGENTS.md): Vận hành nhà máy Đắk Lắk, kho phụ TP.HCM, quy cách đóng gói, Dashboard sản xuất `/ops.html` (8 vai trò) & hệ sinh thái AI Agents.
-4. [`.agent/04_TECH_ARCHITECTURE_AND_CONVENTIONS.md`](file:///.agent/04_TECH_ARCHITECTURE_AND_CONVENTIONS.md): Kiến trúc Multi-Page App (MPA: `index.html` & `ops.html`), Vue 3 + Pinia, `src/shared/`, bộ 256+ unit test Vitest, quy chuẩn UI/UX.
+3. [`.agent/03_OPERATIONS_FACTORY_AND_AGENTS.md`](file:///.agent/03_OPERATIONS_FACTORY_AND_AGENTS.md): Vận hành nhà máy Đắk Lắk, kho phụ TP.HCM, quy cách đóng gói, Dashboard sản xuất `/ops.html` (8 vai trò, đăng nhập email + mật khẩu) & hệ sinh thái AI Agents.
+4. [`.agent/04_TECH_ARCHITECTURE_AND_CONVENTIONS.md`](file:///.agent/04_TECH_ARCHITECTURE_AND_CONVENTIONS.md): Kiến trúc Multi-Page App (MPA: `index.html` & `ops.html`), Vue 3 + Pinia, `src/shared/`, lớp gọi backend thật (`http.js` + bảng route + adapters, KHÔNG còn mock), bộ unit test Vitest, quy chuẩn UI/UX, cách chạy stack local.
 5. [`.agent/05_PROGRESS_AND_ROADMAP.md`](file:///.agent/05_PROGRESS_AND_ROADMAP.md): Bảng theo dõi tiến độ V1 $\rightarrow$ V2.2, các mốc hoàn thành và 4 đầu việc tiếp theo trước mốc Launch T12/2026.
 6. [`.agent/06_MEETING_DECISIONS_LOG.md`](file:///.agent/06_MEETING_DECISIONS_LOG.md): Biên bản các quyết định chiến lược đã chốt ngày 15/11/2026 và ngày 17/11/2026 của Ban sáng lập (không tranh luận lại).
 
@@ -49,6 +49,23 @@ Mọi dòng code, UI component, API logic hoặc kịch bản trải nghiệm vi
 | ❌ 7 | **CẤM ĐƯA GIA VỊ BẾP CƠ BẢN VÀO GÓI NGUYÊN LIỆU** | Không đóng gói nước mắm, muối, đường, hạt nêm, dầu ăn thông thường vào meal-kit (gây lãng phí bao bì, rách vỡ, đội chi phí đóng gói). Nhà máy chỉ cung cấp: Thịt, Cá, Rau củ sơ chế, Tinh bột, Trái cây và **Gói xốt MOVA đặc biệt**. Mọi căn bếp Việt đều có sẵn gia vị cơ bản. |
 | ❌ 8 | **CẤM DÙNG TỪ KHÓA "AI" TRÊN GIAO DIỆN NGƯỜI DÙNG CUỐI** | Toàn bộ copywriting hướng tới khách hàng (Landing, `/plans`, `/account`) phải dùng **"Đầu bếp" (Chef)**: *"Thực đơn Đầu bếp thiết kế riêng"*, *"Đầu bếp MOVA tuyển chọn"*. (Thư mục kỹ thuật backend trên platform vẫn là `ai-engine/`, nhưng mặt hiển thị khách tuyệt đối không gọi là AI). |
 | ❌ 9 | **CẤM DÙNG TÊN ĐỐI THỦ "HELLOFRESH" TRÊN GIAO DIỆN NGƯỜI DÙNG** | Tuyệt đối không để lộ từ khóa "HelloFresh" trên giao diện khách hàng, copywriting hay marketing. Phải dùng tên thương hiệu chính thức: **MOVA Fresh**, **Gói 4 tuần của bạn**, **Thẻ quà tặng MOVA Fresh**. |
+
+---
+
+## 3B. QUY TẮC KIẾN TRÚC KHI LÀM VIỆC VỚI BACKEND THẬT (V2.3)
+
+Web **không còn máy chủ giả**. Mọi trạng thái, số tiền, sức chứa và quyền do `movafresh-platform/backend` quyết định; chi tiết ở `.agent/04_TECH_ARCHITECTURE_AND_CONVENTIONS.md` mục 4 và `README.md` (cách chạy stack local bằng `npm run stack:up`).
+
+1. **Một cửa gọi API:** chỉ qua `src/shared/api/` (`http.js`, `routes.js`, `opsRoutes.js`, `adapters/`). Không `fetch` rải rác trong component; không thêm đường gọi mà backend chưa có (test `w1Routes`/`w4Routes` sẽ đỏ).
+2. **Mọi lệnh gọi là bất đồng bộ:** `await` đủ ở store, view và composable. Cấm đọc `api.customer.x(...).data` đồng bộ; các test quét tĩnh (`w2AsyncScan`, `w3AsyncScan`, `w4–w8 AsyncScan`) bắt lỗi này.
+3. **Số tiền chỉ lấy từ máy chủ:** giá, giảm giá, khung giờ xanh, giới thiệu, lịch trừ tiền hiển thị từ `POST /subscription/preview`; web KHÔNG tự tính số tiền để hiển thị hay gửi. Mọi dữ liệu tiền là số nguyên VND, định dạng bằng `fmt()`.
+4. **Lỗi nghiệp vụ theo mã hợp đồng** (`docs/api-contract.json`): app khách giữ phong bì `{status:'success'|'error'}`; app vận hành bắt `HttpError {code,status,details}`. Hiển thị thông báo tiếng Việt theo `code` (ví dụ `CYCLE_FULL`, `BATCH_LOCKED`, `PHOTO_REQUIRED`), không hiện thông báo thô của máy chủ.
+5. **Danh tính nằm ở Supabase JWT:** khách đăng nhập SĐT + OTP, nhân viên đăng nhập email + mật khẩu rồi lấy vai trò/quyền từ `GET /ops/me` (`src/ops/session.js`). Không còn mã PIN, không truyền `customerId`/`ctx` có ý nghĩa nào. Ẩn nút theo `can(permission)` chỉ để tiện, quyền thật luôn do máy chủ kiểm.
+6. **Giờ nghiệp vụ theo máy chủ:** dùng `serverNow()` và `syncServerTime()` trong `src/shared/utils/time.js`; không tự suy giờ chốt sổ từ giờ máy. Không chạy "tick" ở trình duyệt: job chạy ở máy chủ (khi dev: bảng demo gọi `/dev/jobs/run`).
+7. **Ảnh (nhiệt độ, nhận hàng, bằng chứng giao):** tải lên bằng vé một lần (`POST /ops/uploads`) rồi chỉ gửi ĐƯỜNG DẪN; không gửi data URL tới thao tác nghiệp vụ. Hàng đợi offline của xưởng tải ảnh trước rồi phát lại thao tác theo `opId`.
+8. **Không có kho dữ liệu cục bộ:** `localStorage`/`sessionStorage` chỉ giữ phiên, bản nháp thực đơn, hàng đợi offline. Không dựng lại mock-server, `createMemoryStorage` hay dữ liệu giả trong `src/`.
+9. **Bảng demo (`/demo`) chỉ ở bản dev:** build với `VITE_DEV_TOOLS=true` và backend `DEV_TOOLS_ENABLED=true`; không bao giờ bật ở production.
+10. **Xác nhận trước khi coi là xong:** `npm test` và `npm run build` đều qua; luồng thật cần chạy tay trên stack local (xem checklist ở `.agent/05_PROGRESS_AND_ROADMAP.md`).
 
 ---
 

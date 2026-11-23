@@ -95,8 +95,9 @@ export const BUSINESS = {
     westernMealsWhenMixed: { base: 1, withMealsAtLeast: 5, extra: 2 },
     // Hệ số khi khách trả lời các câu hỏi giá trị ở bước thực đơn
     upsells: { proteinFactor: 1.3, lowCarbCarbFactor: 0.5, lowCarbVegFactor: 1.5 },
-    // Mức chi tiêu đi chợ mỗi tuần (câu tùy chọn): trần mềm cho AI, không hiện như tiêu đề
-    groceryBudgetChoicesVnd: [500000, 1000000, 1500000, 2500000]
+    // Mức chi tiêu đi chợ mỗi tuần (câu Q6, tùy chọn): trần mềm cho Đầu bếp. Bội số của 250.000đ để khớp gói 4 tuần
+    // (mỗi mức × 4 tuần ra giá trị gói tròn 2 / 3 / 4 / 6 / 10 triệu); dòng giải thích ở StepAbout dùng budgetExplain.js.
+    groceryBudgetChoicesVnd: [500000, 750000, 1000000, 1500000, 2500000]
   },
 
   credit: {
@@ -270,10 +271,10 @@ export const BUSINESS = {
   logistics: {
     // Shipper: mỗi người có PIN riêng (3333 là PIN shipper đã có từ trước, gán cho shipper đầu tiên) và sức chở (thùng / chuyến).
     shippers: [
-      { id: 'SH-01', name: 'Nguyễn Văn Hùng', pin: '3333', capacityBoxes: 15 },
-      { id: 'SH-02', name: 'Trần Minh Tuấn', pin: '3334', capacityBoxes: 15 },
-      { id: 'SH-03', name: 'Lê Thị Hoa', pin: '3335', capacityBoxes: 12 },
-      { id: 'SH-04', name: 'Phạm Quốc Bảo', pin: '3336', capacityBoxes: 12 }
+      { id: 'SH-01', name: 'Nguyễn Văn Hùng', capacityBoxes: 15 },
+      { id: 'SH-02', name: 'Trần Minh Tuấn', capacityBoxes: 15 },
+      { id: 'SH-03', name: 'Lê Thị Hoa', capacityBoxes: 12 },
+      { id: 'SH-04', name: 'Phạm Quốc Bảo', capacityBoxes: 12 }
     ],
     // Xe lạnh chặng dài: sức chứa mặc định (thùng) và giá mỗi chuyến khi điều phối chưa nhập
     truck: { capacityBoxes: 120, costPerTripVnd: 4500000, carrierSupplierId: 'S-TRUCK' },
@@ -300,7 +301,6 @@ export const BUSINESS = {
     // Gợi ý gộp ngày cho khu có độ lấp đầy của một ngày giao dưới mức này
     mergeSuggestBelowFillPct: 0.35,
     // Bảng demo: nút nhảy tới mốc xe về kho phụ (giờ ngày giao D)
-    demoHubJump: { hour: 2, min: 0 },
     // KPI
     kpi: { onTimeGraceMinutes: 0, minRouteMinutes: 15 }
   },

@@ -3,7 +3,7 @@
     <h1>Tổng quan</h1>
     <p class="ops-muted fin-note">
       Dành cho founder: tiền vào / ra của tuần {{ o ? `${dmy(o.week.from)} – ${dmy(o.week.to)}` : '' }}, nợ Fresh Credit, tỷ lệ bao phủ, margin, giữ chân, giao đúng giờ và hao hụt.
-      Số liệu đọc từ sổ nghiệp vụ nên cập nhật theo đồng hồ giả lập.
+      Số liệu đọc từ sổ nghiệp vụ trên máy chủ nên cập nhật theo giờ máy chủ.
     </p>
     <p v-if="error" class="ops-error" role="alert">{{ error }}</p>
 
@@ -13,6 +13,12 @@
         <ul class="ops-list">
           <li v-for="a in o.alerts" :key="a.id" :data-alert="a.id"><RouterLink :to="a.href">{{ a.text }}</RouterLink></li>
         </ul>
+      </section>
+
+      <section v-if="tile" class="fin-tiles" aria-label="Sổ Fresh Credit">
+        <div class="fin-tile" :class="tile.tone === 'unknown' ? '' : tile.tone" data-testid="ov-integrity" :data-tone="tile.tone">
+          <span class="n">{{ tile.big }}</span><strong>{{ tile.title }}</strong><small>{{ tile.detail }}</small>
+        </div>
       </section>
 
       <h2>Dòng tiền và nghĩa vụ</h2>
@@ -58,17 +64,26 @@ import { pct } from '../format';
 import { session, ctx } from '../session';
 import { modulesFor } from '../modules';
 import { useLive } from '../useLive';
+import { financeError, integrityTile } from '../financeUi';
 
 const o = ref(null);
+const integrity = ref(null);
 const error = ref('');
-const modules = computed(() => modulesFor(session.value.role).filter((m) => m.name !== 'overview'));
+const tile = computed(() => (o.value ? integrityTile(integrity.value) : null));
+const modules = computed(() => (session.value ? modulesFor(session.value.role).filter((m) => m.name !== 'overview') : []));
 
-function load() {
+async function load() {
   try {
-    o.value = api.ops.overview.founder(ctx.value);
+    o.value = await api.ops.overview.founder(ctx.value);
     error.value = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
+  }
+  // Ô sổ Fresh Credit: không có quyền hoặc lỗi mạng thì hiện "chưa kiểm được", không làm hỏng cả trang tổng quan.
+  try {
+    integrity.value = await api.ops.finance.integrity(ctx.value);
+  } catch {
+    integrity.value = null;
   }
 }
 useLive(load, { every: 8000 });

@@ -1,0 +1,94 @@
+/*
+ * MOVA FRESH design tokens, nguồn duy nhất cho màu, chữ, bo góc.
+ * Theo MOVA FRESH Branding Guideline (Figma):
+ *   cam #F89122, cam-đỏ #F25A29, xanh #0B9C63, nâu #543F18, kem #F9F7EC.
+ * main.css ánh xạ các tên cũ (--line-2, --orange-soft, ...) sang các token này.
+ *
+ * Quy tắc tương phản: chữ nhỏ trên xanh/cam-đỏ dùng biến thể đậm (--green-d, --red-orange-d)
+ * hoặc chữ nâu. Chữ trắng trên #0B9C63 / #F25A29 chỉ cho chữ lớn (>= 18,66px đậm).
+ * Biến thể đậm là giá trị SUY RA, cần Design duyệt.
+ */
+:root {
+  /* Màu thương hiệu (nguyên văn Figma) */
+  --green: #0B9C63;
+  --orange: #F89122;
+  --red-orange: #F25A29;
+  --brown: #543F18;
+  --cream: #F9F7EC;
+  --white: var(--white);
+  --black: #000000;
+  --paper-grey: #EEEEEE;
+
+  /* Biến thể đậm suy ra, đạt AA (>= 4,5:1) với chữ trắng */
+  --green-d: #087A4D;
+  --green-dd: #065F3C;
+  --red-orange-d: #B93B12;
+  --red-orange-dd: #962F0D;
+
+  /* Nền, chữ, đường kẻ */
+  --surface: #F4F1E4;
+  --ink-2: #5F4D28;
+  --muted: #74643F;
+  --faint: #8C7C5A;
+  --on-orange: #3A2A0C;
+  --on-dark: var(--white);
+  --on-dark-muted: rgba(255, 255, 255, .5);
+  --line: #E4DDC6;
+  --line-2: #EFEADA;
+  --line-strong: #CFC6A8;
+
+  /* Tông phụ cho nền nhạt, viền, chữ trên nền nhạt */
+  --green-soft: #E3F4EC;
+  --green-tint: #F1F9F4;
+  --green-line: #BFE3D0;
+  --orange-soft: #FEEFDC;
+  --orange-ink: #8F4308;
+  --red-orange-soft: #FDE9E1;
+  --amber-soft: #FFF4DC;
+  --amber-line: var(--amber-line);
+  --amber-ink: #7A4A00;
+  --butter: var(--butter);
+  --wood: var(--wood);
+
+  /* Trạng thái */
+  --red: var(--red);
+  --red-soft: #FBE9E6;
+  --red-line: #EDB4AE;
+  --blue: var(--blue);
+  --blue-soft: var(--blue-soft);
+  --blue-line: var(--blue-line);
+  --blue-ink: var(--blue-ink);
+  --violet: var(--violet);
+  --violet-soft: var(--violet-soft);
+
+  /* Màu thương hiệu bên thứ ba (đối tác thanh toán, Zalo) */
+  --pay-vietqr: #EE0033;
+  --pay-momo: #A50064;
+  --pay-zalo: #0068FF;
+  --pay-vnpay: var(--blue);
+  --pay-visa: #1A1F71;
+  --pay-mc: #EB001B;
+
+  /* Chữ */
+  --font: "Epilogue", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fs-display: 44px;
+  --fs-12: 12px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --lh-display: 1;
+  --grad-hero-text: linear-gradient(90deg, var(--white) 0%, #F89122 100%);
+
+  /* Bo góc và lưới */
+  --r-card: 16px;
+  --r-ctl: 12px;
+  --r-pill: 999px;
+  --frame: 596px;
+
+  /* Bóng đổ */
+  --shadow-1: 0 1px 2px rgba(84, 63, 24, .08), 0 4px 14px rgba(84, 63, 24, .06);
+  --shadow-2: 0 8px 28px rgba(84, 63, 24, .16);
+}

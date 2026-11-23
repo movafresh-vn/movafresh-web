@@ -5,6 +5,7 @@
       <h2 id="skip-title" class="pl-h2">Tạm hoãn Tuần {{ week.number }}</h2>
 
       <p v-if="loadError" class="pl-error" role="alert">{{ loadError }}</p>
+      <p v-else-if="!preview" class="pl-note">Đang tính toán lịch giao mới...</p>
       <template v-else>
         <p class="pl-lead">Thực đơn tuần này không mất. MOVA dời nguyên cả tuần xuống cuối gói và giữ ưu đãi.</p>
         <div class="pl-panel good">
@@ -24,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -33,23 +34,29 @@ const props = defineProps({ week: { type: Object, required: true } });
 const emit = defineEmits(['close', 'done']);
 const store = useMovaStore();
 
-const req = { customer_id: store.customerId, week_index: props.week.week_index };
-const p = api.customer.previewSkip(req);
-const loadError = ref(p.status === 'error' ? p.error.message : '');
-const preview = p.status === 'success' ? p.data : null;
+const req = { week_index: props.week.week_index };
+const loadError = ref('');
+const preview = ref(null);
 const error = ref('');
 const busy = ref(false);
 
-function confirm() {
+onMounted(async () => {
+  const p = await api.customer.previewSkip(req);
+  if (p.status === 'error') loadError.value = p.error?.message || 'Không thể tải thông tin tạm hoãn';
+  else preview.value = p.data;
+});
+
+async function confirm() {
   busy.value = true;
-  const r = api.customer.skipWeek(req);
+  const r = await api.customer.skipWeek(req);
   busy.value = false;
   if (r.status === 'error') {
-    error.value = r.error.message;
+    error.value = r.error?.message || 'Có lỗi xảy ra khi tạm hoãn';
     return;
   }
-  store.refresh();
-  store.toast(`Đã tạm hoãn tuần ${props.week.number}, giao lại ${r.data.new_deliveries[0].delivery_label}`);
+  await store.refresh();
+  const newDateLabel = r.data.new_deliveries?.[0]?.delivery_label || r.data.new_week?.delivery_date || '';
+  store.toast(`Đã tạm hoãn tuần ${props.week.number}${newDateLabel ? ', giao lại ' + newDateLabel : ''}`);
   emit('done', r.data);
 }
 </script>

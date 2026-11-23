@@ -1,7 +1,7 @@
 <template>
   <div v-if="data" class="rewards">
     <!-- Bảng số dư Fresh Credit đa năng -->
-    <section v-if="creditSum" class="pl-card fc-card">
+    <section v-if="creditSum?.balance" class="pl-card fc-card">
       <div class="fc-head">
         <div>
           <span class="wallet-badge">TÀI KHOẢN SUẤT ĂN TRẢ TRƯỚC</span>
@@ -89,16 +89,15 @@ const busy = ref(false);
 const r = computed(() => data.value.rewards);
 const inviteUrl = computed(() => `${location.origin}${data.value.invite_path}`);
 
-function load() {
-  const res = api.customer.rewards(store.customerId);
+async function load() {
+  const [res, cRes] = await Promise.all([api.customer.rewards(), api.customer.creditSummary()]);
   if (res.status === 'success') data.value = res.data;
-  const cRes = api.customer.creditSummary(store.customerId);
   if (cRes.status === 'success') creditSum.value = cRes.data;
 }
 load();
 watch(() => store.version, load);
 
-async function send(text, url, title = 'MOVA Fresh') {
+async function send(text, url, title = 'MOVA FRESH') {
   try {
     if (navigator.share) await navigator.share({ title, text, url });
     else await navigator.clipboard.writeText(`${text} ${url}`);
@@ -111,24 +110,24 @@ async function send(text, url, title = 'MOVA Fresh') {
 }
 
 async function shareInvite() {
-  const done = await send('Mình nấu cơm nhà 15 phút với MOVA Fresh: nguyên liệu sơ chế sẵn từ Đắk Lắk. Đăng ký qua link này nhé:', inviteUrl.value);
+  const done = await send('Mình nấu cơm nhà 15 phút với MOVA FRESH: nguyên liệu sơ chế sẵn từ Đắk Lắk. Đăng ký qua link này nhé:', inviteUrl.value);
   if (done && !navigator.share) copiedInvite.value = true;
 }
 
-function claim(req) {
-  const res = api.customer.claimShare({ customer_id: store.customerId, ...req });
+async function claim(req) {
+  const res = await api.customer.claimShare({ ...req });
   if (res.status === 'error') {
     message.value = res.error.message;
     return;
   }
   message.value = `Đã cộng ${fmt(res.data.reward_vnd)} vào Fresh Credit (phần khuyến mãi).`;
-  store.refresh();
+  await store.refresh();
 }
 
 async function shareMenu() {
   busy.value = true;
   message.value = '';
-  const weeks = api.customer.myWeeks(store.customerId);
+  const weeks = await api.customer.myWeeks();
   const w = weeks.status === 'success' ? weeks.data.weeks.find((x) => x.editable) || weeks.data.weeks[0] : null;
   if (!w) {
     message.value = 'Bạn chưa có thực đơn để chia sẻ.';
@@ -136,17 +135,17 @@ async function shareMenu() {
     return;
   }
   const names = w.meals.map((m) => m.dishes[0].name).slice(0, 4).join(', ');
-  const done = await send(`Thực đơn tuần này của nhà mình với MOVA Fresh: ${names}.`, `${location.origin}/`);
-  if (done) claim({ kind: 'menu', ref: `week-${w.week_index}` });
+  const done = await send(`Thực đơn tuần này của nhà mình với MOVA FRESH: ${names}.`, `${location.origin}/`);
+  if (done) await claim({ kind: 'menu', ref: `week-${w.week_index}` });
   busy.value = false;
 }
 
-function sharePhoto(e) {
+async function sharePhoto(e) {
   const file = e.target.files && e.target.files[0];
   e.target.value = '';
   if (!file) return;
   message.value = '';
-  claim({ kind: 'photo', ref: `photo:${file.name}:${file.size}`, photo_name: file.name });
+  await claim({ kind: 'photo', ref: `photo:${file.name}:${file.size}`, photo_name: file.name });
 }
 </script>
 
@@ -154,7 +153,7 @@ function sharePhoto(e) {
 .rewards { display: grid; gap: 16px; max-width: 760px; }
 .rewards > section { display: grid; gap: 12px; }
 .fc-card {
-  background: #ffffff;
+  background: var(--white);
   border: 1px solid var(--line-2);
   border-radius: 16px;
   padding: 20px;
@@ -181,7 +180,7 @@ function sharePhoto(e) {
 .total-amt {
   font-size: 32px;
   font-weight: 800;
-  color: var(--green);
+  color: var(--green-d);
 }
 .fc-split {
   display: grid;
@@ -219,12 +218,12 @@ function sharePhoto(e) {
 .fc-note {
   margin-top: 14px;
   padding: 12px 14px;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 12px;
   font-size: 13px;
   line-height: 1.5;
-  color: #334155;
+  color: var(--ink-2);
 }
 .fc-note p {
   margin: 0;

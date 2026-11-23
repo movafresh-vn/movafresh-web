@@ -16,7 +16,7 @@
       {{ offer.payment_method === 'fresh_credit' ? 'từ Fresh Credit' : 'từ thẻ của bạn' }}.
       <template v-if="offer.switched_from_bank"> Gói trước bạn trả bằng chuyển khoản, nên chu kỳ mới trừ từ Fresh Credit.</template>
     </p>
-    <p v-if="offer.needs_credit && offer.balance.total_vnd < offer.weeks[0].amount_vnd" class="pl-panel warn">
+    <p v-if="offer.needs_credit && (offer.balance?.total_vnd ?? 0) < (offer.weeks?.[0]?.amount_vnd ?? 0)" class="pl-panel warn">
       Fresh Credit hiện có {{ fmt(offer.balance.total_vnd) }}, chưa đủ cho tuần đầu của chu kỳ mới. Bạn nên nạp thêm trước mốc trừ.
       <button class="pl-btn sm" type="button" @click="store.openModal('topup')">Nạp thêm</button>
     </p>
@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -40,30 +40,34 @@ defineProps({ remaining: { type: Number, default: 0 } });
 const emit = defineEmits(['done']);
 const store = useMovaStore();
 
-const res = api.customer.renewalOffer(store.customerId);
-const offer = res.status === 'success' ? res.data : null;
+const offer = ref(null);
 const agree = ref(false);
 const error = ref('');
 const busy = ref(false);
 
-function renew() {
+onMounted(async () => {
+  const res = await api.customer.renewalOffer();
+  offer.value = res.status === 'success' ? res.data : null;
+});
+
+async function renew() {
   busy.value = true;
-  const r = api.customer.renewSubscription({ customer_id: store.customerId, consent: agree.value });
+  const r = await api.customer.renewSubscription({ consent: agree.value });
   busy.value = false;
   if (r.status === 'error') {
     error.value = r.error.message;
     return;
   }
-  store.refresh();
+  await store.refresh();
   store.toast(`Đã gia hạn thêm ${r.data.weeks_added} tuần`);
   emit('done');
 }
 </script>
 
 <style scoped>
-.renew { display: grid; gap: 14px; background: var(--green-soft); border-color: #BBD8C5; }
+.renew { display: grid; gap: 14px; background: var(--green-soft); border-color: var(--green-line); }
 .weeks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.weeks li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #cfe3d6; font-size: 16px; }
+.weeks li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--green-line); font-size: 16px; }
 .weeks small { display: block; color: var(--muted); font-size: 14px; }
 .agree { display: flex; gap: 12px; align-items: flex-start; font-size: 16px; cursor: pointer; min-height: 44px; }
 .agree input { width: 24px; height: 24px; margin-top: 2px; accent-color: var(--green); flex-shrink: 0; }

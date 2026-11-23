@@ -39,11 +39,11 @@ export const SAUCES = {
 };
 
 export const SUPPLIERS = {
-  'S-FACTORY': { id: 'S-FACTORY', name: 'Nhà máy sơ chế MOVA Đắk Lắk', type: 'factory', termDays: 30, pin: '4001', contact: 'Quản đốc nhà máy' },
-  'S-SEAFOOD': { id: 'S-SEAFOOD', name: 'Đầu mối hải sản Vũng Tàu', type: 'seafood', termDays: 15, pin: '4002', contact: 'Chủ đầu mối' },
-  'S-TRUCK': { id: 'S-TRUCK', name: 'Nhà xe lạnh Tây Nguyên – Sài Gòn', type: 'long_haul', termDays: 15, pin: '4003', contact: 'Điều độ xe' },
-  'S-LASTMILE': { id: 'S-LASTMILE', name: 'Đội giao hàng chặng cuối', type: 'last_mile', termDays: 7, pin: '4004', contact: 'Trưởng đội' },
-  'S-PACK': { id: 'S-PACK', name: 'Xưởng bao bì cách nhiệt', type: 'packaging', termDays: 30, pin: '4005', contact: 'Kinh doanh' }
+  'S-FACTORY': { id: 'S-FACTORY', name: 'Nhà máy sơ chế MOVA Đắk Lắk', type: 'factory', termDays: 30, contact: 'Quản đốc nhà máy' },
+  'S-SEAFOOD': { id: 'S-SEAFOOD', name: 'Đầu mối hải sản Vũng Tàu', type: 'seafood', termDays: 15, contact: 'Chủ đầu mối' },
+  'S-TRUCK': { id: 'S-TRUCK', name: 'Nhà xe lạnh Tây Nguyên – Sài Gòn', type: 'long_haul', termDays: 15, contact: 'Điều độ xe' },
+  'S-LASTMILE': { id: 'S-LASTMILE', name: 'Đội giao hàng chặng cuối', type: 'last_mile', termDays: 7, contact: 'Trưởng đội' },
+  'S-PACK': { id: 'S-PACK', name: 'Xưởng bao bì cách nhiệt', type: 'packaging', termDays: 30, contact: 'Kinh doanh' }
 };
 
 /**
@@ -53,6 +53,40 @@ export const SUPPLIERS = {
  * bom: gram nguyên liệu đã sơ chế cho MỖI NGƯỜI. sauce: mã xốt (1 túi cho mỗi món mỗi hộ).
  * tags: dùng cho lọc kiêng cữ (beef, pork, seafood, spicy, gluten, lactose).
  */
+/** Cơ sở dinh dưỡng của mọi món: kcal/đạm tính cho 1 người ăn trong 1 bữa (không phải cả hộ, không phải 100g). */
+export const NUTRITION_BASIS = 'per_person_per_meal';
+
+/**
+ * Phần cắt của từng món (F11). group: pork | beef | chicken | seafood | veg | soup | carb | fruit.
+ * part: phần thịt/loại cụ thể (thigh_drumstick = má đùi gà, breast = ức gà...).
+ * LƯU Ý: danh sách 16 món thật do đầu bếp (Anh Hiếu) cấp; 21 món dưới đây và giá trị cut/kcal/đạm
+ * chỉ là DỮ LIỆU TẠM (placeholder) để dựng cấu trúc + validator, cần thay khi có danh sách chính thức.
+ * D-PRT-003: BOM hiện vẫn là NL-GA-03 (ức gà phi lê) nhưng cut tạm ghi má đùi gà; đầu bếp cần chốt lại.
+ */
+export const DISH_CUTS = {
+  'D-PRT-001': { group: 'pork', part: 'belly', label: 'Ba rọi heo' },
+  'D-PRT-002': { group: 'beef', part: 'round', label: 'Đùi bò nạc' },
+  'D-PRT-003': { group: 'chicken', part: 'thigh_drumstick', label: 'Má đùi gà' },
+  'D-PRT-004': { group: 'pork', part: 'spare_rib', label: 'Sườn non heo' },
+  'D-PRT-005': { group: 'seafood', part: 'fish_steak', label: 'Cá bớp cắt khoanh' },
+  'D-PRT-006': { group: 'seafood', part: 'shrimp', label: 'Tôm sú bóc nõn' },
+  'D-WST-001': { group: 'beef', part: 'tenderloin', label: 'Thăn ngoại bò' },
+  'D-WST-002': { group: 'chicken', part: 'breast', label: 'Ức gà phi lê' },
+  'D-WST-003': { group: 'pork', part: 'spare_rib', label: 'Sườn heo' },
+  'D-VEG-001': { group: 'veg', part: 'floret', label: 'Bông cải xanh baby' },
+  'D-VEG-002': { group: 'veg', part: 'leaf', label: 'Cải ngọt' },
+  'D-SUP-001': { group: 'soup', part: 'spare_rib_pumpkin', label: 'Sườn non và bí đỏ' },
+  'D-SUP-002': { group: 'soup', part: 'tomato', label: 'Cà chua' },
+  'D-SUP-003': { group: 'soup', part: 'minced_chicken_breast', label: 'Cải ngọt và ức gà bằm' },
+  'D-CRB-001': { group: 'carb', part: 'rice', label: 'Gạo ST25' },
+  'D-CRB-002': { group: 'carb', part: 'rice_noodle', label: 'Bún gạo khô' },
+  'D-CRB-003': { group: 'carb', part: 'sweet_potato', label: 'Khoai lang mật' },
+  'D-CRB-004': { group: 'carb', part: 'baguette', label: 'Bánh mì baguette mini' },
+  'D-CRB-005': { group: 'carb', part: 'pasta', label: 'Mì Ý khô' },
+  'D-DST-002': { group: 'fruit', part: 'banana', label: 'Chuối tiêu' },
+  'D-DST-003': { group: 'fruit', part: 'lychee', label: 'Vải thiều IQF tách hạt' }
+};
+
 const dish = (id, kind, name, o) => {
   const region = o.terroir_region || o.terroir || 'Đắk Lắk';
   const nutriServing = o.nutrition_per_serving || {
@@ -88,6 +122,9 @@ const dish = (id, kind, name, o) => {
     nutrition_per_serving: nutriServing,
     nutrition: nutriCompat,
     cooking_steps: [],
+    // F11: phần cắt + cơ sở tính dinh dưỡng (1 người / 1 bữa). Kiểm bởi shared/domain/catalogValidate.js.
+    cut: DISH_CUTS[id] || null,
+    nutrition_basis: NUTRITION_BASIS,
     ...o
   };
 };
@@ -400,7 +437,7 @@ export const DISHES = {
   'D-CRB-003': dish('D-CRB-003', 'carb', 'Khoai lang mật nướng đất đỏ Đắk Lắk', {
     bom: [{ sku: 'NL-KHOAI-01', gramsPerPerson: 150 }], prepMinutes: 0, pricePerPersonVnd: 5000, lowCarb: true,
     terroir_region: 'Krông Búk • Đắk Lắk',
-    terroir_story: 'Khoai lang mật trồng trên vùng đồi Bazan Krông Búk nhiều nắng gió, tích lũy lượng mật tự nhiên ngọt lịm và ruột vàng cam óng ả. Nguồn tinh bột hấp thu chậm (Low GI) giàu chất xơ, lý tưởng cho người giảm cân hoặc giữ dáng.',
+    terroir_story: 'Khoai lang mật trồng trên vùng đồi Bazan Krông Búk nhiều nắng gió, tích lũy lượng mật tự nhiên ngọt lịm và ruột vàng cam óng ả. Nguồn tinh bột giàu chất xơ, hỗ trợ bữa ăn cân đối (thông tin dinh dưỡng chỉ mang tính tham khảo).',
     chef_note: 'Nướng nồi chiên không dầu ở 180°C trong 15 phút, mật khoai sẽ tứa ra thơm nức mũi như nướng than hoa.',
     portion_specs: {
       net_weight_grams: 150,
@@ -490,24 +527,3 @@ export const DISHES = {
     ]
   })
 };
-
-/** Mã khung giờ của hợp đồng API → khung giờ nội bộ. */
-export const SLOT_ALIASES = {
-  early_morning_06_08: 'early_morning_06_08',
-  noon_11_13: 'noon_11_13',
-  evening_18_21: 'evening_18_21'
-};
-
-/** 10 AI Personas theo .agent/05 — nền để nhân ra các hộ mẫu. */
-export const PERSONAS = [
-  { id: 'P1', label: 'Dân gym nam', householdSize: 1, goals: ['high_protein', 'low_carb'], restrictions: [], mealsPerWeek: 6, deliveriesPerWeek: 1, payment: 'fresh_credit', zoneId: 'Z3' },
-  { id: 'P2', label: 'Nữ văn phòng giảm mỡ', householdSize: 1, goals: ['low_carb'], restrictions: ['no_beef'], mealsPerWeek: 5, deliveriesPerWeek: 1, payment: 'card', zoneId: 'Z1' },
-  { id: 'P3', label: 'Cần hạn chế đường', householdSize: 2, goals: ['limit_sugar', 'low_carb'], restrictions: [], mealsPerWeek: 5, deliveriesPerWeek: 1, payment: 'bank_transfer_4w', zoneId: 'Z5' },
-  { id: 'P4', label: 'Dạ dày nhạy cảm', householdSize: 1, goals: ['gentle_digestion'], restrictions: ['no_spicy'], mealsPerWeek: 4, deliveriesPerWeek: 1, payment: 'card', zoneId: 'Z2' },
-  { id: 'P5', label: 'Gia đình trẻ có con nhỏ', householdSize: 3, goals: ['balanced'], restrictions: ['no_spicy'], mealsPerWeek: 5, deliveriesPerWeek: 2, payment: 'fresh_credit', zoneId: 'Z2' },
-  { id: 'P6', label: 'Đại gia đình ba thế hệ', householdSize: 6, goals: ['balanced'], restrictions: [], mealsPerWeek: 6, deliveriesPerWeek: 2, payment: 'bank_transfer_4w', zoneId: 'Z4' },
-  { id: 'P7', label: 'Chuyên gia bận rộn độc thân', householdSize: 1, goals: ['balanced'], restrictions: [], mealsPerWeek: 4, deliveriesPerWeek: 1, payment: 'card', zoneId: 'Z1' },
-  { id: 'P8', label: 'Ăn chay bán phần', householdSize: 2, goals: ['balanced'], restrictions: ['no_beef', 'no_pork'], mealsPerWeek: 4, deliveriesPerWeek: 1, payment: 'fresh_credit', zoneId: 'Z6' },
-  { id: 'P9', label: 'Mẹ bỉm sữa sau sinh', householdSize: 2, goals: ['high_protein', 'gentle_digestion'], restrictions: ['no_spicy'], mealsPerWeek: 6, deliveriesPerWeek: 2, payment: 'bank_transfer_4w', zoneId: 'Z7' },
-  { id: 'P10', label: 'Cặp đôi Gen Z mê Fusion', householdSize: 2, goals: ['balanced'], restrictions: [], mealsPerWeek: 5, deliveriesPerWeek: 1, payment: 'card', zoneId: 'Z8' }
-];

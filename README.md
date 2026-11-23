@@ -8,37 +8,39 @@
 
 ---
 
-## 🌟 Tính Năng Cốt Lõi V2.2
+## 🌟 Tính Năng Cốt Lõi (V2.3: chạy trên backend thật)
+
+> Từ V2.3 web **không còn máy chủ giả**: mọi dữ liệu, giá, sức chứa và trạng thái đơn do `movafresh-platform/backend` quyết định (Hono + Supabase/Postgres). Web chỉ hiển thị và gửi lệnh. Không có `localStorage` làm kho dữ liệu; trình duyệt chỉ giữ phiên đăng nhập, bản nháp thực đơn và hàng đợi offline của xưởng.
 
 ### 1. Web App Khách Hàng (`index.html`)
-- **Trang chủ & Video Hook 10 giây (Grand Frais Style):** Khung video tỷ lệ 16:9 / 4:3 cận cảnh nguyên liệu tươi sống chuyển động thật với 3 nhịp: `00:00 Mở hộp Đắk Lắk` $\rightarrow$ `00:05 Đảo 1 chảo & rưới xốt` $\rightarrow$ `00:15 Xong mâm cơm 5 món`.
-- **Đăng nhập nhanh 1 chạm:** Tích hợp Google, Zalo, Facebook điền tự động thông tin liên hệ.
-- **Phễu khảo sát Đầu bếp (`/plans`):** Nút tăng/giảm `−` / `+` cho số người ăn (1–10) và số bữa/tuần (3–7); 9 nhu cầu thể trạng + 6 kiêng cữ dị ứng kèm ô *"Khác (tự nhập)"* có bộ phân tích từ khóa thời gian thực; 3 phong cách ẩm thực (Thuần Việt, Đồ Tây, Đồ Á).
-- **Thực đơn Mâm cơm Á Đông 5 món:** Đạm chính + Canh nóng + Rau xanh + Tinh bột lành mạnh + Trái cây tráng miệng theo mùa (Chuối tiêu chín cây, Vải thiều cấp đông nhanh IQF tách hạt).
-- **Đổi món linh hoạt & Modal Chi tiết món:**
-  - Gợi ý đổi 3–4 món khác biệt nguồn đạm kèm thanh tìm kiếm thực đơn nhà máy.
-  - Modal Chi tiết: Ảnh/màu nhóm tươi sống, Huy hiệu vùng miền `terroir_region`, Câu chuyện thổ nhưỡng `terroir_story`, Mẹo ngon `chef_note`, Bảng định lượng nhân theo số người ăn, Quy cách sơ chế, Hướng dẫn bảo quản, 4 chỉ số dinh dưỡng (Calo, Đạm, Tinh bột, Béo), 3 bước nấu 15 phút.
-- **Thanh toán FinTech & Giao hàng:**
-  - Khung giờ xanh (06:00 – 08:00): Tặng ngay -15.000đ Freeship né kẹt xe.
-  - Tần suất 1 lần/tuần (Badge khuyên dùng tối ưu phí thùng 39.000đ/hộp).
-  - Xác thực SĐT qua OTP (demo mã 1234) tích hợp vào validation.
-  - 3 Hình thức trả trước (Zero COD): Nạp Fresh Credit (~10% thưởng nạp, Nghị định 52/2024), Chuyển khoản VietQR 4 tuần, Liên kết thẻ tín dụng (tự trừ trước 72 giờ).
-  - Hộp nhập Voucher (`THEQUATANG`, `MOVA20`, `FREESHIP`).
-  - Checkbox pháp lý thông tin cá nhân & Newsletter nhận bản tin (+15.000đ Fresh Credit).
-- **Dashboard Quản lý Tài khoản (`/account`):** Đổi món trước giờ chốt sổ nhà máy (08:00 ngày D-2), tạm hoãn (Skip), quản lý số dư Fresh Credit 2 ngăn (`real_vnd` vs `promo_vnd`), Cook & Share, Mời bạn bè nhận thưởng.
+- **Trang chủ & Video Hook 10 giây:** `00:00 Mở hộp Đắk Lắk` → `00:05 Đảo 1 chảo & rưới xốt` → `00:15 Xong mâm cơm 5 món`.
+- **Đăng nhập bằng SĐT + OTP hoặc Google (Supabase Auth):** không còn tài khoản mẫu. SĐT nhận mã vùng quốc tế (E.164, mặc định +84). Nút Google dùng `supabase.auth.signInWithOAuth({ provider: 'google' })`, môi trường thật bật Google ở dashboard Supabase (khối Google trong `supabase/config.toml` đang tắt); khách Google vẫn phải xác thực SĐT bằng OTP khi thanh toán. Bản local dùng số thử có OTP cố định (xem mục "Tài khoản thử").
+- **Phễu khảo sát Đầu bếp (`/plans`):** số người ăn (1–10), số bữa/tuần (3–7), nhu cầu thể trạng, kiêng cữ dị ứng (có ô tự nhập, máy chủ phân tích và **chặn món không an toàn: fail-closed**), phong cách ẩm thực. Bản nháp thực đơn nằm ở trình duyệt; mọi món được máy chủ kiểm lại khi xem giá và khi đăng ký.
+- **Thực đơn Mâm cơm 5 món** và đổi món theo danh mục `GET /dishes` (Đạm, Canh, Rau, Tinh bột, Tráng miệng; huy hiệu vùng, định lượng theo số người, dinh dưỡng, 3 bước nấu 15 phút).
+- **Thanh toán & giao hàng (Zero COD):**
+  - **Mọi số tiền (giá, giảm giá, khung giờ xanh, giới thiệu, lịch trừ tiền) do máy chủ trả về** qua `POST /subscription/preview`; web không tự tính để hiển thị.
+  - **Hướng dẫn giao bắt buộc chọn**, mặc định "Để ở lễ tân + shipper chụp ảnh" (`leave_at_reception`, bắt buộc ảnh); có ô **phường** (không bắt buộc) để gom tuyến.
+  - **Số chỗ còn lại theo từng ngày giao** (khung giờ và chu kỳ sản xuất); ngày đã đầy không chọn được và hiện lý do (`SLOT_FULL`, `CYCLE_FULL`).
+  - Phương thức: Fresh Credit (mua Gói Suất ăn trả trước cố định), chuyển khoản VietQR 4 tuần, thẻ liên kết (tự trừ trước 72 giờ). Voucher và thưởng giới thiệu theo luật của máy chủ.
+- **Tài khoản (`/account`):** đổi món trước giờ chốt sổ (mặc định **08:00 ngày D-2**, cấu hình ở máy chủ, luôn hiện ngày giờ cụ thể), hoãn tuần, gia hạn có đồng ý rõ ràng, Fresh Credit 2 ngăn (`real` / `promo`), thưởng và chia sẻ, mời bạn. Thẻ tuần hiện **ảnh giao hàng** khi đã giao, hóa đơn, và huy hiệu **thanh toán muộn** (đang chờ admin / dời ngày / hoàn Fresh Credit).
 
 ---
 
 ### 2. Web App Vận Hành 8 Vai Trò (`ops.html`)
-Ứng dụng Single Page độc lập qua hash router phục vụ 8 nhóm tác nhân, ẩn thông tin PII khách hàng:
-- **`1111` — Quản đốc phân xưởng (Factory Manager):** Kế hoạch sản xuất tuần, phiếu chế bản in ấn (Printable Work Order), cân đối BOM nguyên liệu thô theo mốc chốt sổ `08:00 D-2`.
-- **`2222` — Bếp phân xưởng (Factory Workshop):** Kế hoạch hôm nay, 7 ngày, đóng gói, xuất xe lạnh Đắk Lắk $\rightarrow$ TP.HCM, Offline Queue lưu trữ khi mất mạng.
-- **`3333–3336` — Mua hàng & Kho (Procurement):** Đơn mua hàng (PO), đối soát 3-way match, kho FEFO, thu hồi lô hàng sự cố (Lot Recall).
-- **`4001–4005` — Cổng Nhà cung cấp (Supplier Portal):** Dành cho 5 nhà cung ứng (`S-FACTORY`, `S-SEAFOOD`, `S-TRUCK`, `S-LASTMILE`, `S-PACK`).
-- **`5555` — Điều phối vận hành & Xe lạnh (Logistics):** Quản lý công suất tuyến, giám sát cảm biến chuỗi lạnh Cold Chain, tính chi phí logistics theo thùng và KPI đúng giờ.
-- **`6666` — Kho phụ trung chuyển TP.HCM (Secondary Hub):** Nhận xe lạnh Đắk Lắk, ghép hải sản tươi Vũng Tàu, chia tuyến giao, in nhãn thùng.
-- **`7777` — Shipper chặng cuối (Delivery):** Giao diện mobile tối giản, danh sách điểm dừng, SĐT che một phần, 1 chạm xác nhận Đã giao / Thất bại.
-- **`9999` — Kế toán & Quản trị dòng tiền (Finance & Accounting):** Sổ cái Fresh Credit 2 ngăn, đối soát ngân hàng VietQR, xuất hóa đơn VAT, biên lợi nhuận, công nợ NCC, dự báo dòng tiền 13 tuần, export CSV chuẩn MISA / Fast.
+Đăng nhập **email + mật khẩu** (Supabase Auth); vai trò, trang chủ và danh sách quyền lấy từ `GET /ops/me`, nên menu và nút ẩn theo quyền còn máy chủ vẫn kiểm lại ở từng lệnh. Không còn mã PIN. Dữ liệu khách chỉ hiện đúng mức vai trò được phép.
+
+| Vai trò (email local, đều @staff.movafresh.local) | Làm gì |
+|---|---|
+| `workshop` Xưởng Đắk Lắk (workshop@) | Hôm nay làm bao nhiêu, nhận nguyên liệu (ảnh + mã lô), đóng gói, **in nhãn thùng (Order_Code, Batch_ID, Route_ID, Lot_IDs, không có tên khách)**, **nhập hiệu suất thực tế (lệch >5% bị cờ)**, xuất xe (**bắt buộc nhiệt độ + ảnh**), báo thiếu/hỏng, **hoàn tiền thiếu hàng hàng loạt (xem trước rồi xác nhận)**. Hàng đợi offline: ảnh tải lên trước, rồi gửi lại thao tác theo `opId`. |
+| `hub` Kho phụ TP.HCM (hub@) | Nhận hàng, tồn kho FEFO, truy xuất lô (liệt kê mọi đơn bị ảnh hưởng), thu hồi lô, nhận xe lạnh (**cần ảnh dỡ hàng**), ghép hải sản, chia tuyến, xuất kho. |
+| `dispatch` Điều phối (dispatch@) | Kế hoạch & chốt sổ, **nút chốt sổ một chạm** (chốt sớm cần lý do), **tải lệnh mua tổng CSV**, bảng sức chứa và **3 giới hạn chu kỳ** (xưởng, xe theo hộp, xe theo kg), chuyến xe, lập tuyến, ngoại lệ giao, chuỗi lạnh, chi phí và KPI. |
+| `purchasing` Mua hàng (purchasing@) | Nhà cung cấp, SKU, bảng giá (cảnh báo món vượt 35% giá vốn), dự báo, PO (duyệt, gửi, đối chiếu 3 chiều, trả), mua trực tiếp, công nợ, thẻ điểm nhà cung cấp. |
+| `supplier` Cổng nhà cung cấp (s-factory@, s-seafood@, s-truck@, s-lastmile@, s-pack@) | Xác nhận PO, hóa đơn, trả lời khiếu nại; chỉ thấy dữ liệu của chính nhà cung cấp đó. |
+| `shipper` Giao hàng (shipper1@ đến shipper4@) | Điểm dừng của tuyến mình, gọi khách (SĐT che một phần), đã giao (**ảnh bằng chứng theo hướng dẫn giao**) / không giao được (mở ngoại lệ). |
+| `accounting` Kế toán (accounting@) | Sổ Fresh Credit, đề nghị điều chỉnh, đối soát ngân hàng, doanh thu và hóa đơn, giá vốn và margin, công nợ và pay-run, dòng tiền, xuất bút toán CSV, **bảng giá vốn món (cờ đỏ >35%)**. |
+| `admin` Quản trị (admin@) | Tổng quan founder, **hàng đợi thanh toán muộn** (nhận vào lô còn khóa hoặc từ chối: dời ngày / hoàn Fresh Credit, khách được báo), duyệt điều chỉnh, ô **toàn vẹn sổ cái** (xanh khi sổ cái khớp số dư), bảng dev. |
+
+Màn "Bảng demo" (`/demo`): đồng hồ máy chủ giả lập (nhảy tới giờ trừ tiền / chốt sổ / giao), chạy job, nạp dữ liệu mẫu, chuyển khoản ngân hàng giả có chữ ký. **Chỉ hiện khi build với `VITE_DEV_TOOLS=true` ** và backend bật `DEV_TOOLS_ENABLED=true`; không bao giờ ở production.
 
 ---
 
@@ -61,82 +63,95 @@
 
 ```text
 movafresh-web/
-├── .agent/                             # Toàn bộ tài liệu nghiệp vụ, kiến trúc & roadmap cho AI
-│   ├── 01_PRODUCT_SOUL_AND_BUSINESS_MODEL.md
-│   ├── 02_USER_FLOW_AND_UX_SPEC.md
-│   ├── 03_OPERATIONS_FACTORY_AND_AGENTS.md
-│   ├── 04_TECH_ARCHITECTURE_AND_CONVENTIONS.md
-│   ├── 05_PROGRESS_AND_ROADMAP.md
-│   └── 06_MEETING_DECISIONS_LOG.md
+├── .agent/                             # Tài liệu nghiệp vụ, kiến trúc & roadmap cho AI (đọc theo AGENTS.md)
 ├── AGENTS.md                           # Chỉ thị khởi động & danh sách cấm bắt buộc cho AI
 ├── index.html                          # Entry HTML cho Web Khách Hàng
-├── ops.html                            # Entry HTML cho Web Vận Hành 8 Vai Trò
-├── netlify.toml                        # Cấu hình Netlify redirects (/ops -> /ops.html, /* -> /index.html)
-├── package.json                        # Cấu hình dependencies & test scripts
-├── vite.config.js                      # Cấu hình Vite build multi-input & Vitest
+├── ops.html                            # Entry HTML cho Web Vận Hành
+├── netlify.toml                        # Netlify redirects (/ops -> /ops.html, /* -> /index.html)
+├── .env.example                        # Biến môi trường công khai (VITE_*), xem mục bên dưới
+├── vite.config.js                      # Vite build đa cổng vào + Vitest
 └── src/
-    ├── main.js                         # Entry point App Khách Hàng (Vue Router + Pinia)
-    ├── App.vue                         # Root component Web Khách
-    ├── router/                         # Vue Router cho Web Khách (/, /plans, /account, /q/:code)
-    ├── stores/                         # Pinia stores: usePlanFlowStore, useMovaStore
-    ├── views/                          # Các View màn hình chính: HomeView, PlansView, DashboardView, QrTraceView
-    ├── components/
-    │   ├── common/                     # AppHeader, AppFooter, VietQrSvg, NotificationDrawer...
-    │   ├── store/                      # HeroSection, MealKitVideoHook, SampleMeals, HowItWorks...
-    │   ├── plans/                      # StepAbout, StepMenu, StepCheckout, StepDone, MealCard, PriceBlock...
-    │   └── dashboard/                  # ActiveOrderTab, MealChangeSheet, ProfileTab, RewardsTab...
-    ├── ops/                            # Ứng dụng Vận hành 8 vai trò (/ops.html)
-    │   ├── main.js                     # Entry point Ops
-    │   ├── OpsApp.vue                  # Root layout Ops, chuyển đổi vai trò qua PIN
-    │   ├── views/                      # Màn hình: TodayView, PoView, LoadView, FinanceView, ShipperView...
-    │   └── styles/ops.css              # Theme CSS chuyên biệt cho bảng vận hành
-    └── shared/                         # Thư mục dùng chung (Single Source of Truth)
-        ├── config/
-        │   └── business.js             # Cấu hình Unit Economics, timings, limits, zones
-        ├── data/
-        │   ├── catalog.js              # 18 SKU thô, 8 túi xốt, 21 món Terroir & 10 AI Personas
-        │   ├── packaging.js            # Quy cách bao bì thùng cách nhiệt & khay hút chân không
-        │   ├── recipes.js              # 21 công thức 3 bước 15 phút (chuẩn Grand Frais)
-        │   └── sources.js              # Bản đồ nông trại đối tác Đắk Lắk & Vũng Tàu
-        ├── domain/                     # Logic nghiệp vụ thuần túy (Subscription, Credit, Logistics, Finance)
-        ├── api/                        # Client API & Mock handlers (customer, factory, logistics, finance...)
-        ├── mock-server/                # In-memory Database mô phỏng Backend thực tế
-        └── __tests__/                  # 10 test suites Vitest với 256 unit tests
+    ├── main.js, App.vue, router/       # App khách (Vue Router history: /, /plans, /account, /q/:code)
+    ├── stores/                         # Pinia: usePlanFlowStore, useMovaStore (phiên OTP, thông báo)
+    ├── views/, components/             # Màn khách: plans/, dashboard/, common/, store/
+    ├── services/                       # supabase.js (Auth: OTP khách, email+mật khẩu nhân viên), aiApi.js (gợi ý thực đơn)
+    ├── ops/                            # App vận hành (hash router)
+    │   ├── session.js, guard.js        # Phiên nhân viên từ GET /ops/me, chặn route theo vai trò/quyền
+    │   ├── useLive.js, live.js         # Cập nhật theo nhịp 6 giây, không chồng yêu cầu, tạm dừng khi tab ẩn
+    │   ├── queue.js, queuePhotos.js    # Hàng đợi offline của xưởng: tải ảnh trước, gửi lại thao tác theo opId
+    │   └── views/                      # workshop/, hub/, logistics/, purchasing/, supplier/, shipper/, finance/, ...
+    └── shared/
+        ├── api/                        # Lớp gọi backend (xem bên dưới)
+        ├── config/                     # business.js (khung giờ, hằng hiển thị), roles.js (nhãn vai trò)
+        ├── data/                       # Dữ liệu hiển thị tĩnh còn lại (catalog, packaging, recipes, sources); nguồn sự thật nghiệp vụ là backend
+        ├── domain/                     # Hàm thuần dùng chung cho hiển thị và hàng đợi offline (không giữ trạng thái)
+        ├── utils/                      # time.js (giờ Việt Nam + đồng hồ theo máy chủ), formatters.js (fmt), qr.js
+        └── __tests__/                  # Vitest, tên theo nhóm: w1* (client), w2* (phễu), w3* (tài khoản), w4–w9* (vận hành)
 ```
+
+`src/shared/api/`: `http.js` (một client duy nhất: Bearer của Supabase, `Idempotency-Key` tự gắn cho lệnh ghi, bóc phong bì `{status,data}`, ném `HttpError {code,status,details}`), `routes.js` (bảng đường gọi của app khách) và `opsRoutes.js` (của app vận hành): mỗi dòng được test đối chiếu với `movafresh-platform/backend/src/routes`; `customerApi.js` (`api.customer.*`, giữ phong bì `{status,data|error}`), `opsApi.js` (`api.ops.*`, ném `HttpError`), `devApi.js` (`/dev/*`), `adapters/` (đổi dạng backend sang dạng màn hình dùng), `uploads.js` (vé ảnh một lần), `index.js` (`api` ghép các phần trên).
 
 ---
 
 ## 🚀 Hướng Dẫn Cài Đặt & Phát Triển
 
 ### Yêu cầu môi trường
-- **Node.js:** $\ge 18.0.0$
-- **NPM:** $\ge 9.0.0$
+- **Node.js** ≥ 20 (backend yêu cầu 20; web dùng Vite 6), **npm** ≥ 9, **Docker** (để chạy Supabase local).
+- Repo anh em: `movafresh-platform` (backend + ai-engine) đặt cạnh `movafresh-web`.
 
-### Lệnh thực thi
+### Chạy toàn bộ stack local (backend thật + web)
+Thứ tự bắt buộc:
+
 ```bash
-# 1. Cài đặt thư viện dependencies
+# 1. Backend: Supabase local (Postgres, Auth, Storage), cổng API 55441, DB 55442
+cd ../movafresh-platform/backend
 npm install
+npm run stack:up
+npm run stack:status          # lấy ANON_KEY và SERVICE_ROLE_KEY (chỉ dùng local)
 
-# 2. Khởi chạy máy chủ phát triển (Dev server)
+# 2. Điền backend/.env từ .env.example (SUPABASE_*, DATABASE_URL, AI_ENGINE_*, BANK_WEBHOOK_*);
+#    đặt DEV_TOOLS_ENABLED=true và CORS_ORIGINS có http://localhost:5173
+
+# 3. Dữ liệu mẫu (migration đã được stack:up áp). seed:dev làm trọn: món (nhãn dị ứng coi như đã duyệt, chỉ dev), SKU, lô mẫu,
+#    một nhân viên mỗi vai trò, 4 khách mẫu có gói 4 tuần. Chạy lại an toàn. Có thể chạy riêng từng phần: npm run seed, npm run seed:staff.
+npm run seed:dev
+
+# 4. Backend (cổng 8787)
 npm run dev
-# -> App Khách hàng: http://localhost:5173/
-# -> App Vận hành:   http://localhost:5173/ops.html
 
-# 3. Chạy toàn bộ 256 unit tests tự động
-npm test
+# 5. Web (một terminal khác)
+cd ../../movafresh-web
+npm install
+cp .env.example .env.local    # điền VITE_SUPABASE_ANON_KEY từ bước 1; đặt VITE_DEV_TOOLS=true khi muốn có bảng demo
+npm run dev
+# -> App khách:    http://localhost:5173/
+# -> App vận hành: http://localhost:5173/ops.html
+```
 
-# 4. Build đóng gói production cho cả 2 ứng dụng
-npm run build
-# -> Kết xuất thư mục dist/ chứa cả index.html và ops.html
+Dừng stack: `npm run stack:down` (trong `movafresh-platform/backend`, dữ liệu được giữ). Kiểm cả luồng một đơn trên stack thật: `npm run smoke:e2e` (cũng ở backend).
+
+### Biến môi trường (`.env.local`, chỉ chứa giá trị công khai)
+| Biến | Ý nghĩa |
+|---|---|
+| `VITE_API_BASE_URL` | Địa chỉ backend, local `http://localhost:8787` (web gọi `${VITE_API_BASE_URL}/api/v2/...`) |
+| `VITE_SUPABASE_URL` | Supabase Auth, local `http://127.0.0.1:55441` |
+| `VITE_SUPABASE_ANON_KEY` | Khóa anon của Supabase (công khai); KHÔNG bao giờ đặt service-role hay khóa Gemini ở đây |
+| `VITE_DEV_TOOLS` | `true` mới hiện "Bảng demo" ở app vận hành; mặc định `false`; chỉ bật ở máy local |
+
+### Tài khoản thử (chỉ stack local)
+- **Khách (OTP cố định `123456`):** số `84901000001` đến `84901000004` (có sẵn gói 4 tuần do `seed:dev`); số `15555550100` dành cho smoke test. Cấu hình ở `movafresh-platform/backend/supabase/config.toml`.
+- **Nhân viên:** email ở bảng vai trò trên (đuôi `@staff.movafresh.local`), mật khẩu là `STAFF_SEED_PASSWORD` khi chạy `seed:staff` (mặc định dev `Mova-dev-2026!`, KHÔNG dùng ở môi trường thật).
+
+### Lệnh khác
+```bash
+npm test          # Vitest: toàn bộ test web (không cần backend chạy)
+npm run build     # Build production cho cả index.html và ops.html -> dist/
 ```
 
 ---
 
 ## 🚢 Triển Khai (Deployment trên Netlify)
 
-1. Repository được cấu hình CI/CD tự động trên **Netlify**:
-   - Nhánh kích hoạt: `feat/v2-customer-and-ops-apps` (và `main` khi hợp nhất).
-   - Lệnh build: `npm run build`.
-   - Thư mục publish: `dist`.
-2. Biến môi trường:
-   - `VITE_SHOW_DEMO_PINS`: Đặt là `true` nếu muốn hiển thị thanh chọn nhanh mã PIN demo ở trang `/ops.html` trên môi trường staging; để trống hoặc `false` trên production.
+1. Netlify build tự động: lệnh `npm run build`, thư mục publish `dist`.
+2. Biến môi trường production: `VITE_API_BASE_URL` (backend đã deploy), `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. Để `VITE_DEV_TOOLS` trống hoặc `false`; backend production phải có `DEV_TOOLS_ENABLED=false` (mặc định) và `NODE_ENV=production`.
+3. Backend (`movafresh-platform`) cần `CORS_ORIGINS` chứa domain web.

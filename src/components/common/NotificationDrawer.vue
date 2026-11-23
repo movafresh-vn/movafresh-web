@@ -6,7 +6,7 @@
         <button class="sheet-x" type="button" @click="store.notifDrawerOpen = false" aria-label="Đóng thông báo">×</button>
       </div>
       <div class="drawer-body">
-        <div v-if="!store.isLoggedIn" class="empty">
+        <div v-if="!store.hasMovaSession" class="empty">
           <p>Đăng nhập để xem thông báo về tuần giao, số tiền sắp trừ và trạng thái đơn.</p>
           <button class="pl-btn primary sm" type="button" @click="login">Đăng nhập</button>
         </div>
@@ -140,7 +140,7 @@ function run(action) {
   gap: 4px;
 }
 
-.notif-item.unread { background: #fff; box-shadow: 0 1px 6px rgba(30, 25, 15, .08); }
+.notif-item.unread { background: var(--white); box-shadow: 0 1px 6px rgba(84, 63, 24, .08); }
 .notif-item.money { border-left-color: var(--blue); }
 .notif-item.warn { border-left-color: var(--orange); }
 .notif-item.good { border-left-color: var(--green); }
@@ -156,5 +156,5 @@ function run(action) {
 .drawer-ftr { padding: 12px 16px; border-top: 1px solid var(--line); text-align: center; }
 
 .scrim { display: none; }
-.scrim.open { display: block; position: fixed; inset: 0; background: rgba(30, 25, 15, .4); z-index: 64; }
+.scrim.open { display: block; position: fixed; inset: 0; background: rgba(84, 63, 24, .4); z-index: 64; }
 </style>

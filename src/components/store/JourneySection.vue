@@ -111,14 +111,14 @@ const steps = [
   display: grid;
   place-items: center;
   font-weight: 800;
-  color: var(--green);
+  color: var(--green-d);
   position: relative;
   z-index: 1;
 }
 
 .steps li:last-child .dot {
-  background: var(--green);
-  color: #fff;
+  background: var(--green-d);
+  color: var(--white);
 }
 
 .steps .when {

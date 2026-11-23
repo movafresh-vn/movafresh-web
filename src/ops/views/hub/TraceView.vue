@@ -126,7 +126,7 @@ const STATUS = { locked: 'Đã chốt sổ', in_production: 'Đang sản xuất'
 const shownOrders = computed(() => (t.value ? t.value.orders.filter((o) => !grp.value || o.group === grp.value) : []));
 const qrUrl = computed(() => `${window.location.origin}/q/${t.value ? t.value.lotCode : ''}`);
 
-function search(c) {
+async function search(c) {
   error.value = '';
   t.value = null;
   grp.value = '';
@@ -135,7 +135,7 @@ function search(c) {
     return;
   }
   try {
-    t.value = api.ops.hub.trace(ctx.value, c);
+    t.value = await api.ops.hub.trace(ctx.value, c);
   } catch (e) {
     error.value = e.message;
   }
@@ -147,18 +147,18 @@ function pickLot(v) {
   search(v);
 }
 
-onMounted(() => {
+onMounted(async () => {
   try {
-    lots.value = api.ops.hub.traceLots(ctx.value);
+    lots.value = await api.ops.hub.traceLots(ctx.value);
   } catch (e) {
     error.value = e.message;
   }
-  if (code.value) search(code.value);
+  if (code.value) await search(code.value);
 });
 </script>
 
 <style scoped>
 .group-pill-not_shipped { background: var(--amber-soft); color: var(--amber); }
-.group-pill-in_transit { background: var(--sticker-blue-soft); color: #14507a; }
-.group-pill-delivered { background: #fbe4e2; color: var(--red); }
+.group-pill-in_transit { background: var(--sticker-blue-soft); color: var(--blue-ink); }
+.group-pill-delivered { background: var(--red-soft); color: var(--red); }
 </style>

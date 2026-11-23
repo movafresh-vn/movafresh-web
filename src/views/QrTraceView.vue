@@ -1,7 +1,9 @@
 <template>
   <div class="trace">
     <div class="wrap narrow">
-      <section v-if="!lot" class="pl-card">
+      <section v-if="!loaded" class="pl-card" role="status"><p class="pl-lead">Đang tải thông tin nguồn gốc…</p></section>
+
+      <section v-else-if="!lot" class="pl-card">
         <h1 class="pl-h1">Không tìm thấy mã QR này</h1>
         <p class="pl-lead">Mã <b class="code">{{ code }}</b> chưa có trong hệ thống. Bạn kiểm tra lại nhãn trên hộp hoặc thử một mã mẫu:</p>
         <ul class="samples">
@@ -88,6 +90,7 @@ const route = useRoute();
 const store = useMovaStore();
 const reward = BUSINESS.incentives.rewards.share;
 const lot = ref(null);
+const loaded = ref(false);
 const samples = ref([]);
 const message = ref('');
 const busy = ref(false);
@@ -96,12 +99,14 @@ const code = computed(() => String(route.params.code || ''));
 const harvestLabel = computed(() => (lot.value && lot.value.kind === 'rice' ? 'Ngày thu hoạch' : 'Ngày giết mổ'));
 const testText = computed(() => (lot.value.inspector.antibiotic_test === 'NEGATIVE' ? 'âm tính (đạt)' : lot.value.inspector.antibiotic_test || 'chưa có'));
 
-function load() {
-  const res = api.customer.traceLot(code.value);
+async function load() {
+  loaded.value = false;
+  const res = await api.customer.traceLot(code.value);
   lot.value = res.status === 'success' ? res.data : null;
-  samples.value = lot.value ? [] : api.customer.sampleLotCodes();
+  samples.value = lot.value ? [] : await api.customer.sampleLotCodes();
   message.value = '';
-  document.title = lot.value ? `${lot.value.product_name} | MOVA Fresh` : 'Truy xuất nguồn gốc | MOVA Fresh';
+  loaded.value = true;
+  document.title = lot.value ? `${lot.value.product_name} | MOVA FRESH` : 'Truy xuất nguồn gốc | MOVA FRESH';
 }
 load();
 watch(code, load);
@@ -110,7 +115,7 @@ async function share() {
   busy.value = true;
   message.value = '';
   const url = location.href;
-  const text = `Mình vừa quét QR trên hộp MOVA Fresh: ${lot.value.product_name} từ ${lot.value.farm.location}. Xem nguồn gốc và công thức 15 phút:`;
+  const text = `Mình vừa quét QR trên hộp MOVA FRESH: ${lot.value.product_name} từ ${lot.value.farm.location}. Xem nguồn gốc và công thức 15 phút:`;
   try {
     if (navigator.share) await navigator.share({ title: lot.value.product_name, text, url });
     else await navigator.clipboard.writeText(`${text} ${url}`);
@@ -122,11 +127,11 @@ async function share() {
   if (!store.isLoggedIn) {
     message.value = 'Đã chia sẻ. Đăng nhập để MOVA cộng thưởng vào Fresh Credit.';
   } else {
-    const res = api.customer.claimShare({ customer_id: store.customerId, kind: 'qr', ref: lot.value.qr_code });
+    const res = await api.customer.claimShare({ kind: 'qr', ref: lot.value.qr_code });
     if (res.status === 'error') message.value = `Đã chia sẻ. ${res.error.message}.`;
     else {
       message.value = `Đã chia sẻ. MOVA cộng ${fmt(res.data.reward_vnd)} vào Fresh Credit (khuyến mãi).`;
-      store.refresh();
+      await store.refresh();
     }
   }
   busy.value = false;
@@ -137,9 +142,9 @@ async function share() {
 .trace { padding: 20px 0 60px; }
 .narrow { max-width: 720px; display: grid; gap: 16px; }
 .top { display: grid; gap: 8px; }
-.kicker { font-size: 14px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: .05em; }
+.kicker { font-size: 14px; font-weight: 700; color: var(--green-d); text-transform: uppercase; letter-spacing: .05em; }
 .code { background: var(--butter); padding: 2px 8px; border-radius: 8px; letter-spacing: .02em; overflow-wrap: anywhere; }
-.sample { background: var(--butter); border-color: #eadba6; font-size: 15px; }
+.sample { background: var(--butter); border-color: var(--amber-line); font-size: 15px; }
 .sec { display: grid; gap: 14px; }
 h3 { font-size: 18px; font-weight: 800; }
 .recipe { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 8px; }
@@ -151,10 +156,10 @@ h3 { font-size: 18px; font-weight: 800; }
 .facts small, .readings small { display: block; font-weight: 400; color: var(--muted); font-size: 14px; }
 .temp { font-size: 17px; padding: 10px 14px; border-radius: 12px; background: var(--line-2); }
 .temp.ok { background: var(--green-soft); color: var(--green-d); }
-.temp.bad { background: #FBE5E2; color: var(--red); }
+.temp.bad { background: var(--red-soft); color: var(--red); }
 .readings { list-style: none; margin: 0; padding: 0; display: grid; }
 .readings li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-2); font-size: 16px; }
-.share { background: var(--green-soft); border-color: #BBD8C5; }
+.share { background: var(--green-soft); border-color: var(--green-line); }
 .msg { color: var(--green-d); font-weight: 600; }
 .link { background: none; border: 0; padding: 0; color: var(--green-d); font-weight: 700; text-decoration: underline; min-height: 44px; font-size: inherit; }
 .samples { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }

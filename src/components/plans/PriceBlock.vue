@@ -162,15 +162,15 @@ function kFormat(vnd) {
 }
 .pb-sub-line {
   font-size: 14px;
-  color: #475569;
+  color: var(--ink-2);
   font-weight: 600;
   margin: 0;
 }
 
 /* Banner Tuần 1 */
 .pb-week1-box {
-  background: #FFF7ED;
-  border: 1px solid #FFEDD5;
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-soft);
   border-radius: 12px;
   padding: 10px 14px;
   display: grid;
@@ -184,15 +184,15 @@ function kFormat(vnd) {
 .badge-deal {
   font-size: 11px;
   font-weight: 800;
-  color: #C2410C;
+  color: var(--red-orange-d);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 .badge-discount {
   font-size: 11px;
   font-weight: 800;
-  color: #FFFFFF;
-  background: #EA580C;
+  color: var(--white);
+  background: var(--orange);
   padding: 1px 7px;
   border-radius: 99px;
 }
@@ -216,12 +216,12 @@ function kFormat(vnd) {
 }
 .highlight {
   font-size: 20px;
-  color: #C2410C;
+  color: var(--red-orange-d);
 }
 .banner-sub-rate {
   font-size: 13px;
   font-weight: 600;
-  color: #9A3412;
+  color: var(--red-orange-d);
   margin: 0;
 }
 
@@ -257,8 +257,8 @@ function kFormat(vnd) {
 .deal-pill {
   font-size: 10px;
   font-weight: 800;
-  background: #FFEDD5;
-  color: #C2410C;
+  background: var(--amber-soft);
+  color: var(--red-orange-d);
   padding: 1px 6px;
   border-radius: 4px;
 }
@@ -270,8 +270,8 @@ function kFormat(vnd) {
   font-size: 15px;
   font-weight: 800;
   color: var(--ink);
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: var(--surface);
+  border: 1px solid var(--line);
   padding: 2px 7px;
   border-radius: 6px;
 }
@@ -290,7 +290,7 @@ function kFormat(vnd) {
   color: var(--muted);
 }
 .compact-rate {
-  color: #64748B;
+  color: var(--muted);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -319,7 +319,7 @@ function kFormat(vnd) {
 }
 .serving-rate {
   font-weight: 600;
-  color: #475569;
+  color: var(--ink-2);
 }
 
 /* Fresh Credit */

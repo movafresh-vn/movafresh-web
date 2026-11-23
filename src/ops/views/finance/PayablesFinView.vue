@@ -29,7 +29,7 @@
         <div class="head-row">
           <h2>Đề xuất đợt chi ({{ fmtDay(data.today) }})</h2>
           <div class="fin-actions">
-            <button class="ops-btn ops-btn-small" data-testid="pay-file" :disabled="!chosen.length" @click="exportFile">Xuất file chi (mock)</button>
+            <button class="ops-btn ops-btn-small" data-testid="pay-file" :disabled="!chosen.length" @click="exportFile">Tải file chi (CSV)</button>
             <button class="ops-btn ops-btn-primary ops-btn-small" data-testid="pay-run" :disabled="!chosen.length" @click="execute">Ghi đã chi {{ chosen.length ? `(${chosen.length})` : '' }}</button>
           </div>
         </div>
@@ -119,6 +119,7 @@ import { downloadText } from '../../download';
 import { CLAIM_LABEL, PO_STATUS_LABEL as labels, dmy, stagePill } from '../../labels';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
+import { financeError } from '../../financeUi';
 
 const data = ref(null);
 const error = ref('');
@@ -132,37 +133,38 @@ const chosen = computed(() => (data.value ? data.value.payRun.items.filter((i) =
 const chosenTotal = computed(() => chosen.value.reduce((s, i) => s + i.amountVnd, 0));
 const cashWarn = computed(() => (method.value === 'cash' ? chosen.value.filter((i) => i.cashCheck.warn).length : 0));
 
-function load() {
+async function load() {
   try {
-    data.value = api.ops.finance.payables(ctx.value);
+    data.value = await api.ops.finance.payables(ctx.value);
     error.value = '';
   } catch (e) {
-    error.value = e.message;
+    error.value = financeError(e);
   }
 }
 useLive(load, { every: 8000 });
 
-function exportFile() {
+async function exportFile() {
+  actionError.value = '';
   try {
-    const f = api.ops.finance.payRunFile(ctx.value, { poIds: chosen.value.map((i) => i.poId) });
+    const f = await api.ops.finance.payRunFile(ctx.value, { poIds: chosen.value.map((i) => i.poId) });
     downloadText(f.filename, f.csv);
-    msg.value = `Đã xuất ${f.filename} (mock): ${f.count} khoản, ${fmt(f.totalVnd)}. Chưa phải lệnh chi thật tới ngân hàng.`;
+    msg.value = `Đã tải ${f.filename}: ${f.count} khoản, ${fmt(f.totalVnd)}. Tệp để kế toán nạp lên ngân hàng; chưa phải lệnh chi.`;
   } catch (e) {
-    actionError.value = e.message;
+    actionError.value = financeError(e);
   }
 }
 
-function execute() {
+async function execute() {
   msg.value = '';
   actionError.value = '';
   try {
-    const r = api.ops.finance.executePayRun(ctx.value, { poIds: chosen.value.map((i) => i.poId), method: method.value });
+    const r = await api.ops.finance.executePayRun(ctx.value, { poIds: chosen.value.map((i) => i.poId), method: method.value });
     results.value = r.results;
     msg.value = `Đã ghi chi ${r.paid} khoản, tổng ${fmt(r.totalVnd)}.`;
     for (const x of r.results) if (x.ok) sel[x.poId] = false;
   } catch (e) {
-    actionError.value = e.message;
+    actionError.value = financeError(e);
   }
-  load();
+  await load();
 }
 </script>

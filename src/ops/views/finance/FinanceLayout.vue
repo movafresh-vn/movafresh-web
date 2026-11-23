@@ -20,6 +20,7 @@ const tabs = [
   { key: 'bank', to: '/tai-chinh/thu-tien', title: 'Thu tiền & đối soát' },
   { key: 'revenue', to: '/tai-chinh/doanh-thu', title: 'Doanh thu & hóa đơn' },
   { key: 'margin', to: '/tai-chinh/gia-von', title: 'Giá vốn & margin' },
+  { key: 'costing', to: '/tai-chinh/gia-von-mon', title: 'Giá vốn món' },
   { key: 'payables', to: '/tai-chinh/cong-no', title: 'Công nợ & đợt chi' },
   { key: 'cashflow', to: '/tai-chinh/dong-tien', title: 'Dòng tiền' },
   { key: 'journal', to: '/tai-chinh/xuat-but-toan', title: 'Xuất bút toán' },
@@ -29,10 +30,11 @@ const tabs = [
 // Số việc đang chờ kế toán: giao dịch chờ khớp tay, yêu cầu điều chỉnh chờ duyệt
 const badge = reactive({ bank: 0, credit: 0 });
 
-useLive(() => {
+useLive(async () => {
   try {
-    badge.bank = api.ops.finance.reconciliation(ctx.value).queue.length;
-    badge.credit = api.ops.finance.creditSummary(ctx.value).pendingAdjustments;
+    const [rec, cred] = await Promise.all([api.ops.finance.reconciliation(ctx.value), api.ops.finance.creditSummary(ctx.value)]);
+    badge.bank = rec.queue.length;
+    badge.credit = cred.pendingAdjustments;
   } catch {
     // dữ liệu chưa sẵn: bỏ số
   }

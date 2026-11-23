@@ -23,6 +23,6 @@ const ALL = [
   { key: 'settings', to: '/mua-hang/cai-dat', title: 'Cài đặt', roles: ['purchasing', 'accounting', 'admin'] }
 ];
 
-const tabs = computed(() => ALL.filter((t) => t.roles.includes(session.value.role)));
-const canKho = computed(() => ['purchasing', 'admin'].includes(session.value.role));
+const tabs = computed(() => (session.value ? ALL.filter((t) => t.roles.includes(session.value.role)) : []));
+const canKho = computed(() => Boolean(session.value && ['purchasing', 'admin'].includes(session.value.role)));
 </script>
