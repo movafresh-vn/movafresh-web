@@ -393,7 +393,7 @@ const formattedSteps = computed(() => {
 }
 
 .dish-modal-box {
-  background: #FFFFFF;
+  background: var(--white);
   border-radius: 24px;
   max-width: 680px;
   width: 100%;
@@ -411,7 +411,7 @@ const formattedSteps = computed(() => {
   right: 14px;
   z-index: 20;
   background: rgba(15, 23, 42, 0.6);
-  color: #FFFFFF;
+  color: var(--white);
   border: 1px solid rgba(255, 255, 255, 0.3);
   width: 36px;
   height: 36px;
@@ -433,8 +433,8 @@ const formattedSteps = computed(() => {
 .dish-hero-banner {
   position: relative;
   height: 220px;
-  background: #146C43;
-  color: #FFFFFF;
+  background: var(--green-d);
+  color: var(--white);
   display: flex;
   align-items: flex-end;
   padding: 20px;
@@ -442,19 +442,19 @@ const formattedSteps = computed(() => {
   flex-shrink: 0;
 }
 .dish-hero-banner.theme-protein {
-  background: linear-gradient(135deg, #146C43 0%, #0F5534 60%, #1e241d 100%);
+  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-dd) 60%, var(--ink) 100%);
 }
 .dish-hero-banner.theme-veg {
-  background: linear-gradient(135deg, #15803d 0%, #166534 60%, #14532d 100%);
+  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-d) 60%, var(--green-dd) 100%);
 }
 .dish-hero-banner.theme-soup {
-  background: linear-gradient(135deg, #0369a1 0%, #075985 60%, #0c4a6e 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-ink) 60%, var(--blue-ink) 100%);
 }
 .dish-hero-banner.theme-carb {
-  background: linear-gradient(135deg, #b45309 0%, #92400e 60%, #78350f 100%);
+  background: linear-gradient(135deg, var(--amber-ink) 0%, var(--amber-ink) 60%, var(--amber-ink) 100%);
 }
 .dish-hero-banner.theme-dessert {
-  background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 60%, #581c87 100%);
+  background: linear-gradient(135deg, var(--violet) 0%, var(--violet) 60%, var(--violet) 100%);
 }
 
 .hero-bg-gradient {
@@ -501,7 +501,7 @@ const formattedSteps = computed(() => {
   font-weight: 700;
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(4px);
-  color: #FFFFFF;
+  color: var(--white);
   padding: 3px 9px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -509,8 +509,8 @@ const formattedSteps = computed(() => {
 .kind-pill {
   font-size: 11.5px;
   font-weight: 700;
-  background: var(--orange);
-  color: #FFFFFF;
+  background: var(--red-orange-d);
+  color: var(--white);
   padding: 3px 9px;
   border-radius: 999px;
 }
@@ -519,7 +519,7 @@ const formattedSteps = computed(() => {
   margin-right: 40px;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #FFFFFF;
+  color: var(--white);
   font-size: 11.5px;
   font-weight: 600;
   padding: 3px 10px;
@@ -545,7 +545,7 @@ const formattedSteps = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #FFFFFF;
+  background: var(--white);
 }
 
 /* Quick stats strip */
@@ -553,8 +553,8 @@ const formattedSteps = computed(() => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 10px 14px;
 }
@@ -617,21 +617,21 @@ const formattedSteps = computed(() => {
 
 /* Terroir box */
 .terroir-box {
-  background: #F0FDF4;
-  border: 1px solid #BBF7D0;
+  background: var(--green-tint);
+  border: 1px solid var(--green-line);
   border-radius: 14px;
   padding: 14px;
 }
 .terroir-text {
   font-size: 13px;
   line-height: 1.5;
-  color: #1E293B;
+  color: var(--ink);
   margin: 0;
 }
 .chef-note-box {
   display: flex;
   gap: 10px;
-  background: #FFFFFF;
+  background: var(--white);
   border-left: 3px solid var(--green);
   border-radius: 8px;
   padding: 10px 12px;
@@ -649,7 +649,7 @@ const formattedSteps = computed(() => {
 }
 .chef-note-box p {
   font-size: 12.5px;
-  color: #334155;
+  color: var(--ink-2);
   margin: 0;
   line-height: 1.4;
   font-style: italic;
@@ -657,8 +657,8 @@ const formattedSteps = computed(() => {
 
 /* Allergy box */
 .allergy-box {
-  background: #FFFBEB;
-  border: 1px solid #FDE68A;
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-line);
   border-radius: 14px;
   padding: 14px;
 }
@@ -670,14 +670,14 @@ const formattedSteps = computed(() => {
 .allergy-title-badge {
   font-size: 11px;
   font-weight: 800;
-  color: #92400E;
+  color: var(--amber-ink);
   letter-spacing: 0.05em;
 }
 .zero-badge {
   font-size: 11px;
   font-weight: 800;
-  background: #DC2626;
-  color: #FFFFFF;
+  background: var(--red);
+  color: var(--white);
   padding: 2px 7px;
   border-radius: 6px;
 }
@@ -689,7 +689,7 @@ const formattedSteps = computed(() => {
 .tier-label {
   font-size: 12px;
   font-weight: 700;
-  color: #78350F;
+  color: var(--amber-ink);
 }
 .allergen-tags {
   display: flex;
@@ -703,28 +703,28 @@ const formattedSteps = computed(() => {
   border-radius: 6px;
 }
 .allergen-tag.danger {
-  background: #FEE2E2;
-  color: #991B1B;
+  background: var(--red-soft);
+  color: var(--red);
 }
 .allergen-tag.warn {
-  background: #FEF3C7;
-  color: #B45309;
+  background: var(--amber-soft);
+  color: var(--amber-ink);
 }
 .safe-tag {
   font-size: 12px;
   font-weight: 700;
-  background: #DCFCE7;
-  color: #166534;
+  background: var(--green-soft);
+  color: var(--green-d);
   padding: 3px 8px;
   border-radius: 6px;
 }
 .allergy-tier-2 {
   font-size: 12px;
-  color: #78350F;
+  color: var(--amber-ink);
   line-height: 1.45;
   margin: 0;
   padding-top: 6px;
-  border-top: 1px dashed #FDE68A;
+  border-top: 1px dashed var(--amber-line);
 }
 
 /* Ingredients Grid */
@@ -739,16 +739,16 @@ const formattedSteps = computed(() => {
   }
 }
 .ing-card {
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 10px 12px;
   display: grid;
   gap: 2px;
 }
 .ing-card.sauce-card {
-  background: #FCEDE4;
-  border-color: #F1C7B1;
+  background: var(--orange-soft);
+  border-color: var(--red-line);
 }
 .ing-top {
   display: flex;
@@ -786,7 +786,7 @@ const formattedSteps = computed(() => {
   }
 }
 .prep-card {
-  background: #FAF9F5;
+  background: var(--cream);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px 14px;
@@ -871,8 +871,8 @@ const formattedSteps = computed(() => {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 10px 14px;
 }
@@ -906,7 +906,7 @@ const formattedSteps = computed(() => {
 .dish-modal-footer {
   padding: 14px 24px;
   border-top: 1px solid var(--line-2);
-  background: #FAF9F5;
+  background: var(--cream);
   display: flex;
   justify-content: flex-end;
 }

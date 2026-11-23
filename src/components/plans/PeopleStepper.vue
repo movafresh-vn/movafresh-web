@@ -27,7 +27,7 @@ defineEmits(['update:modelValue']);
 .ps { display: inline-flex; align-items: center; gap: 14px; }
 .ps-btn {
   width: 52px; height: 52px; border-radius: 14px; border: 1.5px solid var(--green);
-  background: var(--card); color: var(--green); font-size: 26px; font-weight: 700; line-height: 1;
+  background: var(--card); color: var(--green-d); font-size: 26px; font-weight: 700; line-height: 1;
   cursor: pointer;
 }
 .ps-btn:hover:not(:disabled) { background: var(--green-soft); }

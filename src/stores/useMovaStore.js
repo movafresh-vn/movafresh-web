@@ -112,9 +112,9 @@ export const useMovaStore = defineStore('mova', {
     },
 
     /** Gửi mã OTP về số điện thoại / email. Trả '' nếu gửi được, nếu không trả lời nhắc cho khách. */
-    async requestOtp(contact) {
-      const id = otpIdentity(contact);
-      if (!id) return 'Nhập số điện thoại (ví dụ 0908 123 456) hoặc email hợp lệ.';
+    async requestOtp(contact, opts) {
+      const id = otpIdentity(contact, opts);
+      if (!id) return 'Nhập số điện thoại (ví dụ 0908 123 456, hoặc +81 90 1234 5678 với số nước ngoài) hoặc email hợp lệ.';
       try {
         await requestOtp(id);
         return '';
@@ -124,8 +124,8 @@ export const useMovaStore = defineStore('mova', {
     },
 
     /** Xác thực mã OTP, vào tài khoản và tải dữ liệu. Trả '' nếu thành công. */
-    async verifyOtp(contact, code) {
-      const id = otpIdentity(contact);
+    async verifyOtp(contact, code, opts) {
+      const id = otpIdentity(contact, opts);
       if (!id) return 'Nhập số điện thoại hoặc email hợp lệ.';
       try {
         const user = await verifyOtp(id, String(code || '').trim());

@@ -4,7 +4,7 @@
       <!-- Header Trang Thực Đơn Tuần -->
       <header class="menus-header">
         <span class="menus-badge">THỰC ĐƠN ĐẦU BẾP TUYỂN CHỌN</span>
-        <h1 class="menus-title">Thực đơn sơ chế tuần này tại MOVA Fresh</h1>
+        <h1 class="menus-title">Thực đơn sơ chế tuần này tại MOVA FRESH</h1>
         <p class="menus-lead">
           100% nguyên liệu đặc sản Terroir sơ chế sạch từ Đắk Lắk, định lượng chuẩn xác từng gram và công thức nấu <b>15 phút — 1 chảo</b>.
           Khám phá sự đa dạng luân phiên qua từng tuần cho căn bếp nhà bạn.
@@ -123,9 +123,9 @@
 
             <!-- Đơn giá minh bạch song song & Nút Chi tiết -->
             <div class="dish-card-footer">
-              <div class="price-display num">
-                <span class="serving-price">~{{ fmt(calculateServingPrice(dish)) }}/suất</span>
-                <small class="meal-price">• {{ fmt(calculateMealPrice(dish)) }}/bữa (2 người)</small>
+              <!-- Giá lẻ từng món không hiện cho khách: hiện hạng món. Giá gói do máy chủ tính ở bước /plans. -->
+              <div class="price-display">
+                <span class="serving-price" data-testid="dish-tier">{{ tierLabel(dish) }}</span>
               </div>
               <button
                 type="button"
@@ -151,7 +151,7 @@
           <span class="tray-badge">QUY CHUẨN MÂM CƠM Á ĐÔNG</span>
           <h2>Mâm cơm 5 món cân bằng hoàn hảo trong 15 phút</h2>
           <p>
-            Mỗi hộp meal-kit từ MOVA Fresh cho gia đình đều trọn vẹn 5 cấu phần dinh dưỡng:
+            Mỗi hộp meal-kit từ MOVA FRESH cho gia đình đều trọn vẹn 5 cấu phần dinh dưỡng:
             <b>1 Món Đạm chính</b> + <b>1 Món Rau xanh</b> + <b>1 Món Canh ngọt lành</b> + <b>Gạo hữu cơ ST25 Sóc Trăng</b> + <b>Trái cây tráng miệng cấp đông IQF</b>.
           </p>
           <div class="tray-icons-row">
@@ -196,6 +196,7 @@ import DishDetailModal from '../components/modals/DishDetailModal.vue';
 import { DISHES, SAUCES } from '../shared/data/catalog';
 import { BUSINESS } from '../shared/config/business';
 import { fmt } from '../shared/utils/formatters';
+import { tierLabel } from '../shared/domain/mealTier';
 
 const route = useRoute();
 
@@ -283,14 +284,6 @@ function getSauceSnippet(dish) {
   return 'Gói xốt đặc biệt đi kèm';
 }
 
-function calculateServingPrice(dish) {
-  return dish.pricePerPersonVnd || 45000;
-}
-
-function calculateMealPrice(dish) {
-  return calculateServingPrice(dish) * 2;
-}
-
 function openDishDetail(dish) {
   selectedDishDetail.value = dish;
 }
@@ -353,7 +346,7 @@ onMounted(() => {
   }
 }
 .week-pill-btn {
-  background: #FFFFFF;
+  background: var(--white);
   border: 1.5px solid var(--line);
   border-radius: 14px;
   padding: 10px 12px;
@@ -365,13 +358,13 @@ onMounted(() => {
   transition: all 0.18s ease;
 }
 .week-pill-btn:hover {
-  border-color: #CBD5E1;
+  border-color: var(--line-strong);
   transform: translateY(-1px);
 }
 .week-pill-btn.active {
   border-color: var(--green);
   background: var(--green-soft);
-  box-shadow: 0 4px 12px rgba(20, 108, 67, 0.12);
+  box-shadow: 0 4px 12px rgba(11, 156, 99, 0.12);
 }
 .w-name {
   font-size: 14.5px;
@@ -402,7 +395,7 @@ onMounted(() => {
   padding: 8px 14px;
   border-radius: 999px;
   border: 1.5px solid var(--line);
-  background: #FFFFFF;
+  background: var(--white);
   font-size: 13.5px;
   font-weight: 700;
   color: var(--ink);
@@ -411,12 +404,12 @@ onMounted(() => {
   transition: all 0.15s ease;
 }
 .cat-filter-btn:hover {
-  border-color: #94A3B8;
+  border-color: var(--faint);
 }
 .cat-filter-btn.active {
   background: var(--green-d);
   border-color: var(--green-d);
-  color: #FFFFFF;
+  color: var(--white);
 }
 .cat-count {
   font-size: 11px;
@@ -426,12 +419,12 @@ onMounted(() => {
 }
 .cat-filter-btn.active .cat-count {
   background: rgba(255, 255, 255, 0.25);
-  color: #FFFFFF;
+  color: var(--white);
 }
 
 /* Week intro banner */
 .week-intro-card {
-  background: #FFFFFF;
+  background: var(--white);
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 18px 22px;
@@ -501,7 +494,7 @@ onMounted(() => {
 }
 
 .commercial-dish-card {
-  background: #FFFFFF;
+  background: var(--white);
   border: 1px solid var(--line);
   border-radius: 18px;
   overflow: hidden;
@@ -512,33 +505,33 @@ onMounted(() => {
 }
 .commercial-dish-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(20, 108, 67, 0.1);
+  box-shadow: 0 12px 28px rgba(11, 156, 99, 0.1);
   border-color: var(--green);
 }
 
 .dish-card-media {
   position: relative;
   aspect-ratio: 16 / 10;
-  background: #146C43;
+  background: var(--green-d);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .dish-card-media.theme-protein {
-  background: linear-gradient(135deg, #146C43 0%, #0F5534 60%, #1e241d 100%);
+  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-dd) 60%, var(--ink) 100%);
 }
 .dish-card-media.theme-veg {
-  background: linear-gradient(135deg, #15803d 0%, #166534 60%, #14532d 100%);
+  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-d) 60%, var(--green-dd) 100%);
 }
 .dish-card-media.theme-soup {
-  background: linear-gradient(135deg, #0369a1 0%, #075985 60%, #0c4a6e 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-ink) 60%, var(--blue-ink) 100%);
 }
 .dish-card-media.theme-carb {
-  background: linear-gradient(135deg, #b45309 0%, #92400e 60%, #78350f 100%);
+  background: linear-gradient(135deg, var(--amber-ink) 0%, var(--amber-ink) 60%, var(--amber-ink) 100%);
 }
 .dish-card-media.theme-dessert {
-  background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 60%, #581c87 100%);
+  background: linear-gradient(135deg, var(--violet) 0%, var(--violet) 60%, var(--violet) 100%);
 }
 
 .dish-img {
@@ -574,13 +567,13 @@ onMounted(() => {
   backdrop-filter: blur(4px);
 }
 .corner-badge.chef-pick {
-  background: rgba(20, 108, 67, 0.85);
-  color: #FFFFFF;
+  background: rgba(11, 156, 99, 0.85);
+  color: var(--white);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 .corner-badge.time-badge {
   background: rgba(15, 23, 42, 0.65);
-  color: #FFFFFF;
+  color: var(--white);
 }
 
 .terroir-strip {
@@ -592,7 +585,7 @@ onMounted(() => {
   padding: 12px 10px 6px;
   font-size: 11px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: var(--white);
   display: flex;
   align-items: center;
 }
@@ -640,7 +633,7 @@ onMounted(() => {
 }
 .sauce-snippet {
   font-size: 11.5px;
-  color: #334155;
+  color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -690,8 +683,8 @@ onMounted(() => {
 
 /* Banner mâm cơm Á Đông */
 .viet-tray-banner {
-  background: #FFFBF6;
-  border: 1.5px solid #F1C7B1;
+  background: var(--amber-soft);
+  border: 1.5px solid var(--red-line);
   border-radius: 20px;
   padding: 26px 24px;
   margin-bottom: 40px;
@@ -733,8 +726,8 @@ onMounted(() => {
   }
 }
 .tray-col {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
+  background: var(--white);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 10px 6px;
   display: flex;
@@ -762,7 +755,7 @@ onMounted(() => {
   margin-top: 20px;
 }
 .cta-inner {
-  background: rgba(250, 249, 245, 0.96);
+  background: rgba(249, 247, 236, 0.96);
   backdrop-filter: blur(10px);
   border: 1.5px solid var(--green);
   border-radius: 18px;
@@ -771,7 +764,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 10px 30px rgba(20, 108, 67, 0.15);
+  box-shadow: 0 10px 30px rgba(11, 156, 99, 0.15);
 }
 @media (max-width: 700px) {
   .cta-inner {

@@ -4,7 +4,7 @@
   min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
-  font-family: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  font-family: var(--font);
   font-size: 18px;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
@@ -19,9 +19,13 @@
   gap: 16px;
   padding: 12px 16px;
   background: var(--ink);
-  color: #fff;
+  color: var(--white);
 }
 .ops-brand { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.ops-bar-logo { height: auto; }
+.ops-logo-sm { height: auto; margin: 0 0 8px; }
+.ops-login-logo { height: auto; margin: 0 0 12px; }
+.ops .doc-logo { height: auto; margin: 0 auto 6px; }
 .ops-role { font-size: 15px; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ops-clock { font-weight: 700; white-space: nowrap; }
 
@@ -74,9 +78,9 @@
   cursor: pointer;
 }
 .ops-btn:disabled { opacity: .45; cursor: not-allowed; }
-.ops-btn-primary { background: var(--green); border-color: var(--green); color: #fff; }
-.ops-btn-primary:hover:not(:disabled) { background: var(--green-d); }
-.ops-btn-ghost { background: transparent; border-color: rgba(255, 255, 255, .5); color: #fff; }
+.ops-btn-primary { background: var(--green-d); border-color: var(--green-d); color: var(--white); }
+.ops-btn-primary:hover:not(:disabled) { background: var(--green-dd); border-color: var(--green-dd); }
+.ops-btn-ghost { background: transparent; border-color: rgba(255, 255, 255, .5); color: var(--white); }
 .ops-btn-danger { background: var(--card); border-color: var(--red); color: var(--red); }
 
 .ops-input {
@@ -88,7 +92,7 @@
   border: 2px solid var(--line);
   border-radius: 12px;
   font: inherit;
-  background: #fff;
+  background: var(--white);
   color: var(--ink);
 }
 .ops-input:focus { outline: 3px solid var(--green-soft); border-color: var(--green); }

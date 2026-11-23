@@ -9,7 +9,7 @@
 
       <header class="faq-header">
         <span class="faq-badge">TRUNG TÂM TRỢ GIÚP &amp; HỎI ĐÁP</span>
-        <h1 class="faq-title">Câu hỏi thường gặp tại MOVA Fresh</h1>
+        <h1 class="faq-title">Câu hỏi thường gặp tại MOVA FRESH</h1>
         <p class="faq-lead">
           Tìm kiếm nhanh câu trả lời về thực đơn Đầu bếp MOVA, nguyên liệu tươi sạch Đắk Lắk, chính sách gói suất ăn và hoàn tiền minh bạch trong 7 ngày.
         </p>
@@ -91,7 +91,7 @@
           <span class="support-avatar">👨‍🍳</span>
           <div>
             <h3>Vẫn còn câu hỏi cần giải đáp?</h3>
-            <p>Đội ngũ Đầu bếp và Chăm sóc khách hàng MOVA Fresh sẵn sàng hỗ trợ bạn từ 06:00 đến 21:00 hàng ngày.</p>
+            <p>Đội ngũ Đầu bếp và Chăm sóc khách hàng MOVA FRESH sẵn sàng hỗ trợ bạn từ 06:00 đến 21:00 hàng ngày.</p>
           </div>
         </div>
         <div class="support-actions">
@@ -138,7 +138,7 @@ const RAW_FAQS = [
     id: 'm3',
     groupId: 'menu',
     q: 'Gia đình tôi có người kiêng ăn cay và kiêng hải sản thì MOVA xử lý thế nào?',
-    a: '<p>MOVA Fresh áp dụng cam kết <b>Zero-Tolerance (Lọc cứng 100%)</b>. Ngay khi bạn chọn kiêng cay hoặc kiêng hải sản tại phễu khảo sát, Đầu bếp MOVA sẽ loại trừ tuyệt đối mọi món ăn chứa nguyên liệu này. Nếu nhà có trẻ nhỏ, hệ thống tự động ưu tiên món ngọt mềm thanh dịu.</p>'
+    a: '<p>MOVA FRESH áp dụng cam kết <b>Zero-Tolerance (Lọc cứng 100%)</b>. Ngay khi bạn chọn kiêng cay hoặc kiêng hải sản tại phễu khảo sát, Đầu bếp MOVA sẽ loại trừ tuyệt đối mọi món ăn chứa nguyên liệu này. Nếu nhà có trẻ nhỏ, hệ thống tự động ưu tiên món ngọt mềm thanh dịu.</p>'
   },
   {
     id: 'm4',
@@ -151,8 +151,8 @@ const RAW_FAQS = [
   {
     id: 'f1',
     groupId: 'food',
-    q: 'Nguồn gốc xuất xứ nguyên liệu của MOVA Fresh từ đâu?',
-    a: '<p>100% món ăn tại MOVA Fresh gắn liền với câu chuyện thổ nhưỡng <b>Terroir đặc sản</b>: Thịt heo thảo mộc Cư M\'gar, Thăn bò ăn cỏ Chư Sê, Gà đồi Buôn Đôn, Bông cải xanh baby Đà Lạt, Cá bớp cắt khoanh Vũng Tàu, Gạo ST25 hữu cơ Sóc Trăng và Vải thiều IQF. Mỗi hộp cơm đều có mã QR để quét tra cứu nhật ký nông hộ.</p>'
+    q: 'Nguồn gốc xuất xứ nguyên liệu của MOVA FRESH từ đâu?',
+    a: '<p>100% món ăn tại MOVA FRESH gắn liền với câu chuyện thổ nhưỡng <b>Terroir đặc sản</b>: Thịt heo thảo mộc Cư M\'gar, Thăn bò ăn cỏ Chư Sê, Gà đồi Buôn Đôn, Bông cải xanh baby Đà Lạt, Cá bớp cắt khoanh Vũng Tàu, Gạo ST25 hữu cơ Sóc Trăng và Vải thiều IQF. Mỗi hộp cơm đều có mã QR để quét tra cứu nhật ký nông hộ.</p>'
   },
   {
     id: 'f2',
@@ -178,12 +178,12 @@ const RAW_FAQS = [
     id: 'p2',
     groupId: 'payment',
     q: 'Fresh Credit là gì? Tôi nạp tiền vào có rút ra được không?',
-    a: '<p><b>Fresh Credit</b> là điểm suất ăn trả trước nội bộ theo Thông tư 99/2025/TT-BTC, dùng để đổi bữa ăn tại MOVA Fresh nhận chiết khấu khoảng 10%. Fresh Credit không phải là ví điện tử trung gian thanh toán (tuân thủ Nghị định 52/2024/NĐ-CP). Khi dừng gói giữa chừng, MOVA hoàn trả 100% tiền thật các bữa chưa giao về tài khoản ngân hàng của bạn trong 7 ngày làm việc.</p>'
+    a: '<p><b>Fresh Credit</b> là điểm suất ăn trả trước nội bộ theo Thông tư 99/2025/TT-BTC, dùng để đổi bữa ăn tại MOVA FRESH nhận chiết khấu khoảng 10%. Fresh Credit không phải là ví điện tử trung gian thanh toán (tuân thủ Nghị định 52/2024/NĐ-CP). Khi dừng gói giữa chừng, MOVA hoàn trả 100% tiền thật các bữa chưa giao về tài khoản ngân hàng của bạn trong 7 ngày làm việc.</p>'
   },
   {
     id: 'p3',
     groupId: 'payment',
-    q: 'Tại sao MOVA Fresh không áp dụng hình thức thanh toán khi nhận hàng (COD)?',
+    q: 'Tại sao MOVA FRESH không áp dụng hình thức thanh toán khi nhận hàng (COD)?',
     a: '<p>Thực phẩm sơ chế tươi sống theo khẩu vị riêng của gia đình bạn không thể tái sử dụng nếu bị boom hàng hoặc hoàn về. Mô hình trả trước giúp triệt tiêu rủi ro tồn kho nông sản, bảo vệ dòng tiền lành mạnh và cho phép MOVA giữ mức giá ưu đãi tốt nhất cho khách hàng.</p>'
   },
   {
@@ -204,13 +204,13 @@ const RAW_FAQS = [
     id: 'd2',
     groupId: 'delivery',
     q: 'Quy trình hoàn tiền các bữa chưa giao diễn ra trong bao lâu?',
-    a: '<p>MOVA Fresh cam kết hoàn tiền 100% tiền thật cho các bữa ăn chưa giao trong vòng <b>7 ngày làm việc</b> kể từ khi bạn bấm Dừng gói hoặc liên hệ CSKH. Số tiền được chuyển khoản trực tiếp về tài khoản ngân hàng hoặc phương thức nguồn của bạn.</p>'
+    a: '<p>MOVA FRESH cam kết hoàn tiền 100% tiền thật cho các bữa ăn chưa giao trong vòng <b>7 ngày làm việc</b> kể từ khi bạn bấm Dừng gói hoặc liên hệ CSKH. Số tiền được chuyển khoản trực tiếp về tài khoản ngân hàng hoặc phương thức nguồn của bạn.</p>'
   },
   {
     id: 'd3',
     groupId: 'delivery',
     q: 'Tôi là khách hàng doanh nghiệp hoặc cá nhân cần hóa đơn đỏ GTGT thì sao?',
-    a: '<p>Căn cứ Điều 9 Nghị định 254/2026/NĐ-CP, MOVA Fresh tự động phát hành hóa đơn điện tử GTGT hợp pháp cho từng lần giao hàng thực tế. Bạn có thể tải hóa đơn trực tiếp tại tab Quản lý đơn hàng hoặc nhận qua email công ty.</p>'
+    a: '<p>Căn cứ Điều 9 Nghị định 254/2026/NĐ-CP, MOVA FRESH tự động phát hành hóa đơn điện tử GTGT hợp pháp cho từng lần giao hàng thực tế. Bạn có thể tải hóa đơn trực tiếp tại tab Quản lý đơn hàng hoặc nhận qua email công ty.</p>'
   }
 ];
 
@@ -338,14 +338,14 @@ function toggleItem(id) {
   font-size: 15px;
   border: 1.5px solid var(--line);
   border-radius: 999px;
-  background: #FFFFFF;
+  background: var(--white);
   outline: none;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
   transition: all 0.2s ease;
 }
 .faq-search-input:focus {
   border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(20, 108, 67, 0.15);
+  box-shadow: 0 0 0 3px rgba(11, 156, 99, 0.15);
 }
 .clear-search-btn {
   position: absolute;
@@ -373,7 +373,7 @@ function toggleItem(id) {
   padding: 8px 16px;
   border-radius: 999px;
   border: 1.5px solid var(--line);
-  background: #FFFFFF;
+  background: var(--white);
   font-size: 13.5px;
   font-weight: 700;
   color: var(--ink);
@@ -381,12 +381,12 @@ function toggleItem(id) {
   transition: all 0.15s ease;
 }
 .faq-cat-btn:hover {
-  border-color: #94A3B8;
+  border-color: var(--faint);
 }
 .faq-cat-btn.active {
   background: var(--green-d);
   border-color: var(--green-d);
-  color: #FFFFFF;
+  color: var(--white);
 }
 .cat-count {
   font-size: 11px;
@@ -396,7 +396,7 @@ function toggleItem(id) {
 }
 .faq-cat-btn.active .cat-count {
   background: rgba(255, 255, 255, 0.25);
-  color: #FFFFFF;
+  color: var(--white);
 }
 
 /* Accordion list */
@@ -424,7 +424,7 @@ function toggleItem(id) {
   gap: 10px;
 }
 .accordion-item {
-  background: #FFFFFF;
+  background: var(--white);
   border: 1.5px solid var(--line);
   border-radius: 14px;
   overflow: hidden;
@@ -469,7 +469,7 @@ function toggleItem(id) {
   padding-top: 12px;
   font-size: 14px;
   line-height: 1.6;
-  color: #334155;
+  color: var(--ink-2);
 }
 .panel-content p {
   margin: 0 0 6px;
@@ -495,8 +495,8 @@ function toggleItem(id) {
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
-  background: #FFFBF6;
-  border-color: #F1C7B1;
+  background: var(--amber-soft);
+  border-color: var(--red-line);
 }
 .support-left {
   display: flex;

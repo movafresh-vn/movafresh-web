@@ -275,6 +275,6 @@ async function printReport() {
 
 <style scoped>
 .group-pill-not_shipped { background: var(--amber-soft); color: var(--amber); }
-.group-pill-in_transit { background: var(--sticker-blue-soft); color: #14507a; }
-.group-pill-delivered { background: #fbe4e2; color: var(--red); }
+.group-pill-in_transit { background: var(--sticker-blue-soft); color: var(--blue-ink); }
+.group-pill-delivered { background: var(--red-soft); color: var(--red); }
 </style>

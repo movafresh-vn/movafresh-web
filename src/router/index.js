@@ -66,6 +66,15 @@ export const routes = [
   }
 ];
 
+// Trang tài liệu design system: chỉ đăng ký ở bản dev (VITE_DEV_TOOLS=true), không bao giờ ở production.
+if (import.meta.env?.VITE_DEV_TOOLS === 'true') {
+  routes.splice(routes.length - 1, 0, {
+    path: '/design-system',
+    name: 'design-system',
+    component: () => import('../views/DesignSystemView.vue')
+  });
+}
+
 const router = createRouter({
   history: typeof window !== 'undefined'
     ? createWebHistory(import.meta.env?.BASE_URL || '/')

@@ -273,8 +273,9 @@
 
     <!-- Bản in PO -->
     <section v-if="showSheet && d" class="ops-card ops-print-block doc-sheet" data-testid="po-sheet">
+      <BrandLogo class="doc-logo" variant="onWhite" :width="110" />
       <h2 class="doc-title">ĐƠN ĐẶT HÀNG {{ d.po.id }}</h2>
-      <p class="doc-sub">MOVA Fresh · Ngày giao {{ fmtDay(d.po.deliveryDay) }} · Kỳ công nợ {{ d.po.termDays }} ngày</p>
+      <p class="doc-sub">MOVA FRESH · Ngày giao {{ fmtDay(d.po.deliveryDay) }} · Kỳ công nợ {{ d.po.termDays }} ngày</p>
       <p><strong>Nhà cung cấp:</strong> {{ d.po.supplierName }}<template v-if="d.supplier"> · MST {{ d.supplier.taxId || d.supplier.cccd }} · {{ d.supplier.address }}</template></p>
       <table class="doc-table">
         <thead><tr><th>Mặt hàng</th><th>Mã</th><th class="r">Số lượng</th><th class="r">Đơn giá</th><th class="r">Thành tiền</th></tr></thead>
@@ -294,6 +295,7 @@ import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../../../shared/api';
 import { BUSINESS } from '../../../shared/config/business';
+import BrandLogo from '../../../components/common/BrandLogo.vue';
 import { SKUS } from '../../../shared/data/catalog';
 import { matchIssueLabel } from '../../../shared/domain/procurement';
 import { fmt } from '../../../shared/utils/formatters';

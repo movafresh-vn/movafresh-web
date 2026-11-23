@@ -65,9 +65,7 @@
                 @click="choose(p.kind, o.dish_id)"
               >
                 <b class="sugg-name">{{ o.name }}</b>
-                <span class="num sugg-delta" :class="{ up: o.price_delta_vnd > 0, down: o.price_delta_vnd < 0 }">
-                  {{ deltaText(o.price_delta_vnd) }}
-                </span>
+                <span class="sugg-delta tier" data-testid="dish-tier">{{ tierText(o.dish_id) }}</span>
               </button>
             </div>
           </div>
@@ -79,8 +77,8 @@
                   <span class="opt-name">{{ o.name }}</span>
                   <small v-if="o.sauce_name" class="muted">Xốt: {{ o.sauce_name }}</small>
                 </div>
-                <span class="num delta" :class="{ up: o.price_delta_vnd > 0, down: o.price_delta_vnd < 0 }">
-                  {{ o.current ? 'Đang chọn' : deltaText(o.price_delta_vnd) }}
+                <span class="delta tier" data-testid="dish-tier">
+                  {{ o.current ? 'Đang chọn' : tierText(o.dish_id) }}
                 </span>
               </button>
             </li>
@@ -120,6 +118,7 @@ import { computed, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { DISHES, SKUS } from '../../shared/data/catalog';
+import { tierLabelById } from '../../shared/domain/mealTier';
 import { recipeFor } from '../../shared/data/recipes';
 import FactoryMenuModal from '../modals/FactoryMenuModal.vue';
 import DishDetailModal from '../modals/DishDetailModal.vue';
@@ -235,9 +234,9 @@ function choose(kind, dishId) {
   emit('swap', props.meal.meal_index, kind, dishId);
 }
 
-function deltaText(v) {
-  if (!v) return 'Giá như nhau';
-  return `${v > 0 ? '+' : '−'}${fmt(Math.abs(v))}`;
+// Giá lẻ từng món không hiện cho khách: hiện hạng món thay cho chênh lệch giá (tiền vẫn do máy chủ tính).
+function tierText(dishId) {
+  return tierLabelById(DISHES, dishId);
 }
 
 function openDishDetail(dishId) {
@@ -290,7 +289,7 @@ function kindLabel(kind) {
   height: 100%;
   gap: 10px;
 }
-.meal.west { background: #FFFBF6; border-color: #F1C7B1; }
+.meal.west { background: var(--amber-soft); border-color: var(--red-line); }
 .meal-h { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
 .meal-h > div { display: grid; gap: 6px; justify-items: start; }
 .meal-t { font-size: 17px; }
@@ -321,7 +320,7 @@ function kindLabel(kind) {
   font-weight: 600;
   cursor: pointer;
 }
-.detail-btn:hover { background: #e2e8f0; }
+.detail-btn:hover { background: var(--line); }
 
 .swap-btn {
   min-width: 58px;
@@ -358,7 +357,7 @@ function kindLabel(kind) {
   border: 1px solid var(--line);
   border-radius: 8px;
   font-size: 14px;
-  background: #fff;
+  background: var(--white);
 }
 .view-all-btn {
   padding: 7px 12px;
@@ -374,11 +373,11 @@ function kindLabel(kind) {
 }
 .view-all-btn:hover {
   background: var(--green-d);
-  color: #FFFFFF;
+  color: var(--white);
 }
 
 .cross-suggestions {
-  background: #fff;
+  background: var(--white);
   border: 1px solid var(--line-2);
   border-radius: 10px;
   padding: 10px;
@@ -472,14 +471,14 @@ function kindLabel(kind) {
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 6px;
-  background: var(--muted-bg, #f1f5f9);
+  background: var(--muted-bg, var(--line-2));
   color: var(--ink);
 }
-.category-pill.protein { background: #fee2e2; color: #991b1b; }
-.category-pill.veg { background: #dcfce7; color: #166534; }
-.category-pill.soup { background: #e0f2fe; color: #075985; }
-.category-pill.carb { background: #fef3c7; color: #92400e; }
-.category-pill.dessert { background: #f3e8ff; color: #6b21a8; }
+.category-pill.protein { background: var(--red-soft); color: var(--red); }
+.category-pill.veg { background: var(--green-soft); color: var(--green-d); }
+.category-pill.soup { background: var(--blue-soft); color: var(--blue-ink); }
+.category-pill.carb { background: var(--amber-soft); color: var(--amber-ink); }
+.category-pill.dessert { background: var(--violet-soft); color: var(--violet); }
 
 .terroir-badge {
   display: inline-block;
@@ -494,7 +493,7 @@ function kindLabel(kind) {
 .dish-title { font-size: 20px; font-weight: 800; margin: 0; }
 
 .terroir-story-box {
-  background: #f8fafc;
+  background: var(--surface);
   border-left: 3px solid var(--green);
   border-radius: 8px;
   padding: 10px 14px;
@@ -502,9 +501,9 @@ function kindLabel(kind) {
   display: grid;
   gap: 6px;
 }
-.story-text { font-size: 14px; color: #334155; line-height: 1.5; margin: 0; }
-.chef-tip { font-size: 13px; color: #0f766e; background: #f0fdfa; padding: 6px 10px; border-radius: 6px; margin: 0; line-height: 1.4; }
-.storage-text { font-size: 13px; color: #0284c7; margin: 4px 0 0; }
+.story-text { font-size: 14px; color: var(--ink-2); line-height: 1.5; margin: 0; }
+.chef-tip { font-size: 13px; color: var(--green-d); background: var(--green-tint); padding: 6px 10px; border-radius: 6px; margin: 0; line-height: 1.4; }
+.storage-text { font-size: 13px; color: var(--blue); margin: 4px 0 0; }
 
 .detail-grid { display: grid; gap: 12px; margin-bottom: 14px; }
 .info-card {
@@ -518,13 +517,13 @@ function kindLabel(kind) {
 .spec-text { font-size: 14px; margin: 6px 0 0; color: var(--muted); }
 
 .nutri-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
-.nutri-item { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 4px; display: flex; flex-direction: column; }
+.nutri-item { background: var(--white); border: 1px solid var(--line); border-radius: 8px; padding: 6px 4px; display: flex; flex-direction: column; }
 .nutri-item b { font-size: 16px; color: var(--green-d); }
 .nutri-item span { font-size: 11px; color: var(--muted); }
 
 .recipe-card {
-  background: #FFFBF6;
-  border: 1px solid #F1C7B1;
+  background: var(--amber-soft);
+  border: 1px solid var(--red-line);
   border-radius: 12px;
   padding: 12px 14px;
 }

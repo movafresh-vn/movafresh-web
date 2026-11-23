@@ -189,7 +189,7 @@ onUnmounted(() => {
   overflow: hidden;
   box-shadow: 0 12px 36px rgba(18, 53, 36, 0.12);
   border: 1px solid var(--line);
-  background: #111e16;
+  background: var(--brown);
   position: relative;
 }
 
@@ -197,7 +197,7 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: #0f1c14;
+  background: var(--brown);
   overflow: hidden;
 }
 
@@ -233,7 +233,7 @@ onUnmounted(() => {
   gap: 6px;
   background: rgba(18, 53, 36, 0.85);
   backdrop-filter: blur(8px);
-  color: #fff;
+  color: var(--white);
   font-size: 13px;
   font-weight: 700;
   padding: 6px 12px;
@@ -245,8 +245,8 @@ onUnmounted(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 8px #22c55e;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
   animation: pulse-dot 1.5s infinite;
 }
 
@@ -263,7 +263,7 @@ onUnmounted(() => {
   gap: 6px;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(8px);
-  color: #fff;
+  color: var(--white);
   border: 1px solid rgba(255, 255, 255, 0.25);
   padding: 6px 12px;
   border-radius: 999px;
@@ -285,8 +285,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #132a1d 0%, #1f422e 50%, #2b593f 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--brown) 0%, var(--green-dd) 50%, var(--green-dd) 100%);
+  color: var(--white);
   text-align: center;
   padding: 20px;
 }
@@ -326,12 +326,12 @@ onUnmounted(() => {
   font-size: 20px;
   font-weight: 800;
   margin: 0 0 4px;
-  color: #fff;
+  color: var(--white);
 }
 
 .scene-box p, .scene-pan p, .scene-table p {
   font-size: 14px;
-  color: #cbd5e1;
+  color: var(--line-strong);
   margin: 0;
   max-width: 32ch;
 }
@@ -383,7 +383,7 @@ onUnmounted(() => {
 }
 
 .timeline-step.active .step-progress-fill {
-  background: #34d399;
+  background: var(--green);
 }
 
 .step-info {
@@ -395,18 +395,18 @@ onUnmounted(() => {
 .step-time {
   font-size: 11px;
   font-weight: 800;
-  color: #94a3b8;
+  color: var(--faint);
   font-family: monospace;
 }
 
 .timeline-step.active .step-time {
-  color: #34d399;
+  color: var(--green-d);
 }
 
 .step-label {
   font-size: 12px;
   font-weight: 700;
-  color: #f1f5f9;
+  color: var(--line-2);
   line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;

@@ -3,11 +3,13 @@ import { api } from '../shared/api';
 import { errorKind, withGiftCard } from '../shared/api/requests';
 import { DEFAULT_INSTRUCTION, normalizeInstruction } from '../shared/api/adapters/checkout';
 import { BUSINESS } from '../shared/config/business';
+import { normalizeContact } from '../shared/domain/leads';
+import { checkoutErrorMessage, clearPersistedPaymentChoice, PAYMENT_TOKEN_REQUIRED, PLAN_FLOW_KEY, recoverFromTokenRequired } from '../shared/domain/checkoutError';
 
 // Trạng thái phễu /plans. Lưu vào localStorage để khách tải lại trang hoặc bấm quay lại không mất dữ liệu.
 // Thực đơn nháp nằm ở trình duyệt (api.customer giữ), còn GIÁ, ƯU ĐÃI, SỨC CHỨA và lịch trừ tiền luôn do máy chủ trả (xem trước / đăng ký).
 // Mọi lời gọi api.customer đều được chờ (await); lỗi mạng ném ra và được bắt ở mỗi hành động để báo cho khách.
-const KEY = 'mova_plans_flow_v2';
+const KEY = PLAN_FLOW_KEY;
 
 const freshAnswers = () => ({
   district: '',
@@ -31,6 +33,7 @@ const freshCheckout = () => ({
   instruction: { ...DEFAULT_INSTRUCTION, note: '' },
   name: '',
   phone: '',
+  phoneDial: '84', // mã vùng đang chọn ở ô số điện thoại người nhận (không có dấu +)
   phoneVerified: false,
   newsletterOptin: false,
   voucherCode: '',
@@ -39,6 +42,8 @@ const freshCheckout = () => ({
   district: '',
   method: 'fresh_credit',
   packId: 'exact',
+  lockMenu: false, // chiến dịch chốt món: chỉ true khi khách nhận ưu đãi (xem SeasonalOfferModal)
+  addons: [], // add-on Tết đã chọn (mã trong src/shared/domain/campaign.js)
   agree: false
 });
 
@@ -82,7 +87,8 @@ export const usePlanFlowStore = defineStore('planFlow', {
     capacity: null, // [{ date, remaining, effective_remaining, cycle_remaining }] của khung giờ đang chọn
     busy: false,
     error: '',
-    errorCode: ''
+    errorCode: '',
+    cardLinkNeeded: false // máy chủ báo chưa liên kết thẻ/ví (PAYMENT_TOKEN_REQUIRED): hiện nút liên kết
   }),
 
   getters: {
@@ -109,7 +115,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
 
     reset() {
       const refCode = this.refCode; // mã mời giữ lại khi khách làm lại từ đầu
-      Object.assign(this, freshState(), { refCode, plan: null, options: null, preview: null, capacity: null, busy: false, error: '', errorCode: '' });
+      Object.assign(this, freshState(), { refCode, plan: null, options: null, preview: null, capacity: null, busy: false, error: '', errorCode: '', cardLinkNeeded: false });
       api.customer.reset();
       this.persist();
     },
@@ -350,7 +356,8 @@ export const usePlanFlowStore = defineStore('planFlow', {
           district: c.district,
           city: this.options.province,
           receiver_name: c.name.trim(),
-          receiver_phone: c.phone.trim()
+          // Số Việt Nam giữ 0xxxxxxxxx; số quốc tế gửi E.164 (+819012345678)
+          receiver_phone: (normalizeContact(c.phone, { dial: c.phoneDial }) || {}).value || c.phone.trim()
         }
       };
     },
@@ -362,7 +369,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
     },
 
     /** Xem trước giá thật từ máy chủ. Cần đã xác thực SĐT (đăng nhập): chưa thì `needsAuth` và không có giá. */
-    async loadPreview() {
+    async loadPreview(retried = false) {
       const schedule = this.scheduleRequest();
       if (!schedule) {
         this.preview = null;
@@ -380,6 +387,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
         if (ref) req.referral_code = ref;
         const res = await api.customer.previewSubscription(req);
         if (res.status === 'error') {
+          if (res.error.code === PAYMENT_TOKEN_REQUIRED && !retried) return this.recoverTokenRequired();
           this.fail(res);
           this.preview = null;
           return;
@@ -387,10 +395,27 @@ export const usePlanFlowStore = defineStore('planFlow', {
         this.error = '';
         this.errorCode = '';
         this.preview = res.data;
+        if (this.checkout.method === 'card') this.cardLinkNeeded = false; // xem trước bằng thẻ không báo thiếu token: đã liên kết
       } catch (e) {
         this.error = messageOf(e);
         this.errorCode = 'NETWORK_ERROR';
         this.preview = null;
+      }
+    },
+
+    /**
+     * PAYMENT_TOKEN_REQUIRED: chọn "Thẻ / Ví" khi chưa liên kết. Trả lựa chọn về Fresh Credit, xóa lựa chọn đã lưu (tải lại không kẹt),
+     * tính lại giá để danh sách phương thức vẫn hiện, và bật `cardLinkNeeded` để màn thanh toán đưa nút liên kết thẻ/ví.
+     */
+    async recoverTokenRequired() {
+      recoverFromTokenRequired(this.checkout);
+      clearPersistedPaymentChoice();
+      this.cardLinkNeeded = true;
+      this.persist();
+      await this.loadPreview(true);
+      if (this.preview) {
+        this.error = checkoutErrorMessage(PAYMENT_TOKEN_REQUIRED);
+        this.errorCode = PAYMENT_TOKEN_REQUIRED;
       }
     },
 
@@ -409,12 +434,23 @@ export const usePlanFlowStore = defineStore('planFlow', {
         newsletter_optin: Boolean(c.newsletterOptin),
         schedule
       });
+      // Đủ credit cho tuần 1 thì KHÔNG gửi topup_pay_vnd (selectedPackId trả null); thiếu thì gửi giá đúng gói đã chọn.
       if (c.method === 'fresh_credit' && this.selectedPackId()) req.topup_pay_vnd = this.selectedTopupPay();
+      if (c.lockMenu) req.lock_menu = true;
       const ref = this.activeRef();
       if (ref) req.referral_code = ref;
       try {
         const res = await api.customer.createSubscription(req);
-        if (res.status === 'error') return { ok: false, kind: errorKind(res), message: res.error.message, details: res.error };
+        if (res.status === 'error') {
+          const kind = errorKind(res);
+          if (kind === PAYMENT_TOKEN_REQUIRED) {
+            recoverFromTokenRequired(c);
+            clearPersistedPaymentChoice();
+            this.cardLinkNeeded = true;
+            this.persist();
+          }
+          return { ok: false, kind, message: checkoutErrorMessage(kind, res.error.message), details: res.error };
+        }
         this.result = { ...res.data, planSummary: this.summary() };
         this.persist();
         return { ok: true };

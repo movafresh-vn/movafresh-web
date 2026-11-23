@@ -106,7 +106,7 @@ onMounted(load);
   object-fit: contain;
   border-radius: 10px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  background: #111;
+  background: var(--ink);
 }
 .ops-lightbox-close {
   position: absolute;
@@ -115,8 +115,8 @@ onMounted(load);
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #ffffff;
-  color: #111111;
+  background: var(--white);
+  color: var(--ink);
   border: 1px solid rgba(0, 0, 0, 0.2);
   font-size: 20px;
   font-weight: bold;
@@ -129,7 +129,7 @@ onMounted(load);
   transition: background 0.15s ease, transform 0.15s ease;
 }
 .ops-lightbox-close:hover {
-  background: #f0f0f0;
+  background: var(--surface);
   transform: scale(1.08);
 }
 </style>

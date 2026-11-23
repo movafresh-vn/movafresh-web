@@ -1,6 +1,7 @@
 <template>
   <section class="sp">
     <header class="ops-card sp-head">
+      <BrandLogo class="ops-logo-sm" variant="onWhite" :width="84" />
       <h1>Giao hàng</h1>
       <p v-if="data && data.shipper" class="sp-who" data-testid="sp-who"><b>{{ data.shipper.name }}</b> · sức chở {{ data.shipper.capacityBoxes }} thùng / chuyến</p>
       <p v-if="data && data.day" class="ops-muted">{{ fmtDay(data.day) }}</p>
@@ -117,6 +118,7 @@ import { useLive } from '../../useLive';
 import { hhmm } from '../../format';
 import { STOP_PILL, STOP_STATUS, logisticsError, photoRequired, routeLabel } from '../../logisticsUi';
 import PhotoInput from '../../components/PhotoInput.vue';
+import BrandLogo from '../../../components/common/BrandLogo.vue';
 import PhotoThumbnail from '../../components/PhotoThumbnail.vue';
 
 const data = ref(null);

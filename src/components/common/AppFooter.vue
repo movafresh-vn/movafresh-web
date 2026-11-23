@@ -35,19 +35,15 @@
     <!-- Thân Footer 4 cột cân đối -->
     <div class="wrap footer-main-body">
       <div class="footer-grid">
-        <!-- Cột 1: MOVA Fresh -->
+        <!-- Cột 1: MOVA FRESH -->
         <div class="f-col col-brand">
-          <router-link to="/" class="f-logo" aria-label="MOVA Fresh">
-            <svg viewBox="0 0 40 40" width="34" height="34" aria-hidden="true">
-              <rect width="40" height="40" rx="10" fill="#146C43"/>
-              <path d="M10 27V14l6 8 4-6 4 6 6-8v13" fill="none" stroke="#FAF9F5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="30" cy="11" r="3.2" fill="#D9531E"/>
-            </svg>
+          <router-link to="/" class="f-logo" aria-label="MOVA FRESH">
+            <BrandLogo variant="onWhite" :width="110" />
             <div class="f-logo-text">
-              <b>MOVA <span>FRESH</span></b>
               <span class="f-city-tag">TP.HCM</span>
             </div>
           </router-link>
+          <p class="f-tagline">{{ BRAND_TAGLINE }}</p>
 
           <p class="f-brand-desc">
             Nông sản sơ chế sạch 100% từ Đắk Lắk, xe lạnh 0–4°C giao sáng tận bếp TP.HCM. Giải pháp bữa ăn tiện lợi cho người bận rộn: <b>15 phút — 1 chảo</b>.
@@ -145,7 +141,7 @@
               <span class="c-ico">💬</span>
               <div>
                 <b>Zalo Official Account:</b>
-                <span>MOVA Fresh Official</span>
+                <span>MOVA FRESH Official</span>
               </div>
             </div>
           </div>
@@ -157,7 +153,7 @@
     <div class="footer-bottom">
       <div class="wrap footer-bottom-inner">
         <p class="copyright-line">
-          © 2026 MOVA Fresh Việt Nam. Bảo lưu mọi quyền. Tuân thủ NĐ 52/2024/NĐ-CP &amp; Thông tư 99/2025/TT-BTC.
+          © 2026 MOVA FRESH Việt Nam. Bảo lưu mọi quyền. Tuân thủ NĐ 52/2024/NĐ-CP &amp; Thông tư 99/2025/TT-BTC.
         </p>
         <div class="bottom-quick-links">
           <router-link to="/terms">Điều khoản</router-link>
@@ -176,6 +172,8 @@
 <script setup>
 import { ref } from 'vue';
 import { useMovaStore } from '../../stores/useMovaStore';
+import BrandLogo from './BrandLogo.vue';
+import { BRAND_TAGLINE } from '../../shared/config/brandLogo';
 
 const store = useMovaStore();
 const emailInput = ref('');
@@ -194,7 +192,7 @@ function submitNewsletter() {
 
 <style scoped>
 .site-footer {
-  background: #FFFFFF;
+  background: var(--white);
   border-top: 1px solid var(--line);
   color: var(--ink);
   font-size: 13.5px;
@@ -202,8 +200,8 @@ function submitNewsletter() {
 
 /* Dải Newsletter */
 .newsletter-strip {
-  background: #F0FDF4;
-  border-bottom: 1px solid #BBF7D0;
+  background: var(--green-tint);
+  border-bottom: 1px solid var(--green-line);
   padding: 24px 0;
 }
 .newsletter-inner {
@@ -230,12 +228,12 @@ function submitNewsletter() {
 .nl-title {
   font-size: 16px;
   font-weight: 800;
-  color: #14532D;
+  color: var(--green-dd);
   margin: 0;
 }
 .nl-desc {
   font-size: 13px;
-  color: #166534;
+  color: var(--green-d);
   margin: 0;
   line-height: 1.4;
 }
@@ -249,10 +247,10 @@ function submitNewsletter() {
   flex: 1;
   min-height: 44px;
   padding: 0 14px;
-  border: 1.5px solid #86EFAC;
+  border: 1.5px solid var(--green-line);
   border-radius: 12px;
   font-size: 14px;
-  background: #FFFFFF;
+  background: var(--white);
   outline: none;
 }
 .nl-input:focus {
@@ -261,8 +259,8 @@ function submitNewsletter() {
 .nl-btn {
   min-height: 44px;
   padding: 0 16px;
-  background: var(--green);
-  color: #FFFFFF;
+  background: var(--green-d);
+  color: var(--white);
   border: none;
   border-radius: 12px;
   font-weight: 700;
@@ -272,16 +270,16 @@ function submitNewsletter() {
   transition: background 0.15s ease;
 }
 .nl-btn:hover:not(:disabled) {
-  background: var(--green-d);
+  background: var(--green-dd);
 }
 .nl-btn:disabled {
-  background: #059669;
+  background: var(--green);
   cursor: default;
 }
 .nl-success-msg {
   margin-top: 10px;
   font-size: 13px;
-  color: #15803D;
+  color: var(--green-d);
   font-weight: 600;
 }
 
@@ -331,18 +329,16 @@ function submitNewsletter() {
   align-items: center;
   gap: 6px;
 }
-.f-logo-text b {
-  font-size: 17px;
-  font-weight: 900;
-  color: var(--green);
-}
-.f-logo-text b span {
-  color: var(--orange);
+.f-tagline {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--green-d);
 }
 .f-city-tag {
   font-size: 10px;
   font-weight: 800;
-  color: var(--green);
+  color: var(--green-d);
   background: var(--green-soft);
   padding: 2px 6px;
   border-radius: 6px;
@@ -360,7 +356,7 @@ function submitNewsletter() {
   gap: 8px;
 }
 .f-links a {
-  color: #334155;
+  color: var(--ink-2);
   text-decoration: none;
   font-size: 13.5px;
   font-weight: 500;
@@ -386,8 +382,8 @@ function submitNewsletter() {
   gap: 8px;
 }
 .pay-badge {
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 8px;
   height: 36px;
   display: flex;
@@ -400,12 +396,12 @@ function submitNewsletter() {
   font-weight: 800;
   letter-spacing: -0.2px;
 }
-.pay-txt.vietqr { color: #EE0033; }
-.pay-txt.momo { color: #A50064; font-size: 13px; }
-.pay-txt.zalopay { color: #0068FF; }
-.pay-txt.vnpay { color: #005BAA; }
-.pay-txt.visa { color: #1A1F71; font-weight: 900; font-size: 13px; font-style: italic; }
-.pay-txt.mc { color: #EB001B; font-size: 10px; text-transform: lowercase; }
+.pay-txt.vietqr { color: var(--pay-vietqr); }
+.pay-txt.momo { color: var(--pay-momo); font-size: 13px; }
+.pay-txt.zalopay { color: var(--pay-zalo); }
+.pay-txt.vnpay { color: var(--blue); }
+.pay-txt.visa { color: var(--pay-visa); font-weight: 900; font-size: 13px; font-style: italic; }
+.pay-txt.mc { color: var(--pay-mc); font-size: 10px; text-transform: lowercase; }
 
 .f-sec-note {
   font-size: 11.5px;

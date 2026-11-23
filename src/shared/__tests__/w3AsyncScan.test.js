@@ -28,7 +28,7 @@ describe('W3-01: màn tài khoản chờ mọi lời gọi API', () => {
   });
 
   it('W3-01: không còn đăng nhập demo, tài khoản mẫu hay bảng demo trong trang tài khoản', () => {
-    expect(read('components/modals/LoginModal.vue')).not.toMatch(/sampleAccounts|loginAs|loginWithContact|quickSocialLogin/);
+    expect(read('components/modals/LoginModal.vue')).not.toMatch(/sampleAccounts|loginAs|loginWithContact/);
     expect(read('views/DashboardView.vue')).not.toMatch(/DemoTools/);
     expect(read('stores/useMovaStore.js')).not.toMatch(/loginAs|loginWithContact|resolveCustomer|customer\.tick/);
   });

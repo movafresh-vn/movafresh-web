@@ -73,7 +73,7 @@ h3 { font-size: 17px; font-weight: 800; }
 .dn { font-size: 16px; font-weight: 600; }
 .thumbs { display: flex; gap: 8px; flex-shrink: 0; }
 .thumb {
-  width: 48px; height: 48px; border-radius: 14px; border: 1.5px solid var(--line); background: #fff; color: var(--muted);
+  width: 48px; height: 48px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--white); color: var(--muted);
   display: grid; place-items: center;
 }
 .thumb:hover { background: var(--line-2); }

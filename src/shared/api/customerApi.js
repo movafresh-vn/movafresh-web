@@ -294,6 +294,13 @@ export function createCustomerApi(deps = {}) {
     unlinkCard() {
       return envelope(() => call('unlinkCard', { body: {} }));
     },
+    /**
+     * Bắt đầu liên kết thẻ/ví đối tác: trả { link_id, url, expires_at }, mở `url` của cổng thanh toán để khách liên kết.
+     * return_url phải thuộc danh sách origin backend cho phép (mặc định origin hiện tại). Web không bao giờ nhận số thẻ hay token.
+     */
+    linkCard(returnUrl) {
+      return envelope(() => call('linkCard', { body: { return_url: returnUrl } }));
+    },
     renewalOffer() {
       return envelope(async () => adaptRenewalOffer(await call('renewalOffer')));
     },

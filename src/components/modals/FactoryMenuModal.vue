@@ -65,8 +65,8 @@
               <span v-if="isCurrent(d.id)" class="f-current-pill">Đang chọn</span>
               <span
                 v-else
-                class="f-delta-pill num"
-                :class="deltaClass(d)"
+                class="f-delta-pill even"
+                data-testid="dish-tier"
               >
                 {{ deltaLabel(d) }}
               </span>
@@ -126,7 +126,7 @@ import { computed, ref } from 'vue';
 import DishDetailModal from './DishDetailModal.vue';
 import { DISHES, SAUCES, SKUS } from '../../shared/data/catalog';
 import { recipeFor } from '../../shared/data/recipes';
-import { fmt } from '../../shared/utils/formatters';
+import { tierLabel } from '../../shared/domain/mealTier';
 
 const props = defineProps({
   currentDishId: { type: String, default: '' },
@@ -201,32 +201,10 @@ function sauceName(d) {
   return 'Gói xốt MOVA đặc biệt đi kèm';
 }
 
-function calculateDeltaVnd(dish) {
-  // 1. Kiểm tra trong props.options trước nếu parent đã cung cấp
-  const opt = props.options.find((o) => o.dish_id === dish.id);
-  if (opt && typeof opt.price_delta_vnd === 'number') {
-    return opt.price_delta_vnd;
-  }
-
-  // 2. Tự tính chênh lệch so với món hiện tại
-  const curDish = DISHES[props.currentDishId];
-  if (!curDish) return 0;
-  const pDiff = (dish.pricePerPersonVnd || 0) - (curDish.pricePerPersonVnd || 0);
-  return pDiff * (props.householdSize || 2);
-}
-
+// Giá lẻ từng món không hiện cho khách: hiện hạng món (tiền vẫn do máy chủ tính).
 function deltaLabel(dish) {
   if (isCurrent(dish.id)) return 'Đang chọn';
-  const delta = calculateDeltaVnd(dish);
-  if (delta === 0) return 'Cùng giá';
-  return `${delta > 0 ? '+' : '−'}${fmt(Math.abs(delta))}`;
-}
-
-function deltaClass(dish) {
-  const delta = calculateDeltaVnd(dish);
-  if (delta > 0) return 'up';
-  if (delta < 0) return 'down';
-  return 'even';
+  return tierLabel(dish);
 }
 
 function openDetail(dish) {
@@ -263,7 +241,7 @@ function selectDish(dish) {
 }
 
 .f-modal-box {
-  background: #FFFFFF;
+  background: var(--white);
   border-radius: 20px;
   max-width: 780px;
   width: 100%;
@@ -324,16 +302,16 @@ function selectDish(dish) {
   height: 44px;
   padding: 0 40px 0 42px;
   font-size: 14px;
-  border: 1.5px solid #E2E8F0;
+  border: 1.5px solid var(--line);
   border-radius: 12px;
   outline: none;
-  background: #F8FAFC;
+  background: var(--surface);
   transition: all 0.2s ease;
 }
 .f-search-input:focus {
   border-color: var(--green);
-  background: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.12);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(11, 156, 99, 0.12);
 }
 .clear-btn {
   position: absolute;
@@ -360,19 +338,19 @@ function selectDish(dish) {
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 99px;
-  border: 1px solid #E2E8F0;
-  background: #FFFFFF;
+  border: 1px solid var(--line);
+  background: var(--white);
   color: var(--muted);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .f-tab:hover {
-  border-color: #CBD5E1;
+  border-color: var(--line-strong);
   color: var(--ink);
 }
 .f-tab.active {
   background: var(--green-d);
-  color: #FFFFFF;
+  color: var(--white);
   border-color: var(--green-d);
 }
 
@@ -384,7 +362,7 @@ function selectDish(dish) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
-  background: #F8FAFC;
+  background: var(--surface);
 }
 @media (max-width: 640px) {
   .f-dish-list { grid-template-columns: 1fr; padding: 12px 16px; }
@@ -398,8 +376,8 @@ function selectDish(dish) {
 }
 
 .f-dish-card {
-  background: #FFFFFF;
-  border: 1.5px solid #E2E8F0;
+  background: var(--white);
+  border: 1.5px solid var(--line);
   border-radius: 14px;
   padding: 14px;
   display: flex;
@@ -409,13 +387,13 @@ function selectDish(dish) {
   transition: all 0.18s ease;
 }
 .f-dish-card:hover {
-  border-color: #CBD5E1;
+  border-color: var(--line-strong);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
 }
 .f-dish-card.is-current {
   border-color: var(--green);
-  background: #F7FBF8;
+  background: var(--green-tint);
 }
 
 .f-card-header {
@@ -436,8 +414,8 @@ function selectDish(dish) {
 .f-current-pill {
   font-size: 11px;
   font-weight: 700;
-  color: #64748B;
-  background: #F1F5F9;
+  color: var(--muted);
+  background: var(--line-2);
   padding: 2px 7px;
   border-radius: 6px;
 }
@@ -448,16 +426,16 @@ function selectDish(dish) {
   border-radius: 6px;
 }
 .f-delta-pill.down {
-  background: #DCFCE7;
-  color: #15803D;
+  background: var(--green-soft);
+  color: var(--green-d);
 }
 .f-delta-pill.up {
-  background: #FFEDD5;
-  color: #C2410C;
+  background: var(--amber-soft);
+  color: var(--red-orange-d);
 }
 .f-delta-pill.even {
-  background: #F1F5F9;
-  color: #475569;
+  background: var(--line-2);
+  color: var(--ink-2);
 }
 
 .f-dish-name {
@@ -487,7 +465,7 @@ function selectDish(dish) {
 }
 .f-sauce-tag {
   font-size: 12px;
-  color: #475569;
+  color: var(--ink-2);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -507,16 +485,16 @@ function selectDish(dish) {
   padding: 7px 12px;
   font-size: 12px;
   font-weight: 600;
-  border: 1px solid #E2E8F0;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: #FFFFFF;
+  background: var(--white);
   color: var(--ink);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .f-btn-detail:hover {
-  background: #F8FAFC;
-  border-color: #CBD5E1;
+  background: var(--surface);
+  border-color: var(--line-strong);
 }
 .f-btn-select {
   flex: 1;
@@ -526,7 +504,7 @@ function selectDish(dish) {
   border: none;
   border-radius: 8px;
   background: var(--green-d);
-  color: #FFFFFF;
+  color: var(--white);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -534,8 +512,8 @@ function selectDish(dish) {
   background: var(--green);
 }
 .f-btn-select.disabled {
-  background: #E2E8F0;
-  color: #94A3B8;
+  background: var(--line);
+  color: var(--faint);
   cursor: not-allowed;
 }
 
@@ -552,7 +530,7 @@ function selectDish(dish) {
   padding: 16px;
 }
 .f-detail-sheet {
-  background: #FFFFFF;
+  background: var(--white);
   border-radius: 16px;
   max-width: 600px;
   width: 100%;
@@ -582,16 +560,16 @@ function selectDish(dish) {
   line-height: 1.5;
 }
 .f-detail-box {
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 14px;
   display: grid;
   gap: 4px;
 }
 .f-detail-box.story-box {
-  background: #F0FDF4;
-  border-color: #BBF7D0;
+  background: var(--green-tint);
+  border-color: var(--green-line);
 }
 .box-label {
   font-weight: 700;

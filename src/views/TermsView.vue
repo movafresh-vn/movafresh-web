@@ -15,7 +15,7 @@
           </div>
           <h1 class="legal-h1">Điều khoản sử dụng &amp; Quy chế Giao dịch từ xa</h1>
           <p class="legal-sub">
-            Áp dụng cho mọi giao dịch đặt mua Gói Suất ăn trả trước và dịch vụ giao hàng định kỳ trên nền tảng <b>MOVA Fresh</b>.
+            Áp dụng cho mọi giao dịch đặt mua Gói Suất ăn trả trước và dịch vụ giao hàng định kỳ trên nền tảng <b>MOVA FRESH</b>.
           </p>
           <div class="legal-notice-box">
             <b>⚖️ Căn cứ pháp lý áp dụng:</b>
@@ -31,7 +31,7 @@
         <section class="legal-content">
           <h2>Điều 1. Định nghĩa và Bản chất dịch vụ</h2>
           <p>
-            1.1. <b>MOVA Fresh</b> là nền tảng cung cấp giải pháp bữa ăn gia đình tiện lợi (Meal-Kit Subscription) do Đầu bếp MOVA tuyển chọn, kết nối trực tiếp nông sản đặc sản sơ chế sạch từ phân xưởng Đắk Lắk và kho trung chuyển TP.HCM đến căn bếp của khách hàng.
+            1.1. <b>MOVA FRESH</b> là nền tảng cung cấp giải pháp bữa ăn gia đình tiện lợi (Meal-Kit Subscription) do Đầu bếp MOVA tuyển chọn, kết nối trực tiếp nông sản đặc sản sơ chế sạch từ phân xưởng Đắk Lắk và kho trung chuyển TP.HCM đến căn bếp của khách hàng.
           </p>
           <p>
             1.2. Mọi nguyên liệu trong hộp meal-kit đều được rửa sạch, sơ chế cắt thái 100%, định lượng gram chuẩn xác theo quy mô gia đình, đóng khay hút chân không kèm <b>Gói xốt MOVA đặc biệt</b> giúp hoàn thành mâm cơm 5 món chuẩn Á Đông trong <b>15 phút — 1 chảo</b>.
@@ -42,14 +42,14 @@
 
           <h2>Điều 2. Cơ chế Thanh toán trả trước &amp; Zero COD</h2>
           <p>
-            2.1. <b>Nguyên tắc Dòng tiền trả trước:</b> Để đảm bảo an toàn vệ sinh thực phẩm và không phát sinh hư hao nông sản, 100% đơn hàng phải được thanh toán trước khi lệnh sản xuất được chuyển giao về nhà máy Đắk Lắk. MOVA Fresh <b>tuyệt đối không áp dụng hình thức thanh toán khi nhận hàng (Zero COD)</b>.
+            2.1. <b>Nguyên tắc Dòng tiền trả trước:</b> Để đảm bảo an toàn vệ sinh thực phẩm và không phát sinh hư hao nông sản, 100% đơn hàng phải được thanh toán trước khi lệnh sản xuất được chuyển giao về nhà máy Đắk Lắk. MOVA FRESH <b>tuyệt đối không áp dụng hình thức thanh toán khi nhận hàng (Zero COD)</b>.
           </p>
           <p>
             2.2. <b>Phương thức thanh toán hợp lệ:</b>
           </p>
           <ul>
-            <li><b>Gói Suất ăn trả trước (Fresh Credit):</b> Khách hàng mua Gói 4 tuần hoặc 13 tuần cố định với ưu đãi chiết khấu suất ăn. Fresh Credit là điểm suất ăn nội bộ chỉ dùng để đổi suất ăn tại MOVA Fresh, không có giá trị rút tiền mặt trực tiếp và không chuyển nhượng cho bên thứ ba (tuân thủ Nghị định 52/2024/NĐ-CP).</li>
-            <li><b>Chuyển khoản VietQR:</b> Thanh toán trọn gói 4 tuần một lần qua mã QR động kết nối với tài khoản ngân hàng chính thức của Công ty MOVA Fresh.</li>
+            <li><b>Gói Suất ăn trả trước (Fresh Credit):</b> Khách hàng mua Gói 4 tuần hoặc 13 tuần cố định với ưu đãi chiết khấu suất ăn. Fresh Credit là điểm suất ăn nội bộ chỉ dùng để đổi suất ăn tại MOVA FRESH, không có giá trị rút tiền mặt trực tiếp và không chuyển nhượng cho bên thứ ba (tuân thủ Nghị định 52/2024/NĐ-CP).</li>
+            <li><b>Chuyển khoản VietQR:</b> Thanh toán trọn gói 4 tuần một lần qua mã QR động kết nối với tài khoản ngân hàng chính thức của Công ty MOVA FRESH.</li>
             <li><b>Trừ tiền định kỳ qua Thẻ / Ví đối tác:</b> Liên kết cổng thanh toán thẻ quốc tế hoặc ví điện tử đối tác đã được cấp phép (MoMo, ZaloPay, VNPAY). Số tiền của từng tuần được tự động trừ trước giờ giao hàng <b>72 tiếng</b>.</li>
           </ul>
 
@@ -58,7 +58,7 @@
             3.1. <b>Quyền dừng gói 1 chạm:</b> Tuân thủ Điều 27 Luật Bảo vệ quyền lợi người tiêu dùng 19/2023/QH15, khách hàng có toàn quyền chủ động bấm <b>"Dừng gói"</b> hoặc <b>"Hủy liên kết thẻ/ví đối tác"</b> bất kỳ lúc nào trực tiếp trên giao diện quản lý tài khoản mà không phải chịu bất kỳ thủ tục gây khó khăn nào.
           </p>
           <p>
-            3.2. <b>Cam kết hoàn tiền trong 7 ngày làm việc:</b> Khi khách hàng yêu cầu dừng gói trước khi chu kỳ 4 tuần kết thúc, MOVA Fresh cam kết hoàn trả 100% số tiền thật tương ứng với các bữa ăn chưa giao về đúng tài khoản nguồn trong vòng <b>7 ngày làm việc</b> kể từ thời điểm tiếp nhận yêu cầu.
+            3.2. <b>Cam kết hoàn tiền trong 7 ngày làm việc:</b> Khi khách hàng yêu cầu dừng gói trước khi chu kỳ 4 tuần kết thúc, MOVA FRESH cam kết hoàn trả 100% số tiền thật tương ứng với các bữa ăn chưa giao về đúng tài khoản nguồn trong vòng <b>7 ngày làm việc</b> kể từ thời điểm tiếp nhận yêu cầu.
           </p>
           <p>
             3.3. <b>Công thức tất toán ưu đãi:</b> Tiền hoàn lại = Tổng tiền thực trả của gói − (Số bữa đã nhận × Đơn giá bữa ăn niêm yết không ưu đãi). Nếu số tiền còn lại là số dương, MOVA hoàn trả đầy đủ cho khách hàng.
@@ -82,7 +82,7 @@
 
           <h2>Điều 6. Cam kết Dị ứng Zero-Tolerance &amp; An toàn thực phẩm</h2>
           <p>
-            6.1. MOVA Fresh cam kết <b>lọc cứng 100%</b> các chất gây dị ứng và nguyên liệu kiêng cữ mà khách hàng đã khai báo tại phễu khảo sát.
+            6.1. MOVA FRESH cam kết <b>lọc cứng 100%</b> các chất gây dị ứng và nguyên liệu kiêng cữ mà khách hàng đã khai báo tại phễu khảo sát.
           </p>
           <p>
             6.2. 100% thịt, cá, rau củ được sơ chế vô trùng, đóng khay hút chân không và vận chuyển trong thùng cách nhiệt kèm đá gel giữ lạnh chuẩn <b>0°C – 4°C suốt 6 giờ</b>.
@@ -93,11 +93,11 @@
             Mọi thắc mắc, yêu cầu hỗ trợ hoặc khiếu nại về chất lượng nguyên liệu, quý khách vui lòng liên hệ:
           </p>
           <div class="contact-box">
-            <p><b>Công ty Cổ phần Thực phẩm Sạch MOVA Fresh Việt Nam</b></p>
+            <p><b>Công ty Cổ phần Thực phẩm Sạch MOVA FRESH Việt Nam</b></p>
             <p>📍 Xưởng sơ chế: Xã Hòa Thắng, TP. Buôn Ma Thuột, Đắk Lắk</p>
             <p>📍 Trung tâm phân phối: Phường Tân Phong, Quận 7, TP. Hồ Chí Minh</p>
             <p>📞 Hotline hỗ trợ bếp: <b>1900 8899</b> (06:00 – 21:00 hàng ngày)</p>
-            <p>💬 Zalo Official Account: <b>MOVA Fresh Official</b></p>
+            <p>💬 Zalo Official Account: <b>MOVA FRESH Official</b></p>
             <p>✉️ Email tiếp nhận: <b>hotro@movafresh.vn</b></p>
           </div>
         </section>
@@ -162,8 +162,8 @@
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
-  background: #F1F5F9;
-  color: #475569;
+  background: var(--line-2);
+  color: var(--ink-2);
 }
 .l-badge.green {
   background: var(--green-soft);
@@ -185,13 +185,13 @@
 }
 
 .legal-notice-box {
-  background: #F0FDF4;
-  border: 1px solid #BBF7D0;
+  background: var(--green-tint);
+  border: 1px solid var(--green-line);
   border-radius: 12px;
   padding: 14px 18px;
   margin-top: 16px;
   font-size: 13px;
-  color: #14532D;
+  color: var(--green-dd);
 }
 .legal-notice-box b {
   display: block;
@@ -207,7 +207,7 @@
 .legal-content {
   font-size: 14.5px;
   line-height: 1.65;
-  color: #1E293B;
+  color: var(--ink);
   display: grid;
   gap: 16px;
 }

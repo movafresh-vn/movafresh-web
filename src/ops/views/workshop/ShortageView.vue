@@ -31,6 +31,11 @@
         <button type="button" class="ops-btn" :class="{ on: kind === 'damaged' }" data-testid="kind-damaged" @click="kind = 'damaged'">Hàng hỏng</button>
       </fieldset>
 
+      <fieldset v-if="kind === 'damaged'" class="verdict" data-testid="damage-scale">
+        <legend>Mức độ hỏng (ước lượng theo thang)</legend>
+        <button v-for="step in DAMAGE_LEVEL_STEPS" :key="step" type="button" class="ops-btn" :class="{ on: damagePct === step }" :aria-pressed="damagePct === step" :data-testid="`damage-${step}`" @click="damagePct = step">{{ damageLevelLabel(step) }}</button>
+      </fieldset>
+
       <label>Ảnh {{ kind === 'damaged' ? '(bắt buộc với hàng hỏng)' : '(nên chụp nếu có)' }}</label>
       <PhotoInput v-model="photo" testid="s-photo" />
       <label for="s-note">Ghi chú</label>
@@ -131,7 +136,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { api } from '../../../shared/api';
 import { fmt } from '../../../shared/utils/formatters';
 import { fmtDay, fmtDeadline } from '../../../shared/utils/time';
-import { nextDailyId } from '../../../shared/domain/factory';
+import { DAMAGE_LEVEL_STEPS, damageLevelLabel, nextDailyId } from '../../../shared/domain/factory';
 import { can, ctx } from '../../session';
 import { confirmOutcome, previewSummary, shortageGramsOf } from '../../shortPickFlow';
 import { photoSrc } from '../../../shared/api/uploads';
@@ -145,6 +150,7 @@ const key = ref('');
 const qty = ref('');
 const unit = ref('bag');
 const kind = ref('short');
+const damagePct = ref(null); // chọn theo thang DAMAGE_LEVEL_STEPS, không nhập tay
 const photo = ref('');
 const note = ref('');
 const error = ref('');
@@ -169,15 +175,20 @@ function submit() {
   if (!key.value) return (error.value = 'Chọn mặt hàng.');
   if (!(n > 0)) return (error.value = 'Nhập số lượng lớn hơn 0.');
   if (unit.value === 'bag' && !Number.isInteger(n)) return (error.value = 'Số túi phải là số nguyên.');
+  if (kind.value === 'damaged' && damagePct.value === null) return (error.value = 'Chọn mức độ hỏng.');
   if (kind.value === 'damaged' && !photo.value) return (error.value = 'Hàng hỏng cần 1 ảnh.');
   if (!selDay.value) return (error.value = 'Chưa có ngày giao đã chốt.');
   const at = clientNow();
   const id = nextDailyId('SH', factory.value.shortages.map((s) => s.id), at);
-  apply('shortage', { at, id, key: key.value, qty: n, unit: unit.value, kind: kind.value, note: note.value.trim(), photo: photo.value || null, day: selDay.value });
+  const damaged = kind.value === 'damaged';
+  // Mức hỏng vẫn gửi dạng số %; đồng thời ghi vào ghi chú để không mất nếu máy chủ chưa lưu trường riêng.
+  const noteText = [damaged ? `Mức hỏng ${damageLevelLabel(damagePct.value)}` : '', note.value.trim()].filter(Boolean).join('. ');
+  apply('shortage', { at, id, key: key.value, qty: n, unit: unit.value, kind: kind.value, note: noteText, photo: photo.value || null, day: selDay.value, ...(damaged ? { damagePct: damagePct.value } : {}) });
   key.value = '';
   qty.value = '';
   photo.value = '';
   note.value = '';
+  damagePct.value = null;
 }
 
 // Đơn bị ảnh hưởng của một báo cáo, mỗi dòng là một món cần thay

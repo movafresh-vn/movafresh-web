@@ -73,6 +73,8 @@ watch(step, async () => {
 .plans {
   padding: 22px 0 140px;
   min-height: 70vh;
+  background: var(--bg);
+  color: var(--ink);
 }
 
 @media (max-width: 768px) {

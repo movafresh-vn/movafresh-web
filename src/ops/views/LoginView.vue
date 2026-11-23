@@ -1,5 +1,6 @@
 <template>
   <section class="ops-card ops-login">
+    <BrandLogo class="ops-login-logo" variant="onWhite" :width="120" />
     <h1>Đăng nhập vận hành</h1>
     <p class="ops-muted">Dùng email và mật khẩu do quản trị cấp. Mỗi tài khoản có đúng một vai trò.</p>
 
@@ -18,6 +19,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { loginStaff } from '../session';
+import BrandLogo from '../../components/common/BrandLogo.vue';
 
 const router = useRouter();
 const email = ref('');

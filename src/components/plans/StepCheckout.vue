@@ -113,6 +113,7 @@
         <div>
           <label class="pl-label" for="coPhone">Số điện thoại người nhận</label>
           <div class="phone-row">
+            <DialSelect v-model="c.phoneDial" @update:model-value="onPhoneChange" />
             <input
               id="coPhone"
               v-model="c.phone"
@@ -120,7 +121,7 @@
               type="tel"
               inputmode="tel"
               autocomplete="tel"
-              placeholder="09xx xxx xxx"
+              placeholder="0908 123 456"
               @input="onPhoneChange"
               @change="save"
             />
@@ -156,6 +157,12 @@
     <!-- 3. Thanh toán -->
     <section class="pl-card sec">
       <h2 class="pl-h2">3. Thanh toán</h2>
+      <!-- Máy chủ báo chưa liên kết thẻ/ví (PAYMENT_TOKEN_REQUIRED): giữ nguyên danh sách phương thức, đưa nút liên kết -->
+      <div v-if="preview && store.cardLinkNeeded" class="pl-panel warn" role="alert" data-testid="card-link-needed">
+        <p>{{ cardNotice }}</p>
+        <button class="pl-btn primary sm-btn" type="button" @click="linkOpen = true">Liên kết thẻ/ví đối tác</button>
+      </div>
+      <p v-if="phoneNotVerified" class="pl-panel warn" role="alert" data-testid="phone-not-verified">{{ phoneNotVerifiedMsg }}</p>
       <p v-if="needsAuth" class="pl-panel warn" role="status" data-testid="needs-auth">
         Xác thực số điện thoại ở mục 2 để MOVA tính số tiền chính xác cho bạn (giá, ưu đãi và lịch trừ tiền do hệ thống tính, không ước lượng).
       </p>
@@ -171,10 +178,13 @@
           </button>
           <div v-if="c.method === 'fresh_credit'" class="m-body">
             <p v-if="fc.covered" class="pl-panel good" data-testid="credit-covered">
-              Fresh Credit hiện có <b class="num">{{ fmt(fc.balance_vnd) }}</b> đủ trả cho cả gói. Bạn không cần mua thêm.
+              Fresh Credit hiện có <b class="num">{{ fmt(fc.balance_vnd) }}</b> đủ trả tuần 1 (<b class="num">{{ fmt(fc.week1_payable_vnd) }}</b>). Bạn không cần mua thêm.
             </p>
             <div v-else class="offers" role="radiogroup" aria-label="Gói suất ăn trả trước">
-              <p class="pl-note">Fresh Credit hiện có {{ fmt(fc.balance_vnd) }}, cần thêm {{ fmt(fc.need_vnd) }} để trả cho cả gói.</p>
+              <p class="pl-note" data-testid="credit-shortfall">
+                Fresh Credit hiện có {{ fmt(fc.balance_vnd) }}, tuần 1 cần {{ fmt(fc.week1_payable_vnd) }}: còn thiếu <b class="num">{{ fmt(fc.shortfall_vnd) }}</b>.
+                <template v-if="fc.pack_id">Gói nhỏ nhất đủ phần thiếu là <b>{{ fc.pack_label || exactLabel }}</b> (trả {{ fmt(fc.pay_vnd) }}, nhận {{ fmt(fc.credit_received_vnd) }}).</template>
+              </p>
               <button v-if="fc.pack_id" type="button" role="radio" :aria-checked="c.packId === 'exact'" class="offer" :class="{ on: c.packId === 'exact' }" @click="setPack('exact')">
                 <span class="offer-n">{{ exactLabel }}</span>
                 <span class="offer-get num">Nhận {{ fmt(fc.credit_received_vnd) }}</span>
@@ -185,11 +195,12 @@
                 <span class="offer-get num">Nhận {{ fmt(p.credit_received_vnd) }}</span>
                 <span class="offer-pay num">Trả {{ fmt(p.pay_vnd) }}</span>
               </button>
-              <p v-if="!fc.pack_id" class="pl-error" role="alert">Chưa có Gói Suất ăn trả trước đủ giá trị cho gói này. Hãy chọn cách trả khác.</p>
+              <p v-if="!fc.pack_id" class="pl-error" role="alert">Chưa có Gói Suất ăn trả trước đủ giá trị cho phần thiếu. Hãy chọn cách trả khác.</p>
             </div>
             <p class="pl-note">
               Fresh Credit là điểm bữa ăn trả trước, chỉ dùng để đổi suất ăn tại MOVA Fresh; không rút tiền mặt trực tiếp và không chuyển nhượng.
-              Tuần 1 trừ ngay, các tuần sau tự trừ trước giờ giao {{ chargeHours }} giờ (72 tiếng).
+              <template v-if="fc.covered">Tuần 1 trừ ngay từ Fresh Credit, các tuần sau tự trừ trước giờ giao {{ chargeHours }} giờ (72 tiếng).</template>
+              <template v-else>Tuần 1 sẽ được trừ khi Fresh Credit đủ; các tuần sau tự trừ trước giờ giao {{ chargeHours }} giờ (72 tiếng).</template>
             </p>
             <div v-if="packOrder" class="pl-panel warn" role="status" data-testid="pack-order">
               <b>Chuyển khoản để mua gói</b>
@@ -228,6 +239,8 @@
                 <b>Cam kết minh bạch:</b> Bạn có thể hủy liên kết thẻ/ví đối tác bất kỳ lúc nào chỉ với 1 chạm tại trang quản lý gói.
               </div>
             </div>
+            <p class="pl-note" data-testid="card-state">{{ store.cardLinkNeeded ? 'Chưa liên kết thẻ/ví đối tác.' : '✓ Đã liên kết thẻ/ví đối tác.' }}</p>
+            <button class="pl-btn outline sm-btn" type="button" data-testid="link-card-open" @click="linkOpen = true">{{ store.cardLinkNeeded ? 'Liên kết thẻ/ví đối tác' : 'Quản lý liên kết thẻ/ví' }}</button>
             <ul class="charges">
               <li v-for="(ch, i) in preview.card.charges" :key="i">
                 <span>{{ ch.now ? 'Hôm nay' : fmtDeadline(new Date(ch.charge_at)) }}<small class="muted"> · tuần {{ ch.week_index + 1 }}</small></span>
@@ -313,6 +326,10 @@
             </li>
           </ul>
         </li>
+        <!-- Tuần dời vì nghỉ lễ Tết: máy chủ trả shifted_from (ngày khách chọn ban đầu) -->
+        <li v-for="w in preview.shifted_weeks" :key="'sh' + w.week_index" data-testid="shifted-notice">
+          <b>Tuần {{ w.week_index + 1 }}</b> giao ngày <b>{{ fmtDay(w.delivery_date) }}</b> thay vì {{ fmtDay(w.shifted_from) }} vì nghỉ lễ Tết.
+        </li>
       </ul>
       <div class="checkbox-stack">
         <label class="agree">
@@ -359,8 +376,13 @@
           <span>Ưu đãi người quen giới thiệu ({{ activeRefCode }}):</span>
           <b class="num">-{{ fmt(referralDiscountVnd) }}</b>
         </div>
+        <div v-if="c.lockMenu" class="pay-line green" data-testid="lock-menu-line">
+          <span>Đã chốt món theo ưu đãi chiến dịch (đổi món bị khóa ở các tuần đã chốt)</span>
+        </div>
         <div class="pay-sum">
-          <small>Hôm nay bạn trả <span class="rate-note">(~{{ fmt(servingPayToday) }}/suất • {{ fmt(mealPayToday) }}/bữa)</span></small>
+          <small v-if="payInfo.kind === 'activate'">Tuần 1 trừ từ Fresh Credit hôm nay <span class="rate-note">(~{{ fmt(servingPayToday) }}/suất • {{ fmt(mealPayToday) }}/bữa)</span></small>
+          <small v-else-if="payInfo.kind === 'buy_pack'">Hôm nay bạn mua gói để đủ tiền tuần 1</small>
+          <small v-else>Hôm nay bạn trả <span class="rate-note">(~{{ fmt(servingPayToday) }}/suất • {{ fmt(mealPayToday) }}/bữa)</span></small>
           <b class="num">{{ fmt(payToday) }}</b>
         </div>
       </div>
@@ -369,12 +391,14 @@
       <button class="pl-btn orange" type="button" :disabled="problems.length > 0 || busy" @click="pay">{{ payLabel }}</button>
     </section>
 
+    <LinkCardSheet v-if="linkOpen" :linked="!store.cardLinkNeeded && c.method === 'card'" @close="linkOpen = false" @linked="onCardLinked" @unlinked="onCardUnlinked" />
+
     <!-- Modal xác thực OTP -->
     <div v-if="showOtpModal" class="otp-modal-backdrop" @click.self="showOtpModal = false">
       <div class="otp-modal">
         <button class="mclose" type="button" aria-label="Đóng" @click="showOtpModal = false">×</button>
         <h3 class="otp-title">Xác thực số điện thoại</h3>
-        <p class="pl-note">MOVA vừa gửi mã OTP đến số <b>{{ c.phone }}</b>. Nhập mã để xác nhận số này là của bạn.</p>
+        <p class="pl-note">MOVA vừa gửi mã OTP đến số <b>{{ phoneValue || c.phone }}</b>. Nhập mã để xác nhận số này là của bạn.</p>
         <div class="otp-form">
           <input
             v-model="otpInput"
@@ -397,13 +421,16 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import VietQrSvg from '../common/VietQrSvg.vue';
+import DialSelect from '../modals/DialSelect.vue';
+import LinkCardSheet from '../dashboard/LinkCardSheet.vue';
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
 import { useMovaStore } from '../../stores/useMovaStore';
 import { BUSINESS } from '../../shared/config/business';
-import { INSTRUCTION_MODES } from '../../shared/api/adapters/checkout';
+import { INSTRUCTION_MODES, payTodayInfo } from '../../shared/api/adapters/checkout';
+import { checkoutErrorMessage } from '../../shared/domain/checkoutError';
 import { fmt, hash } from '../../shared/utils/formatters';
 import { fmtDay, fmtDeadline } from '../../shared/utils/time';
-import { normalizeContact } from '../../shared/domain/leads';
+import { normalizeContact, splitPhone } from '../../shared/domain/leads';
 
 const emit = defineEmits(['done']);
 const store = usePlanFlowStore();
@@ -423,6 +450,10 @@ const otpBusy = ref(false);
 const packOrder = ref(null);
 const phoneErr = ref('');
 const showTerms = ref(false);
+const linkOpen = ref(false);
+const phoneNotVerified = ref(false);
+const cardNotice = checkoutErrorMessage('PAYMENT_TOKEN_REQUIRED');
+const phoneNotVerifiedMsg = checkoutErrorMessage('PHONE_NOT_VERIFIED');
 
 const voucherInput = ref('');
 const voucherMsg = ref('');
@@ -481,18 +512,14 @@ const activeRefCode = computed(() => {
 const referralDiscountVnd = computed(() => (preview.value && preview.value.referral ? preview.value.referral.referee_bonus_vnd : 0));
 const otherDiscountVnd = computed(() => (preview.value ? Math.max(0, preview.value.gift_total_vnd - referralDiscountVnd.value) : 0));
 
-// Số tiền phải trả hôm nay: toàn bộ do máy chủ tính (gói trả trước, chuyển khoản trọn gói, hoặc tuần đầu khi trừ thẻ).
-const payToday = computed(() => {
-  const p = preview.value;
-  if (!p) return 0;
-  if (c.method === 'bank_transfer_4w') return p.bank_transfer_4w.pay_vnd;
-  if (c.method === 'card') return p.card.charge_now_vnd;
-  return store.selectedTopupPay();
-});
+// Số tiền phải trả hôm nay: toàn bộ do máy chủ tính. Fresh Credit đủ tuần 1 thì là số trừ từ credit ("Kích hoạt gói"),
+// thiếu thì là giá gói trả trước nhỏ nhất đủ phần thiếu; chuyển khoản là cả gói; thẻ/ví là tuần 1.
+const payInfo = computed(() => payTodayInfo(preview.value, c.method, { packPayVnd: preview.value ? store.selectedTopupPay() : 0, fmtVnd: fmt }));
+const payToday = computed(() => payInfo.value.amount_vnd);
 
 const mealPayToday = computed(() => {
   if (!payToday.value) return 0;
-  const weeks = c.method === 'card' ? 1 : 4;
+  const weeks = ['card', 'activate'].includes(payInfo.value.kind) ? 1 : 4;
   const count = (mealsCount.value || 5) * weeks;
   return Math.round(payToday.value / count);
 });
@@ -501,12 +528,7 @@ const servingPayToday = computed(() => {
   return Math.round(mealPayToday.value / (householdSize.value || 1));
 });
 
-const payLabel = computed(() => {
-  if (!preview.value) return 'Chọn ngày giao để tiếp tục';
-  if (c.method === 'bank_transfer_4w') return `Tôi đã chuyển khoản ${fmt(payToday.value)}`;
-  if (c.method === 'card') return `Liên kết thẻ/ví, trả ${fmt(payToday.value)} hôm nay`;
-  return `Thanh toán ${fmt(payToday.value)} và kích hoạt gói`;
-});
+const payLabel = computed(() => payInfo.value.label);
 
 const needsAuth = computed(() => !account.authUser && store.errorCode === 'AUTH_REQUIRED');
 const exactLabel = computed(() => `Gói ${BUSINESS.subscription.defaultWeeks} tuần phù hợp (${(mealsCount.value || 5) * 4} bữa ~ ${(mealsCount.value || 5) * 4 * (householdSize.value || 2)} suất)`);
@@ -519,13 +541,18 @@ const hasFullDate = computed(() => {
   return dates.length ? dates.some((d) => full.has(d)) : full.size > 0;
 });
 
+// Số người nhận đã chuẩn hóa (0xxxxxxxxx cho số Việt Nam, E.164 cho số quốc tế); null nếu chưa hợp lệ.
+const phoneValue = computed(() => {
+  const n = normalizeContact(c.phone, { dial: c.phoneDial });
+  return n && n.type === 'phone' ? n.value : null;
+});
+
 const problems = computed(() => {
   const list = [];
   if (!c.slotId) list.push('ngày và khung giờ giao');
   if (hasFullDate.value) list.push('ngày giao còn chỗ');
   if (c.name.trim().length < 2) list.push('tên người nhận');
-  const cleanPhone = c.phone.replace(/[\s.\-]/g, '');
-  if (!/^0\d{9}$/.test(cleanPhone)) {
+  if (!phoneValue.value) {
     list.push('số điện thoại người nhận hợp lệ');
   } else if (!c.phoneVerified) {
     list.push('xác thực OTP số điện thoại');
@@ -537,15 +564,16 @@ const problems = computed(() => {
 
 function onPhoneChange() {
   c.phoneVerified = false;
+  phoneNotVerified.value = false;
   phoneErr.value = '';
   save();
 }
 
 async function openOtpModal() {
   phoneErr.value = '';
-  const cleanPhone = c.phone.replace(/[\s.\-]/g, '');
-  if (!/^0\d{9}$/.test(cleanPhone)) {
-    phoneErr.value = 'Vui lòng nhập số điện thoại hợp lệ (10 số, bắt đầu bằng 0) trước khi xác thực OTP';
+  const cleanPhone = phoneValue.value;
+  if (!cleanPhone) {
+    phoneErr.value = 'Vui lòng nhập số điện thoại hợp lệ (chọn đúng mã vùng, hoặc gõ đủ dạng +81 90 1234 5678) trước khi xác thực OTP';
     return;
   }
   otpInput.value = '';
@@ -564,7 +592,7 @@ async function verifyOtp() {
   if (otpBusy.value) return;
   otpBusy.value = true;
   otpError.value = '';
-  const err = await account.verifyOtp(c.phone, otpInput.value);
+  const err = await account.verifyOtp(phoneValue.value || c.phone, otpInput.value);
   otpBusy.value = false;
   if (err) {
     otpError.value = err;
@@ -675,10 +703,38 @@ function autoPick() {
   if (o && !o.slots.some((s) => s.slot_id === c.slotId)) c.slotId = o.slots[0].slot_id;
 }
 
+async function onCardLinked() {
+  linkOpen.value = false;
+  store.cardLinkNeeded = false;
+  c.method = 'card';
+  await refresh();
+}
+
+async function onCardUnlinked() {
+  linkOpen.value = false;
+  store.cardLinkNeeded = true;
+  c.method = 'fresh_credit';
+  await refresh();
+}
+
+async function buyPack() {
+  const o = await store.orderSelectedPack();
+  busy.value = false;
+  if (o.ok) {
+    packOrder.value = o.order;
+    message.value = 'Chuyển khoản mua gói bên dưới để đủ tiền tuần 1. Khi tiền về, bạn quay lại bấm "Kích hoạt gói".';
+  } else {
+    message.value = o.message;
+  }
+}
+
 async function pay() {
   message.value = '';
   packOrder.value = null;
+  phoneNotVerified.value = false;
   busy.value = true;
+  // Fresh Credit chưa đủ tuần 1: mua gói trả trước nhỏ nhất đủ phần thiếu trước (chuyển khoản), chưa kích hoạt gói.
+  if (payInfo.value.kind === 'buy_pack') return buyPack();
   const r = await store.submitOrder();
   busy.value = false;
   if (r.ok) {
@@ -704,6 +760,15 @@ async function pay() {
     }
   } else if (r.kind === 'AUTH_REQUIRED') {
     message.value = 'Hãy xác thực số điện thoại trước khi trả tiền.';
+  } else if (r.kind === 'PHONE_NOT_VERIFIED') {
+    // Tài khoản đăng nhập bằng Google chưa có số điện thoại đã xác thực: chỉ dẫn rõ ở mục 2
+    phoneNotVerified.value = true;
+    c.phoneVerified = false;
+    message.value = r.message;
+  } else if (r.kind === 'PAYMENT_TOKEN_REQUIRED') {
+    // store đã đưa lựa chọn về Fresh Credit và bật nút liên kết thẻ/ví; tính lại giá để danh sách phương thức hiện đủ
+    await refresh();
+    message.value = '';
   } else {
     message.value = r.message;
   }
@@ -712,14 +777,15 @@ async function pay() {
 onMounted(async () => {
   await store.loadOptions();
   const contact = normalizeContact(store.contact);
-  if (!c.phone && contact && contact.type === 'phone') c.phone = contact.value;
-  // Đã đăng nhập (OTP) bằng số này rồi thì không bắt xác thực lại
+  if (!c.phone && contact && contact.type === 'phone') {
+    const sp = splitPhone(contact.value);
+    c.phoneDial = sp.dial;
+    c.phone = sp.national;
+  }
+  // Đã đăng nhập (OTP) bằng số này rồi thì không bắt xác thực lại (so sánh dạng chuẩn hóa, mã vùng nào cũng được)
   const rawAuthPhone = account.authUser && account.authUser.phone ? String(account.authUser.phone) : '';
-  const authPhone = rawAuthPhone.startsWith('+84')
-    ? `0${rawAuthPhone.slice(3)}`
-    : rawAuthPhone.replace(/^\+/, '');
-  const cleanPhone = (c.phone || '').replace(/[\s.\-()]/g, '').replace(/^\+/, '');
-  if (authPhone && cleanPhone && (authPhone === cleanPhone || (authPhone.startsWith('84') && `0${authPhone.slice(2)}` === cleanPhone))) {
+  const authNorm = rawAuthPhone ? normalizeContact(rawAuthPhone.startsWith('+') || rawAuthPhone.startsWith('0') ? rawAuthPhone : `+${rawAuthPhone}`) : null;
+  if (authNorm && phoneValue.value && authNorm.value === phoneValue.value) {
     c.phoneVerified = true;
   }
   if (c.voucherCode) {
@@ -742,7 +808,7 @@ watch(() => c.packId, save);
 .freq-chips { display: flex; gap: 10px; flex-wrap: wrap; }
 .freq-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 14px; text-align: left; }
 .freq-title { font-weight: 700; font-size: 16px; }
-.recommend-pill { font-size: 12px; font-weight: 600; background: var(--green); color: #fff; padding: 2px 8px; border-radius: 99px; }
+.recommend-pill { font-size: 12px; font-weight: 600; background: var(--green); color: var(--white); padding: 2px 8px; border-radius: 99px; }
 
 .slot-chip { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; width: 100%; }
 .slot-badge { font-size: 12px; font-weight: 700; background: var(--green-soft); color: var(--green-d); padding: 3px 8px; border-radius: 6px; }
@@ -769,7 +835,7 @@ watch(() => c.packId, save);
 .offer-get { font-size: 20px; font-weight: 800; }
 .offer-pay { font-size: 16px; font-weight: 700; color: var(--orange-ink); align-self: end; }
 .bank { grid-template-columns: 180px 1fr; align-items: center; }
-.qr { width: 180px; height: 180px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px; }
+.qr { width: 180px; height: 180px; background: var(--white); border: 1px solid var(--line); border-radius: 12px; padding: 8px; }
 .bank-info { display: grid; gap: 6px; font-size: 16px; }
 .bank-info .big { font-size: 24px; color: var(--green-d); }
 .ref { background: var(--butter); padding: 2px 8px; border-radius: 8px; letter-spacing: .04em; }
@@ -802,7 +868,7 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
 .cap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .cap-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px; border-radius: 10px; background: var(--green-soft); font-size: 15px; }
 .cap-list li.low { background: var(--butter); }
-.cap-list li.full { background: #FBE5E2; color: var(--red); }
+.cap-list li.full { background: var(--red-soft); color: var(--red); }
 .pl-panel.good { background: var(--green-soft); }
 .rate-note { font-size: 13px; font-weight: 600; color: var(--green-d); margin-left: 4px; }
 
@@ -865,12 +931,12 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
 
 /* OTP Modal */
 .otp-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.otp-modal { background: #fff; width: 100%; max-width: 400px; border-radius: 20px; padding: 24px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: grid; gap: 12px; }
+.otp-modal { background: var(--white); width: 100%; max-width: 400px; border-radius: 20px; padding: 24px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: grid; gap: 12px; }
 .otp-title { font-size: 20px; font-weight: 800; margin: 0; }
 .demo-hint { color: var(--green-d); font-weight: 700; }
 .otp-form { display: flex; gap: 8px; align-items: center; }
 .otp-input { width: 110px; font-size: 20px; text-align: center; letter-spacing: 4px; }
-.mclose { position: absolute; top: 16px; right: 16px; border: 0; background: #f1f5f9; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.mclose { position: absolute; top: 16px; right: 16px; border: 0; background: var(--line-2); width: 32px; height: 32px; border-radius: 50%; font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
 .legal-link {
   color: var(--green-d);
@@ -891,7 +957,7 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
 }
 .fixed-delivery-reminder {
   font-size: 13.5px;
-  color: #0c6b3e;
+  color: var(--green-d);
   background: var(--green-soft);
   padding: 10px 14px;
   border-radius: 10px;
@@ -914,7 +980,7 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
 }
 .faq-acc-item.open {
   border-color: var(--green);
-  background: #FFFFFF;
+  background: var(--white);
 }
 .faq-acc-header {
   width: 100%;
@@ -943,7 +1009,7 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
   padding: 0 14px 12px;
   font-size: 13px;
   line-height: 1.5;
-  color: #334155;
+  color: var(--ink-2);
   border-top: 1px dashed var(--line-2);
 }
 .faq-acc-body p {

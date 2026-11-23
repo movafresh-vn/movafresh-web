@@ -131,6 +131,8 @@ export function buildSubscriptionBody({ req, servings, weeksOfMeals }) {
   if (req.referral_code) body.referral_code = req.referral_code;
   if (req.newsletter_optin) body.newsletter_opt_in = true;
   if (req.topup_pay_vnd) body.topup_pay_vnd = req.topup_pay_vnd;
+  // Chiến dịch chốt món: backend bỏ qua nếu không có chiến dịch đang chạy; web chỉ gửi khi khách bấm nhận ưu đãi.
+  if (req.lock_menu === true) body.lock_menu = true;
   return { body, perWeek, dates };
 }
 
@@ -140,6 +142,28 @@ export function pickPacks(packs, needVnd) {
   if (needVnd <= 0) return { exact: null, larger: sorted, covered: true };
   const exact = sorted.find((p) => p.credit_received_vnd >= needVnd) || null;
   return { exact, larger: exact ? sorted.filter((p) => p.pay_vnd > exact.pay_vnd) : [], covered: false };
+}
+
+/**
+ * Số tiền khách thật sự trả HÔM NAY và nhãn nút thanh toán (số do máy chủ tính, ở đây chỉ chọn số nào theo phương thức).
+ * - Fresh Credit đủ tiền tuần 1: trừ tuần 1 từ credit, không phải chuyển khoản gì → nút "Kích hoạt gói".
+ * - Fresh Credit thiếu: phải mua gói trả trước nhỏ nhất đủ phần thiếu (packPayVnd) trước khi kích hoạt.
+ * - Chuyển khoản: cả gói một lần. Thẻ/ví: chỉ tuần 1.
+ * Trả { amount_vnd, label, kind: 'activate' | 'buy_pack' | 'bank' | 'card' }.
+ */
+export function payTodayInfo(preview, method, { packPayVnd = 0, fmtVnd = (n) => String(n) } = {}) {
+  if (!preview) return { amount_vnd: 0, label: 'Chọn ngày giao để tiếp tục', kind: 'none' };
+  if (method === 'bank_transfer_4w') {
+    const v = preview.bank_transfer_4w.pay_vnd;
+    return { amount_vnd: v, label: `Tôi đã chuyển khoản ${fmtVnd(v)}`, kind: 'bank' };
+  }
+  if (method === 'card') {
+    const v = preview.card.charge_now_vnd;
+    return { amount_vnd: v, label: `Liên kết thẻ/ví, trả ${fmtVnd(v)} hôm nay`, kind: 'card' };
+  }
+  const f = preview.fresh_credit;
+  if (f.covered) return { amount_vnd: f.week1_payable_vnd, label: 'Kích hoạt gói', kind: 'activate' };
+  return { amount_vnd: packPayVnd, label: packPayVnd > 0 ? `Mua gói ${fmtVnd(packPayVnd)} để đủ tiền tuần 1` : 'Chưa có gói phù hợp', kind: 'buy_pack' };
 }
 
 /** Các lần giao → các "tuần" của gói (mỗi tuần 1 hoặc 2 lần giao): tổng tiền, hạn đổi món sớm nhất. */
@@ -175,10 +199,13 @@ export function adaptPreview(raw, ctx) {
     amount_vnd: w.pay_vnd
   }));
   const groups = groupCycleWeeks(rows);
-  const need = payAll - Math.max(0, ctx.balanceVnd || 0);
+  const week1 = rows.filter((r) => r.week_index === 0);
+  // Máy chủ chỉ trừ TỪNG TUẦN: "đủ credit" nghĩa là real + promo >= tiền tuần 1 thật (week1_payable_vnd), không phải cả gói.
+  const week1Payable = Number.isFinite(raw.week1_payable_vnd) ? raw.week1_payable_vnd : week1.reduce((s, r) => s + r.amount_vnd, 0);
+  const balance = Math.max(0, ctx.balanceVnd || 0);
+  const need = week1Payable - balance;
   const { exact, larger, covered } = pickPacks(ctx.packs || [], need);
   const packOut = (p) => ({ pack_id: p.pack_id, label: p.label, pay_vnd: p.pay_vnd, bonus_vnd: p.bonus_vnd, credit_received_vnd: p.credit_received_vnd, capped: false });
-  const week1 = rows.filter((r) => r.week_index === 0);
   return {
     payment_ref: ctx.paymentRef || null,
     slot: slotLabelOf(ctx.slotId),
@@ -186,7 +213,10 @@ export function adaptPreview(raw, ctx) {
     package_value_vnd: raw.total_order_amount_vnd,
     gift_total_vnd: raw.total_discount_vnd,
     pay_all_vnd: payAll,
+    week1_payable_vnd: week1Payable,
     referral: raw.referral || null,
+    // Tuần dời vì nghỉ lễ (ví dụ Tết): ngày khách chọn ban đầu, null nếu không dời.
+    shifted_weeks: raw.weeks.map((w, i) => (w.shifted_from ? { week_index: Math.floor(i / perWeek), shifted_from: w.shifted_from, delivery_date: w.delivery_date } : null)).filter(Boolean),
     slot_full: raw.slot_full,
     full_dates: raw.full_dates || [],
     deliveries: rows,
@@ -201,11 +231,14 @@ export function adaptPreview(raw, ctx) {
     fresh_credit: {
       covered,
       balance_vnd: ctx.balanceVnd || 0,
+      week1_payable_vnd: week1Payable,
       need_vnd: Math.max(0, need),
+      shortfall_vnd: Math.max(0, need),
       pay_vnd: exact ? exact.pay_vnd : 0,
       bonus_vnd: exact ? exact.bonus_vnd : 0,
       credit_received_vnd: exact ? exact.credit_received_vnd : 0,
       pack_id: exact ? exact.pack_id : null,
+      pack_label: exact ? exact.label : null,
       capped: false,
       packs: larger.map(packOut)
     }
@@ -232,6 +265,8 @@ export function adaptCreated(raw, { perWeek = 1, slotId = '' } = {}) {
     voucher_future_credits_locked_vnd: raw.voucher_future_credits_locked_vnd,
     charged_from_fresh_credit_vnd: raw.charged_from_fresh_credit_vnd,
     paid_now_vnd: raw.charged_from_fresh_credit_vnd,
+    // Tuần 1 đã trừ từ Fresh Credit chưa (0 = chưa trừ, trừ ở mốc 72 giờ trước giờ giao)
+    week1_charged: (raw.charged_from_fresh_credit_vnd || 0) > 0,
     fresh_credit_balance_remaining_vnd: bal.real_vnd + bal.promo_vnd,
     credit_balance: bal,
     referral: raw.referral || null,

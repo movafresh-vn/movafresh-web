@@ -14,7 +14,7 @@
 
 ### 1. Web App Khách Hàng (`index.html`)
 - **Trang chủ & Video Hook 10 giây:** `00:00 Mở hộp Đắk Lắk` → `00:05 Đảo 1 chảo & rưới xốt` → `00:15 Xong mâm cơm 5 món`.
-- **Đăng nhập bằng SĐT + OTP (Supabase Auth):** không còn nút đăng nhập mạng xã hội hay tài khoản mẫu. Bản local dùng số thử có OTP cố định (xem mục "Tài khoản thử").
+- **Đăng nhập bằng SĐT + OTP hoặc Google (Supabase Auth):** không còn tài khoản mẫu. SĐT nhận mã vùng quốc tế (E.164, mặc định +84). Nút Google dùng `supabase.auth.signInWithOAuth({ provider: 'google' })`, môi trường thật bật Google ở dashboard Supabase (khối Google trong `supabase/config.toml` đang tắt); khách Google vẫn phải xác thực SĐT bằng OTP khi thanh toán. Bản local dùng số thử có OTP cố định (xem mục "Tài khoản thử").
 - **Phễu khảo sát Đầu bếp (`/plans`):** số người ăn (1–10), số bữa/tuần (3–7), nhu cầu thể trạng, kiêng cữ dị ứng (có ô tự nhập, máy chủ phân tích và **chặn món không an toàn: fail-closed**), phong cách ẩm thực. Bản nháp thực đơn nằm ở trình duyệt; mọi món được máy chủ kiểm lại khi xem giá và khi đăng ký.
 - **Thực đơn Mâm cơm 5 món** và đổi món theo danh mục `GET /dishes` (Đạm, Canh, Rau, Tinh bột, Tráng miệng; huy hiệu vùng, định lượng theo số người, dinh dưỡng, 3 bước nấu 15 phút).
 - **Thanh toán & giao hàng (Zero COD):**

@@ -19,7 +19,10 @@
     <p v-if="week.postponed_to_week != null" class="pl-panel note">
       Tuần này đã tạm hoãn. Thực đơn dời sang <b>Tuần {{ week.postponed_to_week + 1 }}</b>, ưu đãi của tuần được giữ nguyên.
     </p>
-    <p v-else-if="week.moved_from_week != null" class="pl-panel note">
+    <p v-if="week.shifted_from" class="pl-panel note" data-testid="shifted-from">
+      Tuần này dời sang ngày giao mới vì nghỉ lễ Tết (ngày giao ban đầu {{ fmtDay(week.shifted_from) }}).
+    </p>
+    <p v-if="week.postponed_to_week == null && week.moved_from_week != null" class="pl-panel note">
       Đây là thực đơn của Tuần {{ week.moved_from_week + 1 }} đã tạm hoãn, dời xuống cuối gói.
     </p>
 
@@ -107,7 +110,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 import { fmt } from '../../shared/utils/formatters';
-import { fmtDeadline } from '../../shared/utils/time';
+import { fmtDay, fmtDeadline } from '../../shared/utils/time';
 
 const props = defineProps({ week: { type: Object, required: true } });
 defineEmits(['change', 'skip']);
@@ -145,13 +148,13 @@ const skipHint = computed(() => (props.week.editable && props.week.skip?.code ==
 }
 .status.editable { background: var(--green-soft); color: var(--green-d); }
 .status.charged { background: var(--blue-soft); color: var(--blue); }
-.status.charge_failed { background: #FBE5E2; color: var(--red); }
-.status.locked, .status.in_production { background: var(--butter); color: #7a5a00; }
+.status.charge_failed { background: var(--red-soft); color: var(--red); }
+.status.locked, .status.in_production { background: var(--butter); color: var(--amber-ink); }
 .status.shipping { background: var(--orange-soft); color: var(--orange-ink); }
-.status.delivered { background: var(--green); color: #fff; }
+.status.delivered { background: var(--green-d); color: var(--white); }
 .status.postponed, .status.cancelled { background: var(--line); color: var(--muted); }
 
-.note { font-size: 16px; background: var(--butter); border-color: #eadba6; }
+.note { font-size: 16px; background: var(--butter); border-color: var(--amber-line); }
 
 .deadline { border-radius: 14px; padding: 12px 14px; background: var(--line-2); display: grid; gap: 2px; }
 .deadline.open { background: var(--orange-soft); }
@@ -164,7 +167,7 @@ const skipHint = computed(() => (props.week.editable && props.week.skip?.code ==
 .money > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line-2); font-size: 16px; }
 .money dt { color: var(--muted); }
 .money dd { margin: 0; font-weight: 700; text-align: right; }
-.money .good { color: var(--green); }
+.money .good { color: var(--green-d); }
 .money .bad { color: var(--red); }
 
 .meals { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -176,7 +179,7 @@ const skipHint = computed(() => (props.week.editable && props.week.skip?.code ==
 .dishes li:first-child { border-top: 0; }
 .dn small { color: var(--muted); font-size: 14px; }
 .swap {
-  min-width: 64px; min-height: 44px; border: 1.5px solid var(--green); background: #fff; color: var(--green-d);
+  min-width: 64px; min-height: 44px; border: 1.5px solid var(--green); background: var(--white); color: var(--green-d);
   border-radius: 12px; font-weight: 700; font-size: 16px; padding: 0 14px;
 }
 .swap:hover { background: var(--green-soft); }
@@ -215,7 +218,7 @@ const skipHint = computed(() => (props.week.editable && props.week.skip?.code ==
   object-fit: contain;
   border-radius: 10px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  background: #111;
+  background: var(--ink);
 }
 .photo-modal-close {
   position: absolute;
@@ -224,8 +227,8 @@ const skipHint = computed(() => (props.week.editable && props.week.skip?.code ==
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #ffffff;
-  color: #111111;
+  background: var(--white);
+  color: var(--ink);
   border: 1px solid rgba(0, 0, 0, 0.2);
   font-size: 20px;
   font-weight: bold;
@@ -238,11 +241,11 @@ const skipHint = computed(() => (props.week.editable && props.week.skip?.code ==
   transition: background 0.15s ease, transform 0.15s ease;
 }
 .photo-modal-close:hover {
-  background: #f0f0f0;
+  background: var(--surface);
   transform: scale(1.08);
 }
-.late[data-tone="good"] { background: var(--green-soft); border-color: #bfe0cb; }
-.late[data-tone="wait"] { background: var(--orange-soft); border-color: #f3cdb8; }
+.late[data-tone="good"] { background: var(--green-soft); border-color: var(--green-line); }
+.late[data-tone="wait"] { background: var(--orange-soft); border-color: var(--red-line); }
 .late[data-tone="info"] { background: var(--blue-soft); }
 .foot { display: grid; }
 @media (min-width: 641px) { .foot { justify-items: start; } }

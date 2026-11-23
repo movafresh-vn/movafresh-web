@@ -47,8 +47,8 @@
       </div>
 
       <p class="more">
-        <router-link to="/menus" class="pl-btn outline" style="margin-right: 10px;">Xem toàn bộ thực đơn tuần</router-link>
-        <router-link to="/plans" class="pl-btn primary">Xem thực đơn riêng do Đầu bếp thiết kế</router-link>
+        <BaseButton tag="router-link" to="/menus" variant="secondary" style="margin-right: 10px;">Xem toàn bộ thực đơn tuần</BaseButton>
+        <BaseButton tag="router-link" to="/plans">Xem thực đơn riêng do Đầu bếp thiết kế</BaseButton>
       </p>
 
       <!-- Video Modal -->
@@ -88,6 +88,7 @@
 <script setup>
 import { ref } from 'vue';
 import MealCard from '../plans/MealCard.vue';
+import BaseButton from '../ui/BaseButton.vue';
 import { DISHES, SAUCES } from '../../shared/data/catalog';
 import { generateMeals, carbOptionsFor } from '../../shared/domain/mealPlan';
 import { rng } from '../../shared/utils/formatters';
@@ -159,7 +160,7 @@ const samples = [
 .video-card { margin-bottom: 28px; }
 .video-banner {
   height: 220px;
-  background: linear-gradient(135deg, #1C3325 0%, #2D5A3D 100%);
+  background: linear-gradient(135deg, var(--green-dd) 0%, var(--green-dd) 100%);
   border-radius: 20px;
   overflow: hidden;
   position: relative;
@@ -167,12 +168,12 @@ const samples = [
   display: flex;
   align-items: center;
   padding: 24px 32px;
-  box-shadow: 0 10px 24px rgba(28, 51, 37, 0.15);
+  box-shadow: 0 10px 24px rgba(84, 63, 24, 0.15);
   transition: transform .2s ease, box-shadow .2s ease;
 }
 .video-banner:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(28, 51, 37, 0.22);
+  box-shadow: 0 14px 28px rgba(84, 63, 24, 0.22);
 }
 .video-overlay {
   display: flex;
@@ -184,29 +185,29 @@ const samples = [
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: var(--orange, #E87A3E);
+  background: var(--orange, var(--orange));
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 0 0 8px rgba(232, 122, 62, 0.3);
+  box-shadow: 0 0 0 8px rgba(248, 145, 34, 0.3);
   animation: pulse 2s infinite;
 }
 .play-icon {
-  color: #fff;
+  color: var(--white);
   font-size: 26px;
   margin-left: 4px;
 }
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(232, 122, 62, 0.5); }
-  70% { box-shadow: 0 0 0 14px rgba(232, 122, 62, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(232, 122, 62, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(248, 145, 34, 0.5); }
+  70% { box-shadow: 0 0 0 14px rgba(248, 145, 34, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(248, 145, 34, 0); }
 }
-.video-caption { color: #fff; }
+.video-caption { color: var(--white); }
 .v-badge {
   display: inline-block;
   background: rgba(255, 255, 255, 0.2);
-  color: #FFD29D;
+  color: var(--amber-line);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: .05em;
@@ -218,7 +219,7 @@ const samples = [
   font-size: clamp(18px, 2.5vw, 24px);
   font-weight: 800;
   margin: 4px 0 6px;
-  color: #FFFFFF;
+  color: var(--white);
 }
 .v-desc {
   font-size: 15px;
@@ -253,7 +254,7 @@ const samples = [
   aspect-ratio: 16 / 10;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #2D5A3D 0%, #1C3325 100%);
+  background: linear-gradient(135deg, var(--green-dd) 0%, var(--green-dd) 100%);
 }
 .sample-img {
   width: 100%;
@@ -286,7 +287,7 @@ const samples = [
 .theme-badge {
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
-  color: #fff;
+  color: var(--white);
   font-size: 12px;
   font-weight: 700;
   padding: 4px 10px;
@@ -329,13 +330,13 @@ const samples = [
   padding: 20px;
 }
 .video-modal-box {
-  background: #18221B;
+  background: var(--brown);
   border-radius: 20px;
   max-width: 640px;
   width: 100%;
   padding: 24px;
   position: relative;
-  color: #fff;
+  color: var(--white);
   box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
 .mclose {
@@ -344,7 +345,7 @@ const samples = [
   right: 18px;
   background: transparent;
   border: 0;
-  color: #fff;
+  color: var(--white);
   font-size: 32px;
   cursor: pointer;
 }
@@ -362,13 +363,13 @@ const samples = [
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #E53E3E;
+  background: var(--red);
   display: inline-block;
   animation: blink 1s infinite alternate;
 }
 @keyframes blink { from { opacity: 0.3; } to { opacity: 1; } }
 .player-screen {
-  background: #0D1610;
+  background: var(--brown);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 14px;
   padding: 28px 20px;
@@ -377,7 +378,7 @@ const samples = [
   gap: 18px;
 }
 .pan-graphic { font-size: 54px; }
-.sizzle-text { font-size: 17px; font-weight: 700; color: #FFC078; }
+.sizzle-text { font-size: 17px; font-weight: 700; color: var(--amber-line); }
 .steps-overlay {
   text-align: left;
   background: rgba(255,255,255,0.06);
@@ -386,7 +387,7 @@ const samples = [
   display: grid;
   gap: 8px;
   font-size: 14px;
-  color: #E2E8F0;
+  color: var(--line);
 }
 .player-controls {
   display: flex;
@@ -395,8 +396,8 @@ const samples = [
   color: var(--muted);
 }
 .tag-live {
-  background: var(--green);
-  color: #fff;
+  background: var(--green-d);
+  color: var(--white);
   padding: 2px 8px;
   border-radius: 6px;
   font-weight: 700;

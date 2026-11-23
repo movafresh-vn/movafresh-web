@@ -439,9 +439,11 @@ const HANDLERS = {
     if (!['short', 'damaged'].includes(op.kind)) return bad('OP_INVALID', 'Chọn thiếu hay hỏng');
     if (op.kind === 'damaged' && !str(op.photo)) return bad('OP_INVALID', 'Hàng hỏng cần 1 ảnh');
     if (!str(op.id) || !str(op.day)) return bad('OP_INVALID', 'Thiếu mã báo cáo hoặc ngày giao');
+    if (op.damagePct != null && !isDamageLevel(op.damagePct)) return bad('OP_INVALID', 'Mức hỏng phải chọn theo thang');
     if (f.shortages.some((s) => s.id === op.id)) return bad('OP_INVALID', 'Mã báo cáo đã có');
     f.shortages.push({
       id: op.id, key: op.key, qty: op.qty, unit: op.unit, kind: op.kind, note: op.note || '', photo: op.photo || null,
+      damagePct: op.kind === 'damaged' && op.damagePct != null ? op.damagePct : null,
       day: op.day, at: op.at, status: 'open', handled: []
     });
     return ok();
@@ -534,6 +536,38 @@ export function nextLotCode(skuId, existingCodes, atIso) {
   }
   return `${prefix}${String(max + 1).padStart(4, '0')}`;
 }
+
+/** Chuẩn hóa mã lô người nhập / máy quét gõ vào: bỏ khoảng trắng và ký tự điều khiển, viết hoa. */
+export const normalizeLotCode = (s) => (typeof s === 'string' ? s.replace(/[\s\u0000-\u001f]+/g, '').toUpperCase() : '');
+
+/**
+ * Guardrail nhận hàng (B14): mã lô nhập tay hoặc quét phải khớp mã lô đang nhận thì mới được gửi ảnh.
+ * Trả `{ ok, reason }`; `reason` là câu tiếng Việt để hiện cho người nhận.
+ */
+export function checkLotCodeMatch(expected, entered) {
+  const want = normalizeLotCode(expected);
+  const got = normalizeLotCode(entered);
+  if (!want) return { ok: false, reason: 'Chọn nguyên liệu trước để có mã lô đang nhận.' };
+  if (!got) return { ok: false, reason: 'Nhập hoặc quét mã lô trên tem trước khi chụp ảnh.' };
+  if (got !== want) return { ok: false, reason: `Mã lô không khớp lô đang nhận (${expected}). Kiểm tra lại tem hoặc chọn đúng nguyên liệu.` };
+  return { ok: true, reason: '' };
+}
+
+/** Thư mục ảnh tham chiếu nguyên liệu (đặt file `<mã SKU>.jpg` trong public/ref-photos/). */
+export const REFERENCE_PHOTO_DIR = 'ref-photos';
+
+/** Đường dẫn tương đối ảnh tham chiếu của một SKU nhận hàng (null nếu không phải SKU xưởng). */
+export const referencePhotoPath = (skuId) => (isFactorySku(skuId) ? `${REFERENCE_PHOTO_DIR}/${skuId}.jpg` : null);
+
+/** Thang mức độ hỏng (B15), đơn vị %. Giá trị cuối là "từ 30% trở lên". Chip thay cho ô nhập số tự do. */
+export const DAMAGE_LEVEL_STEPS = [0, 5, 10, 20, 30];
+export const DAMAGE_LEVEL_MAX_STEP = DAMAGE_LEVEL_STEPS[DAMAGE_LEVEL_STEPS.length - 1];
+
+/** Nhãn chip: "0%", "5%", ..., "30%+". */
+export const damageLevelLabel = (pct) => (pct >= DAMAGE_LEVEL_MAX_STEP ? `${DAMAGE_LEVEL_MAX_STEP}%+` : `${pct}%`);
+
+/** Giá trị mức hỏng hợp lệ (thuộc thang). */
+export const isDamageLevel = (pct) => DAMAGE_LEVEL_STEPS.includes(pct);
 
 /** Mã mẻ / báo cáo kế tiếp theo ngày: B-20261117-001, SH-20261117-001. */
 export function nextDailyId(prefix, existingIds, atIso) {

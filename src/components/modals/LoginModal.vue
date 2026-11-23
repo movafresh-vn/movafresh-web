@@ -2,7 +2,8 @@
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title" @click.self="store.closeModal">
     <div class="mbox box">
       <button class="mclose" type="button" @click="store.closeModal" aria-label="Đóng">×</button>
-      <h2 id="login-title" class="pl-h2">Tài khoản MOVA Fresh</h2>
+      <BrandLogo class="login-logo" variant="onWhite" :width="96" />
+      <h2 id="login-title" class="pl-h2">Tài khoản MOVA FRESH</h2>
 
       <template v-if="store.isLoggedIn || store.authUser">
         <p class="pl-lead">
@@ -20,17 +21,20 @@
         </p>
         <form v-if="supabase" class="stack" @submit.prevent="submit">
           <label class="pl-label" for="login-contact">Số điện thoại hoặc email</label>
-          <input
-            id="login-contact"
-            v-model="contact"
-            class="pl-input"
-            type="text"
-            inputmode="tel"
-            autocomplete="username"
-            placeholder="0908 123 456"
-            :disabled="otpSent || busy"
-            required
-          />
+          <div class="contact-row">
+            <DialSelect v-if="!isEmail" v-model="dial" :disabled="otpSent || busy" />
+            <input
+              id="login-contact"
+              v-model="contact"
+              class="pl-input"
+              type="text"
+              inputmode="tel"
+              autocomplete="username"
+              placeholder="0908 123 456"
+              :disabled="otpSent || busy"
+              required
+            />
+          </div>
           <template v-if="otpSent">
             <label class="pl-label" for="login-otp">Mã OTP</label>
             <input
@@ -51,6 +55,12 @@
           </button>
           <button v-if="otpSent" class="pl-btn" type="button" :disabled="busy" @click="reset">Đổi số điện thoại</button>
         </form>
+        <!-- Đăng nhập bằng Google: khách chưa có số điện thoại đã xác thực vẫn vào được, đến lúc thanh toán sẽ được hướng dẫn xác thực số -->
+        <div v-if="supabase" class="google-block">
+          <p class="pl-note or">hoặc</p>
+          <button class="pl-btn" type="button" data-testid="google-signin" :disabled="busy" @click="google">Tiếp tục với Google</button>
+          <p class="pl-note">Dùng Google thì bạn vẫn cần xác thực số điện thoại bằng mã OTP khi thanh toán gói.</p>
+        </div>
         <p v-else class="pl-note" role="alert">Chưa cấu hình đăng nhập (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY).</p>
         <router-link to="/plans" class="pl-btn ghost" @click="store.closeModal">Chưa có gói? Thiết kế thực đơn</router-link>
       </template>
@@ -59,12 +69,16 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { supabase } from '../../services/supabase';
+import { computed, ref } from 'vue';
+import DialSelect from './DialSelect.vue';
+import BrandLogo from '../common/BrandLogo.vue';
+import { signInWithGoogle, supabase } from '../../services/supabase';
 import { useMovaStore } from '../../stores/useMovaStore';
 
 const store = useMovaStore();
 const contact = ref('');
+const dial = ref('84');
+const isEmail = computed(() => contact.value.includes('@'));
 const otp = ref('');
 const otpSent = ref(false);
 const busy = ref(false);
@@ -76,10 +90,10 @@ async function submit() {
   error.value = '';
   try {
     if (!otpSent.value) {
-      error.value = await store.requestOtp(contact.value);
+      error.value = await store.requestOtp(contact.value, { dial: dial.value });
       otpSent.value = !error.value;
     } else {
-      error.value = await store.verifyOtp(contact.value, otp.value);
+      error.value = await store.verifyOtp(contact.value, otp.value, { dial: dial.value });
     }
   } finally {
     busy.value = false;
@@ -90,6 +104,18 @@ function reset() {
   otpSent.value = false;
   otp.value = '';
   error.value = '';
+}
+
+async function google() {
+  if (busy.value) return;
+  busy.value = true;
+  error.value = '';
+  try {
+    await signInWithGoogle();
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Chưa đăng nhập được bằng Google.';
+    busy.value = false;
+  }
 }
 
 async function logout() {
@@ -104,5 +130,10 @@ async function logout() {
 
 <style scoped>
 .box { max-width: 480px; padding: 26px 22px; }
+.login-logo { margin-bottom: 12px; height: auto; }
 .stack { display: grid; gap: 12px; margin-top: 8px; }
+.contact-row { display: flex; gap: 8px; align-items: center; }
+.contact-row .pl-input:last-child { flex: 1; min-width: 0; }
+.google-block { display: grid; gap: 8px; margin-top: 10px; }
+.or { text-align: center; margin: 0; }
 </style>

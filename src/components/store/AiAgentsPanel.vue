@@ -274,7 +274,7 @@ async function runAgents() {
   margin: 0;
 }
 .eyebrow {
-  color: var(--green);
+  color: var(--green-d);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: .08em;
@@ -311,7 +311,7 @@ async function runAgents() {
 }
 .ai-error {
   margin: 16px 0 0;
-  color: #b42318;
+  color: var(--red);
 }
 .ai-hint {
   margin: 14px 0 0;

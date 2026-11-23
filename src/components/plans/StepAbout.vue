@@ -308,7 +308,7 @@
               v-model="customNeedText"
               class="pl-input"
               type="text"
-              placeholder="Ví dụ: gout, kiêng mỡ động vật, dạ dày nhạy cảm..."
+              placeholder="Ví dụ: ít đạm purin, kiêng mỡ động vật, dạ dày nhạy cảm..."
               @input="analyzeNeedText"
             />
             <p v-if="needAnalysisTags.length" class="auto-tag-hint">
@@ -331,7 +331,7 @@
               :class="{ on: store.answers.budget === v && !isCustomBudget }"
               :aria-pressed="store.answers.budget === v && !isCustomBudget"
               @click="pickStandardBudget(v)"
-            >Đến {{ fmt(v) }}</button>
+            >{{ budgetChoiceLabel(v, { mealsPerWeek: store.answers.meals }) }}</button>
             <button
               type="button"
               class="pl-chip"
@@ -342,6 +342,8 @@
           </div>
 
           <!-- Khung nhập chi tiêu tùy chỉnh -->
+          <p v-if="budgetNote" class="budget-explain" data-testid="budget-explain" role="status">{{ budgetNote.text }}</p>
+
           <div v-if="isCustomBudget" class="custom-budget-box" role="group" aria-label="Nhập mức chi tiêu cụ thể">
             <label class="pl-label" for="customBudgetInput">Mức chi tiêu dự kiến mỗi tuần (VNĐ):</label>
             <div class="custom-budget-stepper">
@@ -455,6 +457,7 @@ import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
 import { api } from '../../shared/api';
 import { BUSINESS } from '../../shared/config/business';
 import { fmt } from '../../shared/utils/formatters';
+import { budgetChoiceLabel, budgetExplain } from '../../shared/domain/budgetExplain';
 
 const LAST = 6;
 
@@ -490,6 +493,8 @@ const BUDGET_STEP = 100000;
 const DEFAULT_CUSTOM_BUDGET = 1800000;
 
 const budgetChoices = BUSINESS.plan.groceryBudgetChoicesVnd;
+// Dòng giải thích Q6: mức tuần đang chọn ≈ bao nhiêu cho gói 4 tuần (ước tính, tiền thật do máy chủ tính)
+const budgetNote = computed(() => budgetExplain(store.answers.budget, { mealsPerWeek: store.answers.meals }));
 const giftMax = BUSINESS.incentives.giftCardWeeklyVnd.reduce((a, b) => a + b, 0);
 
 // Stepper Người lớn & Trẻ em (0-12 tuổi)
@@ -666,11 +671,11 @@ const HEALTH_NEEDS = [
   { id: 'balanced', label: 'Cân bằng dinh dưỡng' },
   { id: 'gym', label: 'Tăng cơ / Tập Gym' },
   { id: 'weight_loss', label: 'Giảm mỡ / Giữ dáng' },
-  { id: 'limit_sugar', label: 'Kiểm soát đường huyết (Tiểu đường)' },
+  { id: 'limit_sugar', label: 'Hạn chế đường (tham khảo dinh dưỡng)' },
   { id: 'sensitive_stomach', label: 'Tiêu hóa nhẹ nhàng' },
   { id: 'elderly', label: 'Người lớn tuổi' },
   { id: 'young_child', label: 'Trẻ nhỏ' },
-  { id: 'gout', label: 'Bệnh Gout (Ít đạm purin)' },
+  { id: 'gout', label: 'Ít đạm purin (tham khảo dinh dưỡng)' },
   { id: 'meat_lover', label: 'Thích ăn nhiều thịt' },
   { id: 'custom_need', label: 'Khác (tự nhập)' }
 ];
@@ -704,7 +709,7 @@ function analyzeNeedText() {
   const curAvoid = [...(store.answers.avoid || [])];
 
   if (t.includes('gout') || t.includes('gút') || t.includes('purin')) {
-    tags.push('Ít đạm purin (Bệnh Gout)');
+    tags.push('Ít đạm purin (tham khảo)');
     if (!cur.includes('gout')) cur.push('gout');
     if (!curAvoid.includes('no_seafood')) curAvoid.push('no_seafood');
   }
@@ -721,7 +726,7 @@ function analyzeNeedText() {
     if (!cur.includes('gym')) cur.push('gym');
   }
   if (t.includes('đường') || t.includes('tiểu đường')) {
-    tags.push('Kiểm soát đường huyết');
+    tags.push('Hạn chế đường (tham khảo)');
     if (!cur.includes('limit_sugar')) cur.push('limit_sugar');
   }
   if (t.includes('giảm cân') || t.includes('giảm mỡ') || t.includes('béo')) {
@@ -1097,7 +1102,7 @@ function clearBudgetAndFinish() {
 }
 .child-priority-hint {
   font-size: 13px;
-  color: #0c6b3e;
+  color: var(--green-d);
   margin: 0;
   line-height: 1.4;
 }
@@ -1124,18 +1129,18 @@ function clearBudgetAndFinish() {
   justify-content: space-between;
   gap: 10px;
   padding: 8px 12px;
-  background: #FFFFFF;
-  border: 1.5px solid #E2E8F0;
+  background: var(--white);
+  border: 1.5px solid var(--line);
   border-radius: 12px;
   transition: all 0.15s ease;
 }
 .thumb-item-card.is-like {
   border-color: var(--green);
-  background: #F0FDF4;
+  background: var(--green-tint);
 }
 .thumb-item-card.is-dislike {
-  border-color: #F97316;
-  background: #FFF7ED;
+  border-color: var(--orange);
+  background: var(--amber-soft);
 }
 .item-info {
   display: flex;
@@ -1169,8 +1174,8 @@ function clearBudgetAndFinish() {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid #CBD5E1;
-  background: #FFFFFF;
+  border: 1px solid var(--line-strong);
+  background: var(--white);
   font-size: 15px;
   cursor: pointer;
   display: flex;
@@ -1180,7 +1185,7 @@ function clearBudgetAndFinish() {
 }
 .thumb-btn:hover {
   transform: scale(1.08);
-  border-color: #94A3B8;
+  border-color: var(--faint);
 }
 .thumb-btn.like.active {
   background: var(--green);
@@ -1214,19 +1219,19 @@ function clearBudgetAndFinish() {
   padding: 10px 6px;
   min-height: 64px;
   border-radius: 12px;
-  border: 1.5px solid #E2E8F0;
-  background: #FFFFFF;
+  border: 1.5px solid var(--line);
+  background: var(--white);
   cursor: pointer;
   position: relative;
   transition: all 0.15s ease;
 }
 .allergy-square-btn:hover {
-  border-color: #94A3B8;
+  border-color: var(--faint);
   transform: translateY(-1px);
 }
 .allergy-square-btn.on {
   border-color: var(--green);
-  background: #F0FDF4;
+  background: var(--green-tint);
 }
 .sq-icon {
   font-size: 18px;
@@ -1247,13 +1252,13 @@ function clearBudgetAndFinish() {
   color: var(--green);
 }
 
-/* Hộp cam kết ngữ cảnh (#ECFDF3) */
+/* Hộp cam kết ngữ cảnh (var(--green-tint)) */
 .context-commitment-box {
   margin-top: auto;
   padding-top: 14px;
   margin-bottom: 12px;
-  background: #ECFDF3;
-  border: 1px solid #A6F4C5;
+  background: var(--green-tint);
+  border: 1px solid var(--green-line);
   border-radius: 14px;
   padding: 12px 14px;
   display: grid;
@@ -1270,11 +1275,11 @@ function clearBudgetAndFinish() {
 .c-title {
   font-size: 13px;
   font-weight: 800;
-  color: #027A48;
+  color: var(--green-d);
 }
 .c-desc {
   font-size: 12px;
-  color: #054F31;
+  color: var(--green-dd);
   line-height: 1.45;
   margin: 0;
 }
@@ -1296,7 +1301,7 @@ function clearBudgetAndFinish() {
   flex-direction: column;
 }
 .visual-card {
-  background: #FFFFFF;
+  background: var(--white);
   border: 1.5px solid var(--line);
   border-radius: 20px;
   overflow: hidden;
@@ -1319,26 +1324,26 @@ function clearBudgetAndFinish() {
   justify-content: space-between;
   padding: 20px;
   position: relative;
-  background: linear-gradient(135deg, #146C43 0%, #0F5534 60%, #093721 100%);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-dd) 60%, var(--green-dd) 100%);
+  color: var(--white);
 }
 .visual-art.scene-q1 {
-  background: linear-gradient(135deg, #134e4a 0%, #065f46 60%, #064e3b 100%);
+  background: linear-gradient(135deg, var(--green-dd) 0%, var(--green-d) 60%, var(--green-dd) 100%);
 }
 .visual-art.scene-q2 {
-  background: linear-gradient(135deg, #854d0e 0%, #713f12 60%, #1e3a1f 100%);
+  background: linear-gradient(135deg, var(--amber-ink) 0%, var(--amber-ink) 60%, var(--green-dd) 100%);
 }
 .visual-art.scene-q3 {
-  background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 60%, #146C43 100%);
+  background: linear-gradient(135deg, var(--red) 0%, var(--red) 60%, var(--green-d) 100%);
 }
 .visual-art.scene-q4 {
-  background: linear-gradient(135deg, #075985 0%, #0c4a6e 60%, #064e3b 100%);
+  background: linear-gradient(135deg, var(--blue-ink) 0%, var(--blue-ink) 60%, var(--green-dd) 100%);
 }
 .visual-art.scene-q5 {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 60%, #146C43 100%);
+  background: linear-gradient(135deg, var(--blue-ink) 0%, var(--violet) 60%, var(--green-d) 100%);
 }
 .visual-art.scene-q6 {
-  background: linear-gradient(135deg, #3730a3 0%, #1e1b4b 60%, #0f5534 100%);
+  background: linear-gradient(135deg, var(--blue-ink) 0%, var(--violet) 60%, var(--green-dd) 100%);
 }
 
 .art-overlay-gradient {
@@ -1357,7 +1362,7 @@ function clearBudgetAndFinish() {
 .art-badge {
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(6px);
-  color: #FFFFFF;
+  color: var(--white);
   font-size: 11.5px;
   font-weight: 700;
   padding: 4px 10px;
@@ -1400,12 +1405,12 @@ function clearBudgetAndFinish() {
   font-size: 15px;
   font-weight: 800;
   margin: 0 0 4px;
-  color: #FFFFFF;
+  color: var(--white);
 }
 .art-caption-sub {
   font-size: 12px;
   margin: 0;
-  color: #E2E8F0;
+  color: var(--line);
   line-height: 1.4;
 }
 
@@ -1414,7 +1419,7 @@ function clearBudgetAndFinish() {
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   padding: 12px 14px;
-  background: #F8FAFC;
+  background: var(--surface);
   border-top: 1px solid var(--line-2);
 }
 .pillar-item {
@@ -1511,6 +1516,15 @@ function clearBudgetAndFinish() {
   font-weight: 700;
   color: var(--ink);
   letter-spacing: 0.5px;
+}
+.budget-explain {
+  font-size: 14px;
+  color: var(--green-d);
+  background: var(--green-soft);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 0;
+  line-height: 1.45;
 }
 .budget-hint {
   font-size: 13px;

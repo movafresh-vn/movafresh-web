@@ -110,7 +110,7 @@ useLive(load, { every: 6000 });
 <style scoped>
 .late-list { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 12px; }
 .late-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 16px; margin: 8px 0; }
-.late-meta dt { font-size: 12px; color: var(--muted, #666); }
+.late-meta dt { font-size: 12px; color: var(--muted, var(--muted)); }
 .late-meta dd { margin: 0; font-weight: 600; }
 .late-row header { display: flex; align-items: center; gap: 8px; }
 </style>

@@ -51,8 +51,8 @@ const statusText = computed(() => (sub.value?.status === 'active' ? `${sub.value
 .u-info { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .u-avatar {
   width: 52px; height: 52px; border-radius: 16px; flex-shrink: 0;
-  background: linear-gradient(135deg, var(--green), var(--green-d));
-  color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 22px;
+  background: linear-gradient(135deg, var(--green-d), var(--green-d));
+  color: var(--white); display: grid; place-items: center; font-weight: 800; font-size: 22px;
 }
 h1 { font-size: 21px; font-weight: 800; overflow-wrap: anywhere; }
 .u-info p { font-size: 15px; }
@@ -64,7 +64,7 @@ h1 { font-size: 21px; font-weight: 800; overflow-wrap: anywhere; }
 button.stat { cursor: pointer; }
 button.stat:hover { background: var(--green-soft); }
 .stat small { font-size: 13px; color: var(--muted); font-weight: 600; }
-.stat b { font-size: 18px; font-weight: 800; color: var(--green); }
+.stat b { font-size: 18px; font-weight: 800; color: var(--green-d); }
 .stat span { font-size: 13px; color: var(--muted); }
 @media (max-width: 640px) {
   .dash-header { padding: 16px; }

@@ -94,6 +94,6 @@ function done() {
 <style scoped>
 .box { max-width: 480px; padding: 26px 22px; display: grid; gap: 14px; }
 .opts { margin-top: 2px; }
-.qr { width: 190px; height: 190px; margin: 0 auto; background: #fff; padding: 8px; border-radius: 12px; border: 1px solid var(--line); }
+.qr { width: 190px; height: 190px; margin: 0 auto; background: var(--white); padding: 8px; border-radius: 12px; border: 1px solid var(--line); }
 .ref { background: var(--butter); padding: 2px 8px; border-radius: 8px; letter-spacing: .03em; }
 </style>

@@ -52,6 +52,15 @@
             💳 Hủy liên kết thẻ/ví đối tác
           </button>
           <button
+            v-if="data.subscription.payment_method !== 'card'"
+            class="pl-btn outline"
+            type="button"
+            data-testid="link-card-open"
+            @click="linking = true"
+          >
+            💳 Liên kết thẻ/ví đối tác
+          </button>
+          <button
             v-if="current?.skip?.allowed"
             class="pl-btn ghost"
             type="button"
@@ -65,6 +74,7 @@
 
     <MealChangeSheet v-if="changing" :week="changing.week" :target="changing.target" @close="changing = null" @done="changing = null" />
     <SkipSheet v-if="skipping" :week="skipping" @close="skipping = null" @done="afterSkip" />
+    <LinkCardSheet v-if="linking && data && data.subscription" :linked="data.subscription.payment_method === 'card'" @close="linking = false" @linked="afterLink" @unlinked="afterUnlink" />
     <StopPlanSheet v-if="stopping" @close="stopping = false" @done="stopping = false" @skip="skipFromStop" />
   </div>
 </template>
@@ -79,6 +89,7 @@ import WeekCard from './WeekCard.vue';
 import MealChangeSheet from './MealChangeSheet.vue';
 import SkipSheet from './SkipSheet.vue';
 import StopPlanSheet from './StopPlanSheet.vue';
+import LinkCardSheet from './LinkCardSheet.vue';
 import RenewCard from './RenewCard.vue';
 import RatingCard from './RatingCard.vue';
 
@@ -92,6 +103,7 @@ const selected = ref(null);
 const changing = ref(null);
 const skipping = ref(null);
 const stopping = ref(false);
+const linking = ref(false);
 
 const DONE = ['delivered', 'postponed', 'cancelled'];
 const current = computed(() => (data.value ? data.value.weeks.find((w) => w.week_index === selected.value) || null : null));
@@ -121,6 +133,17 @@ async function loadRatings() {
 
 async function afterSkip() {
   skipping.value = null;
+  await load();
+}
+
+async function afterLink() {
+  linking.value = false;
+  await load();
+}
+
+async function afterUnlink() {
+  linking.value = false;
+  store.toast('✓ Đã hủy liên kết thẻ/ví đối tác thành công');
   await load();
 }
 
@@ -171,13 +194,13 @@ onMounted(async () => {
 .pill b { font-size: 16px; }
 .pill .d { color: var(--muted); }
 .pill .s { font-size: 14px; font-weight: 700; }
-.pill.sel { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-soft); background: #fff; }
+.pill.sel { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-soft); background: var(--white); }
 .pill.editable .s { color: var(--green-d); }
 .pill.charged .s { color: var(--blue); }
 .pill.charge_failed .s { color: var(--red); }
-.pill.locked .s, .pill.in_production .s { color: #7a5a00; }
+.pill.locked .s, .pill.in_production .s { color: var(--amber-ink); }
 .pill.shipping .s { color: var(--orange-ink); }
-.pill.delivered .s { color: var(--green); }
+.pill.delivered .s { color: var(--green-d); }
 .pill.postponed, .pill.cancelled { background: var(--line-2); }
 .pill.postponed .s, .pill.cancelled .s { color: var(--muted); }
 
@@ -220,10 +243,10 @@ onMounted(async () => {
 }
 .danger-btn {
   color: var(--red);
-  border-color: #f7c3c0;
+  border-color: var(--red-line);
 }
 .danger-btn:hover {
-  background: #fdf0ef;
+  background: var(--red-soft);
 }
 .stop { display: grid; gap: 6px; justify-items: start; margin-top: 8px; }
 .stop-btn {

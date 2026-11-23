@@ -97,7 +97,7 @@ async function load() {
 load();
 watch(() => store.version, load);
 
-async function send(text, url, title = 'MOVA Fresh') {
+async function send(text, url, title = 'MOVA FRESH') {
   try {
     if (navigator.share) await navigator.share({ title, text, url });
     else await navigator.clipboard.writeText(`${text} ${url}`);
@@ -110,7 +110,7 @@ async function send(text, url, title = 'MOVA Fresh') {
 }
 
 async function shareInvite() {
-  const done = await send('Mình nấu cơm nhà 15 phút với MOVA Fresh: nguyên liệu sơ chế sẵn từ Đắk Lắk. Đăng ký qua link này nhé:', inviteUrl.value);
+  const done = await send('Mình nấu cơm nhà 15 phút với MOVA FRESH: nguyên liệu sơ chế sẵn từ Đắk Lắk. Đăng ký qua link này nhé:', inviteUrl.value);
   if (done && !navigator.share) copiedInvite.value = true;
 }
 
@@ -135,7 +135,7 @@ async function shareMenu() {
     return;
   }
   const names = w.meals.map((m) => m.dishes[0].name).slice(0, 4).join(', ');
-  const done = await send(`Thực đơn tuần này của nhà mình với MOVA Fresh: ${names}.`, `${location.origin}/`);
+  const done = await send(`Thực đơn tuần này của nhà mình với MOVA FRESH: ${names}.`, `${location.origin}/`);
   if (done) await claim({ kind: 'menu', ref: `week-${w.week_index}` });
   busy.value = false;
 }
@@ -153,7 +153,7 @@ async function sharePhoto(e) {
 .rewards { display: grid; gap: 16px; max-width: 760px; }
 .rewards > section { display: grid; gap: 12px; }
 .fc-card {
-  background: #ffffff;
+  background: var(--white);
   border: 1px solid var(--line-2);
   border-radius: 16px;
   padding: 20px;
@@ -180,7 +180,7 @@ async function sharePhoto(e) {
 .total-amt {
   font-size: 32px;
   font-weight: 800;
-  color: var(--green);
+  color: var(--green-d);
 }
 .fc-split {
   display: grid;
@@ -218,12 +218,12 @@ async function sharePhoto(e) {
 .fc-note {
   margin-top: 14px;
   padding: 12px 14px;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 12px;
   font-size: 13px;
   line-height: 1.5;
-  color: #334155;
+  color: var(--ink-2);
 }
 .fc-note p {
   margin: 0;

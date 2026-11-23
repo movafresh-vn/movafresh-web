@@ -18,7 +18,7 @@ const giftMax = BUSINESS.incentives.giftCardWeeklyVnd.reduce((a, b) => a + b, 0)
 </script>
 
 <style scoped>
-.promo { background: var(--green); color: #fff; font-size: 15px; }
+.promo { background: var(--green-d); color: var(--white); font-size: 15px; }
 .promo .wrap { display: flex; justify-content: center; align-items: center; gap: 14px; flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; text-align: center; }
-.go { color: #fff; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; min-height: 28px; display: inline-flex; align-items: center; }
+.go { color: var(--white); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; min-height: 28px; display: inline-flex; align-items: center; }
 </style>

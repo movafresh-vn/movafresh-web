@@ -23,7 +23,7 @@
           <h2>1. Quy chuẩn Giao nhận &amp; Chuỗi cung ứng lạnh 0–4°C</h2>
           <p>
             1.1. <b>Quy cách đóng thùng cách nhiệt tiêu chuẩn (`BB-THUNG-01`):</b>
-            Mỗi kiện hàng meal-kit của MOVA Fresh được đóng gói bằng bộ thùng carton sóng 3 lớp chịu lực, lót túi xốp bạc cách nhiệt và đá gel sinh học giữ lạnh sâu, đảm bảo nhiệt độ ổn định trong ngưỡng <b>0°C đến 4°C liên tục suốt 6 giờ</b> kể từ khi xuất kho trung chuyển TP.HCM.
+            Mỗi kiện hàng meal-kit của MOVA FRESH được đóng gói bằng bộ thùng carton sóng 3 lớp chịu lực, lót túi xốp bạc cách nhiệt và đá gel sinh học giữ lạnh sâu, đảm bảo nhiệt độ ổn định trong ngưỡng <b>0°C đến 4°C liên tục suốt 6 giờ</b> kể từ khi xuất kho trung chuyển TP.HCM.
           </p>
           <p>
             1.2. <b>Linh hoạt khi khách hàng vắng nhà:</b>
@@ -46,7 +46,7 @@
           </ul>
           <p>
             2.2. <b>Quy trình xử lý siêu tốc trong 2 giờ:</b>
-            Quý khách chỉ cần chụp ảnh khay nguyên liệu gặp sự cố và gửi qua Zalo OA hoặc Hotline <b>1900 8899</b> trong vòng 24 giờ kể từ lúc nhận hàng. MOVA Fresh sẽ áp dụng một trong hai phương án theo nguyện vọng của quý khách:
+            Quý khách chỉ cần chụp ảnh khay nguyên liệu gặp sự cố và gửi qua Zalo OA hoặc Hotline <b>1900 8899</b> trong vòng 24 giờ kể từ lúc nhận hàng. MOVA FRESH sẽ áp dụng một trong hai phương án theo nguyện vọng của quý khách:
           </p>
           <ul>
             <li><b>Phương án 1 (Giao bù khẩn cấp):</b> Shipper giao bù nguyên liệu tươi mới trong vòng 2–3 giờ nội thành TP.HCM.</li>
@@ -56,7 +56,7 @@
           <h2>3. Cam kết Hoàn tiền trong 7 ngày làm việc khi Dừng gói</h2>
           <p>
             3.1. <b>Quyền dừng gói bất kỳ lúc nào:</b>
-            MOVA Fresh cam kết không có điều khoản trói buộc hay phạt hủy ngang. Quý khách có quyền chủ động bấm <b>"Dừng gói 1 chạm"</b> ngay tại trang tài khoản.
+            MOVA FRESH cam kết không có điều khoản trói buộc hay phạt hủy ngang. Quý khách có quyền chủ động bấm <b>"Dừng gói 1 chạm"</b> ngay tại trang tài khoản.
           </p>
           <p>
             3.2. <b>Thời hạn hoàn tiền:</b>
@@ -78,14 +78,14 @@
             Theo quy định tại Điều 9 khoản 1, khoản 3 Nghị định số 254/2026/NĐ-CP của Chính phủ, suất ăn là hàng hóa thực phẩm giao định kỳ nhiều lần, doanh nghiệp có trách nhiệm xuất hóa đơn điện tử cho từng lần giao hàng thực tế.
           </p>
           <p>
-            4.2. Hệ thống MOVA Fresh cấu hình tự động lập hóa đơn GTGT điện tử khi shipper xác nhận giao hàng thành công. Khách hàng cá nhân hoặc doanh nghiệp có thể tra cứu và tải hóa đơn trực tiếp tại tab Quản lý đơn hàng hoặc qua email.
+            4.2. Hệ thống MOVA FRESH cấu hình tự động lập hóa đơn GTGT điện tử khi shipper xác nhận giao hàng thành công. Khách hàng cá nhân hoặc doanh nghiệp có thể tra cứu và tải hóa đơn trực tiếp tại tab Quản lý đơn hàng hoặc qua email.
           </p>
 
           <h2>5. Kênh tiếp nhận và hỗ trợ hoàn tiền</h2>
           <div class="contact-box">
-            <p><b>Bộ phận Dịch vụ Khách hàng &amp; Đối soát Tài chính MOVA Fresh</b></p>
+            <p><b>Bộ phận Dịch vụ Khách hàng &amp; Đối soát Tài chính MOVA FRESH</b></p>
             <p>📞 Hotline xử lý đổi trả &amp; hoàn tiền: <b>1900 8899</b> (Nhánh 1)</p>
-            <p>💬 Hỗ trợ Zalo Official: <b>MOVA Fresh Official</b> (tìm kiếm trên Zalo)</p>
+            <p>💬 Hỗ trợ Zalo Official: <b>MOVA FRESH Official</b> (tìm kiếm trên Zalo)</p>
             <p>✉️ Email kế toán: <b>ketoan@movafresh.vn</b></p>
             <p>⏰ Thời gian làm việc: 06:00 – 21:00 (tất cả các ngày trong tuần)</p>
           </div>
@@ -151,8 +151,8 @@
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
-  background: #F1F5F9;
-  color: #475569;
+  background: var(--line-2);
+  color: var(--ink-2);
 }
 .l-badge.green {
   background: var(--green-soft);
@@ -176,7 +176,7 @@
 .legal-content {
   font-size: 14.5px;
   line-height: 1.65;
-  color: #1E293B;
+  color: var(--ink);
   display: grid;
   gap: 16px;
 }
@@ -199,7 +199,7 @@
 }
 
 .calc-box {
-  background: #F8FAFC;
+  background: var(--surface);
   border: 1.5px dashed var(--green);
   border-radius: 14px;
   padding: 16px 20px;

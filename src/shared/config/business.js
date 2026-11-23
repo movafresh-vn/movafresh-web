@@ -95,8 +95,9 @@ export const BUSINESS = {
     westernMealsWhenMixed: { base: 1, withMealsAtLeast: 5, extra: 2 },
     // Hệ số khi khách trả lời các câu hỏi giá trị ở bước thực đơn
     upsells: { proteinFactor: 1.3, lowCarbCarbFactor: 0.5, lowCarbVegFactor: 1.5 },
-    // Mức chi tiêu đi chợ mỗi tuần (câu tùy chọn): trần mềm cho AI, không hiện như tiêu đề
-    groceryBudgetChoicesVnd: [500000, 1000000, 1500000, 2500000]
+    // Mức chi tiêu đi chợ mỗi tuần (câu Q6, tùy chọn): trần mềm cho Đầu bếp. Bội số của 250.000đ để khớp gói 4 tuần
+    // (mỗi mức × 4 tuần ra giá trị gói tròn 2 / 3 / 4 / 6 / 10 triệu); dòng giải thích ở StepAbout dùng budgetExplain.js.
+    groceryBudgetChoicesVnd: [500000, 750000, 1000000, 1500000, 2500000]
   },
 
   credit: {

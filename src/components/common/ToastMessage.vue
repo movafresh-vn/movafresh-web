@@ -22,7 +22,7 @@ const store = useMovaStore();
   bottom: 24px;
   transform: translate(-50%, 16px);
   background: var(--ink);
-  color: #fff;
+  color: var(--white);
   border-radius: 12px;
   padding: 10px 18px;
   font-size: 14px;

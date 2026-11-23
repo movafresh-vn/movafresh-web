@@ -53,6 +53,40 @@ export const SUPPLIERS = {
  * bom: gram nguyên liệu đã sơ chế cho MỖI NGƯỜI. sauce: mã xốt (1 túi cho mỗi món mỗi hộ).
  * tags: dùng cho lọc kiêng cữ (beef, pork, seafood, spicy, gluten, lactose).
  */
+/** Cơ sở dinh dưỡng của mọi món: kcal/đạm tính cho 1 người ăn trong 1 bữa (không phải cả hộ, không phải 100g). */
+export const NUTRITION_BASIS = 'per_person_per_meal';
+
+/**
+ * Phần cắt của từng món (F11). group: pork | beef | chicken | seafood | veg | soup | carb | fruit.
+ * part: phần thịt/loại cụ thể (thigh_drumstick = má đùi gà, breast = ức gà...).
+ * LƯU Ý: danh sách 16 món thật do đầu bếp (Anh Hiếu) cấp; 21 món dưới đây và giá trị cut/kcal/đạm
+ * chỉ là DỮ LIỆU TẠM (placeholder) để dựng cấu trúc + validator, cần thay khi có danh sách chính thức.
+ * D-PRT-003: BOM hiện vẫn là NL-GA-03 (ức gà phi lê) nhưng cut tạm ghi má đùi gà; đầu bếp cần chốt lại.
+ */
+export const DISH_CUTS = {
+  'D-PRT-001': { group: 'pork', part: 'belly', label: 'Ba rọi heo' },
+  'D-PRT-002': { group: 'beef', part: 'round', label: 'Đùi bò nạc' },
+  'D-PRT-003': { group: 'chicken', part: 'thigh_drumstick', label: 'Má đùi gà' },
+  'D-PRT-004': { group: 'pork', part: 'spare_rib', label: 'Sườn non heo' },
+  'D-PRT-005': { group: 'seafood', part: 'fish_steak', label: 'Cá bớp cắt khoanh' },
+  'D-PRT-006': { group: 'seafood', part: 'shrimp', label: 'Tôm sú bóc nõn' },
+  'D-WST-001': { group: 'beef', part: 'tenderloin', label: 'Thăn ngoại bò' },
+  'D-WST-002': { group: 'chicken', part: 'breast', label: 'Ức gà phi lê' },
+  'D-WST-003': { group: 'pork', part: 'spare_rib', label: 'Sườn heo' },
+  'D-VEG-001': { group: 'veg', part: 'floret', label: 'Bông cải xanh baby' },
+  'D-VEG-002': { group: 'veg', part: 'leaf', label: 'Cải ngọt' },
+  'D-SUP-001': { group: 'soup', part: 'spare_rib_pumpkin', label: 'Sườn non và bí đỏ' },
+  'D-SUP-002': { group: 'soup', part: 'tomato', label: 'Cà chua' },
+  'D-SUP-003': { group: 'soup', part: 'minced_chicken_breast', label: 'Cải ngọt và ức gà bằm' },
+  'D-CRB-001': { group: 'carb', part: 'rice', label: 'Gạo ST25' },
+  'D-CRB-002': { group: 'carb', part: 'rice_noodle', label: 'Bún gạo khô' },
+  'D-CRB-003': { group: 'carb', part: 'sweet_potato', label: 'Khoai lang mật' },
+  'D-CRB-004': { group: 'carb', part: 'baguette', label: 'Bánh mì baguette mini' },
+  'D-CRB-005': { group: 'carb', part: 'pasta', label: 'Mì Ý khô' },
+  'D-DST-002': { group: 'fruit', part: 'banana', label: 'Chuối tiêu' },
+  'D-DST-003': { group: 'fruit', part: 'lychee', label: 'Vải thiều IQF tách hạt' }
+};
+
 const dish = (id, kind, name, o) => {
   const region = o.terroir_region || o.terroir || 'Đắk Lắk';
   const nutriServing = o.nutrition_per_serving || {
@@ -88,6 +122,9 @@ const dish = (id, kind, name, o) => {
     nutrition_per_serving: nutriServing,
     nutrition: nutriCompat,
     cooking_steps: [],
+    // F11: phần cắt + cơ sở tính dinh dưỡng (1 người / 1 bữa). Kiểm bởi shared/domain/catalogValidate.js.
+    cut: DISH_CUTS[id] || null,
+    nutrition_basis: NUTRITION_BASIS,
     ...o
   };
 };
@@ -400,7 +437,7 @@ export const DISHES = {
   'D-CRB-003': dish('D-CRB-003', 'carb', 'Khoai lang mật nướng đất đỏ Đắk Lắk', {
     bom: [{ sku: 'NL-KHOAI-01', gramsPerPerson: 150 }], prepMinutes: 0, pricePerPersonVnd: 5000, lowCarb: true,
     terroir_region: 'Krông Búk • Đắk Lắk',
-    terroir_story: 'Khoai lang mật trồng trên vùng đồi Bazan Krông Búk nhiều nắng gió, tích lũy lượng mật tự nhiên ngọt lịm và ruột vàng cam óng ả. Nguồn tinh bột hấp thu chậm (Low GI) giàu chất xơ, lý tưởng cho người giảm cân hoặc giữ dáng.',
+    terroir_story: 'Khoai lang mật trồng trên vùng đồi Bazan Krông Búk nhiều nắng gió, tích lũy lượng mật tự nhiên ngọt lịm và ruột vàng cam óng ả. Nguồn tinh bột giàu chất xơ, hỗ trợ bữa ăn cân đối (thông tin dinh dưỡng chỉ mang tính tham khảo).',
     chef_note: 'Nướng nồi chiên không dầu ở 180°C trong 15 phút, mật khoai sẽ tứa ra thơm nức mũi như nướng than hoa.',
     portion_specs: {
       net_weight_grams: 150,

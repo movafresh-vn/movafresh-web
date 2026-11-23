@@ -3,13 +3,8 @@
     <div class="wrap">
       <!-- Logo + Nhãn TP.HCM tích hợp gọn -->
       <router-link to="/" class="logo" aria-label="MOVA FRESH, về đầu trang">
-        <svg viewBox="0 0 40 40" aria-hidden="true">
-          <rect width="40" height="40" rx="11" fill="#146C43"/>
-          <path d="M10 27V14l6 8 4-6 4 6 6-8v13" fill="none" stroke="#FAF9F5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="30" cy="11" r="3.2" fill="#D9531E"/>
-        </svg>
+        <BrandLogo variant="onWhite" :width="92" />
         <div class="logo-text">
-          <b>MOVA <span>FRESH</span></b>
           <span class="city-tag">TP.HCM</span>
         </div>
       </router-link>
@@ -117,6 +112,7 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMovaStore } from '../../stores/useMovaStore';
+import BrandLogo from './BrandLogo.vue';
 
 const store = useMovaStore();
 const route = useRoute();
@@ -149,7 +145,7 @@ const userLineText = computed(() => {
   position: sticky;
   top: 0;
   z-index: 25;
-  background: rgba(250, 249, 245, .95);
+  background: rgba(249, 247, 236, .95);
   backdrop-filter: saturate(1.2) blur(8px);
   -webkit-backdrop-filter: saturate(1.2) blur(8px);
   border-bottom: 1px solid var(--line);
@@ -171,9 +167,9 @@ const userLineText = computed(() => {
   flex-shrink: 0;
 }
 
-.logo svg {
-  width: 36px;
-  height: 36px;
+.logo .brand-logo {
+  width: 92px;
+  height: auto;
 }
 
 .logo-text {
@@ -182,21 +178,10 @@ const userLineText = computed(() => {
   gap: 6px;
 }
 
-.logo b {
-  font-weight: 800;
-  font-size: 18px;
-  letter-spacing: .01em;
-  color: var(--green);
-}
-
-.logo b span {
-  color: var(--orange);
-}
-
 .city-tag {
   font-size: 11px;
   font-weight: 700;
-  color: var(--green);
+  color: var(--green-d);
   background: var(--green-soft);
   padding: 2px 6px;
   border-radius: 6px;
@@ -232,7 +217,7 @@ const userLineText = computed(() => {
 .nav-tab.active {
   background: var(--card);
   color: var(--ink);
-  box-shadow: 0 1px 3px rgba(30, 25, 15, .1);
+  box-shadow: 0 1px 3px rgba(84, 63, 24, .1);
 }
 
 .badge-dot {
@@ -273,7 +258,7 @@ const userLineText = computed(() => {
   top: -4px;
   right: -4px;
   background: var(--red);
-  color: #fff;
+  color: var(--white);
   font-size: 11px;
   font-weight: 700;
   width: 17px;
@@ -314,7 +299,7 @@ const userLineText = computed(() => {
   height: 24px;
   border-radius: 50%;
   background: var(--green-soft);
-  color: var(--green);
+  color: var(--green-d);
   display: grid;
   place-items: center;
   font-weight: 700;
@@ -334,8 +319,8 @@ const userLineText = computed(() => {
   align-items: center;
   gap: 8px;
   border: 0;
-  background: var(--green);
-  color: #fff;
+  background: var(--green-d);
+  color: var(--white);
   border-radius: 12px;
   padding: 8px 14px;
   font-weight: 600;
@@ -344,7 +329,7 @@ const userLineText = computed(() => {
 }
 
 .cartbtn:hover {
-  background: var(--green-d);
+  background: var(--green-dd);
 }
 
 .cartbtn svg {
@@ -379,8 +364,7 @@ const userLineText = computed(() => {
     padding: 8px 14px;
     font-size: 15px;
   }
-  .logo b { font-size: 16px; }
-  .logo svg { width: 32px; height: 32px; }
+  .logo .brand-logo { width: 78px; }
   .city-tag {
     display: none;
   }

@@ -137,6 +137,7 @@ export function adaptWeeks(r) {
       charge: w.charge,
       postponed_to_week: toViewIndex(w.postponed_to_week),
       moved_from_week: toViewIndex(w.moved_from_week),
+      shifted_from: w.shifted_from || null, // tuần dời vì nghỉ lễ Tết: ngày giao khách chọn ban đầu
       skip: w.skip,
       order_code: w.order_code || null,
       route_id: w.route_id || null,
@@ -245,6 +246,9 @@ export function adaptCancelPreview(r, { mealsPerWeek = BUSINESS.plan.mealsPerWee
     kept_orders: r.kept_weeks,
     refund_days_commitment: r.refund_days_commitment,
     refund_due_by: r.refund_due_by || null,
+    // Gói chưa trả tuần nào: hủy thẳng, không hoàn tiền (máy chủ trả unpaid và has_paid_weeks, kể cả khi dry_run).
+    unpaid: r.unpaid === true,
+    has_paid_weeks: r.has_paid_weeks === undefined ? r.unpaid !== true : r.has_paid_weeks === true,
     skip_instead: skipWeek
   };
 }
@@ -258,7 +262,8 @@ export function adaptCancelResult(r) {
     weeks_cancelled: r.cancelled_weeks,
     kept_orders: r.kept_weeks,
     refund_days_commitment: r.refund_days_commitment,
-    refund_due_by: r.refund_due_by || null
+    refund_due_by: r.refund_due_by || null,
+    unpaid: r.unpaid === true
   };
 }
 

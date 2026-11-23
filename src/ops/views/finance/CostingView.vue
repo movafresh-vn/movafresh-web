@@ -67,5 +67,5 @@ useLive(load, { every: 15000 });
 
 <style scoped>
 tr.over td { background: rgba(200, 40, 40, 0.08); }
-.cost-bad { color: #b3261e; }
+.cost-bad { color: var(--red); }
 </style>

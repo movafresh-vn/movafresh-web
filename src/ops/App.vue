@@ -2,7 +2,7 @@
   <div class="ops">
     <header v-if="session" class="ops-bar ops-noprint">
       <div class="ops-brand">
-        <strong>MOVA Vận hành</strong>
+        <BrandLogo class="ops-bar-logo" variant="onBrown" :width="84" label="MOVA FRESH Vận hành" />
         <span class="ops-role">{{ session.label }}</span>
       </div>
       <div class="ops-clock" :title="'Giờ nghiệp vụ theo máy chủ'" data-testid="ops-clock">
@@ -32,6 +32,7 @@ import { api } from '../shared/api';
 import { fmtDeadline } from '../shared/utils/time';
 import { useLive } from './useLive';
 import QueueBanner from './components/QueueBanner.vue';
+import BrandLogo from '../components/common/BrandLogo.vue';
 
 const router = useRouter();
 const menu = computed(() => (session.value ? modulesFor(session.value.role) : []));

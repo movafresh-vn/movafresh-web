@@ -27,6 +27,7 @@ export const CUSTOMER_ROUTES = {
   skipWeek: ['POST', '/subscription/skip-week'],
   cancelSubscription: ['POST', '/subscription/cancel'],
   unlinkCard: ['POST', '/account/unlink-card'],
+  linkCard: ['POST', '/account/link-card/start'],
   renewalOffer: ['GET', '/subscription/renewal-offer'],
   renewSubscription: ['POST', '/subscription/renew'],
   creditAccount: ['GET', '/credit/account'],

@@ -68,7 +68,7 @@ watch(() => store.version, load);
 <style scoped>
 .credit { display: grid; gap: 16px; max-width: 760px; }
 .bal { display: grid; gap: 12px; }
-.total { font-size: 36px; font-weight: 800; color: var(--green); }
+.total { font-size: 36px; font-weight: 800; color: var(--green-d); }
 .split { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
 .part { background: var(--green-soft); border-radius: 14px; padding: 12px 14px; display: grid; gap: 2px; align-content: start; }
 .part.promo { background: var(--butter); }

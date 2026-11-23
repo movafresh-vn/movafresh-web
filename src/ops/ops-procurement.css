@@ -3,14 +3,14 @@
 .ops .proc h1 { margin-bottom: 4px; }
 .ops .proc-note { margin: 0 0 12px; }
 
-.ops .alert-bad { background: #fbe4e2; color: #7c1f19; border: 2px solid #e9a8a3; padding: 12px 14px; border-radius: 12px; margin: 12px 0; }
+.ops .alert-bad { background: var(--red-soft); color: var(--red); border: 2px solid var(--red-line); padding: 12px 14px; border-radius: 12px; margin: 12px 0; }
 .ops .alert-ok { background: var(--green-soft); color: var(--green-d); border: 2px solid var(--green); padding: 12px 14px; border-radius: 12px; margin: 12px 0; }
 .ops .alert ul, .ops .alert-bad ul { margin: 6px 0 0; padding-left: 20px; }
 
 .ops .num { text-align: right; white-space: nowrap; }
 .ops .strong-n { font-weight: 800; }
-.ops .row-bad td { background: #fff4f3; }
-.ops .row-warn td { background: #fffaf0; }
+.ops .row-bad td { background: var(--red-soft); }
+.ops .row-warn td { background: var(--amber-soft); }
 .ops .row-click { cursor: pointer; }
 .ops .row-click:hover td { background: var(--green-soft); }
 .ops .row-on td { background: var(--green-soft); }
@@ -39,11 +39,11 @@
 .ops .stepper { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 10px 0; }
 .ops .stepper li { padding: 4px 10px; border-radius: 999px; background: var(--line-2); color: var(--muted); font-size: 14px; font-weight: 700; }
 .ops .stepper li.done { background: var(--green-soft); color: var(--green-d); }
-.ops .stepper li.now { background: var(--ink); color: #fff; }
+.ops .stepper li.now { background: var(--ink); color: var(--white); }
 .ops .stepper li small { font-weight: 500; margin-left: 4px; }
 .ops .history { list-style: none; padding: 0; margin: 6px 0 0; font-size: 15px; }
 .ops .history li { padding: 4px 0; border-bottom: 1px dashed var(--line); }
-.ops .link-box { padding: 10px 12px; border: 2px dashed var(--line); border-radius: 12px; word-break: break-all; font-size: 15px; background: #fff; }
+.ops .link-box { padding: 10px 12px; border: 2px dashed var(--line); border-radius: 12px; word-break: break-all; font-size: 15px; background: var(--white); }
 .ops .impact-order { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 8px 0; }
 .ops .impact-hit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 6px 0; border-top: 1px dashed var(--line); }
 .ops .impact-hit select { width: auto; min-width: 200px; flex: 1 1 200px; }
@@ -53,14 +53,14 @@
 /* Tab con cuộn ngang được */
 .ops .seg-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 0 0 8px; margin: 0 0 8px; }
 .ops .seg-tab { flex: none; min-height: 52px; padding: 0 16px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); font: inherit; font-weight: 700; cursor: pointer; color: var(--ink); white-space: nowrap; }
-.ops .seg-tab.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.ops .seg-tab.on { background: var(--ink); border-color: var(--ink); color: var(--white); }
 .ops .seg-tab .badge { display: inline-block; min-width: 24px; margin-left: 6px; padding: 0 7px; border-radius: 999px; background: var(--line-2); color: var(--ink); font-size: 14px; text-align: center; }
-.ops .seg-tab.on .badge { background: var(--green); color: #fff; }
+.ops .seg-tab.on .badge { background: var(--green-d); color: var(--white); }
 
 /* Thẻ dạng danh sách (điện thoại) */
 .ops .card-list { display: grid; gap: 12px; }
-.ops .item-card { border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff; }
-.ops .item-card.attention { border-color: var(--amber); background: #fffaf0; }
+.ops .item-card { border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; background: var(--white); }
+.ops .item-card.attention { border-color: var(--amber); background: var(--amber-soft); }
 .ops .item-card h3 { margin: 0 0 4px; font-size: 18px; word-break: break-all; }
 .ops .item-lines { list-style: none; margin: 8px 0; padding: 0; }
 .ops .item-lines li { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--line-2); font-size: 16px; }
@@ -72,28 +72,28 @@
 
 /* Giấy chứng nhận */
 .ops .cert-list { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 8px; }
-.ops .cert-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
-.ops .cert-list li.expired { border-color: #e9a8a3; background: #fff4f3; }
-.ops .cert-list li.expiring { border-color: #f0c36a; background: #fffaf0; }
+.ops .cert-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); }
+.ops .cert-list li.expired { border-color: var(--red-line); background: var(--red-soft); }
+.ops .cert-list li.expiring { border-color: var(--amber-line); background: var(--amber-soft); }
 
 /* Tồn kho */
 .ops .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-.ops .stock-card { border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fff; }
-.ops .stock-card.warn { border-color: #f0c36a; background: #fffaf0; }
-.ops .stock-card.bad { border-color: #e9a8a3; background: #fff4f3; }
+.ops .stock-card { border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--white); }
+.ops .stock-card.warn { border-color: var(--amber-line); background: var(--amber-soft); }
+.ops .stock-card.bad { border-color: var(--red-line); background: var(--red-soft); }
 .ops .stock-card strong { display: block; }
 .ops .stock-n { font-size: 26px; font-weight: 800; }
-.ops .fefo-rank { display: inline-block; min-width: 28px; padding: 0 6px; text-align: center; border-radius: 8px; background: var(--ink); color: #fff; font-weight: 800; font-size: 14px; }
+.ops .fefo-rank { display: inline-block; min-width: 28px; padding: 0 6px; text-align: center; border-radius: 8px; background: var(--ink); color: var(--white); font-weight: 800; font-size: 14px; }
 
 /* Truy xuất */
 .ops .chain { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 0; }
-.ops .chain > li { position: relative; padding: 12px 14px 12px 16px; border: 2px solid var(--line); border-radius: 14px; background: #fff; margin-bottom: 22px; }
+.ops .chain > li { position: relative; padding: 12px 14px 12px 16px; border: 2px solid var(--line); border-radius: 14px; background: var(--white); margin-bottom: 22px; }
 .ops .chain > li::after { content: '\2193'; position: absolute; left: 24px; bottom: -22px; font-size: 20px; color: var(--muted); }
 .ops .chain > li:last-child { margin-bottom: 0; }
 .ops .chain > li:last-child::after { content: none; }
 .ops .chain-title { font-size: 14px; font-weight: 800; color: var(--green-d); letter-spacing: .04em; text-transform: uppercase; margin: 0 0 4px; }
 .ops .group-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 8px 0 12px; }
-.ops .group-card { border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fff; text-align: left; font: inherit; cursor: pointer; color: var(--ink); }
+.ops .group-card { border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--white); text-align: left; font: inherit; cursor: pointer; color: var(--ink); }
 .ops .group-card.on { border-color: var(--ink); background: var(--line-2); }
 .ops .group-card .n { font-size: 28px; font-weight: 800; display: block; }
 .ops .group-not_shipped .n { color: var(--amber); }
@@ -101,13 +101,13 @@
 .ops .group-delivered .n { color: var(--red); }
 
 /* Bản in: PO, bảng kê, báo cáo thu hồi */
-.ops .doc-sheet { background: #fff; color: #000; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
-.ops .doc-sheet h2, .ops .doc-sheet h3 { color: #000; }
+.ops .doc-sheet { background: var(--white); color: var(--black); padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.ops .doc-sheet h2, .ops .doc-sheet h3 { color: var(--black); }
 .ops .doc-title { text-align: center; font-size: 22px; margin: 4px 0 2px; }
-.ops .doc-sub { text-align: center; color: #333; margin: 0 0 10px; font-size: 15px; }
+.ops .doc-sub { text-align: center; color: var(--ink); margin: 0 0 10px; font-size: 15px; }
 .ops .doc-table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 8px 0; }
-.ops .doc-table th, .ops .doc-table td { border: 1px solid #aaa; padding: 5px 8px; text-align: left; vertical-align: top; }
-.ops .doc-table th { background: #eee; font-size: 13px; }
+.ops .doc-table th, .ops .doc-table td { border: 1px solid var(--line-strong); padding: 5px 8px; text-align: left; vertical-align: top; }
+.ops .doc-table th { background: var(--paper-grey); font-size: 13px; }
 .ops .doc-table .r { text-align: right; }
 .ops .sign-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; text-align: center; font-size: 14px; }
 .ops .sign-row div { min-height: 90px; }
@@ -117,7 +117,7 @@
 .ops .sup-portal { max-width: 720px; margin: 0 auto; }
 .ops .sup-portal .ops-card { padding: 14px; }
 .ops .sup-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 10px 0; }
-.ops .sup-kpi { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fff; }
+.ops .sup-kpi { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--white); }
 .ops .sup-kpi .n { font-size: 20px; font-weight: 800; display: block; overflow-wrap: anywhere; }
 .ops .week-table th, .ops .week-table td { white-space: nowrap; }
 
@@ -139,6 +139,6 @@
   .ops .doc-sheet { border: 0; padding: 0; }
   .ops .hide-print { display: none !important; }
   .ops .sign-row { break-inside: avoid; }
-  .ops .doc-table th { background: #eee !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .ops .doc-table th { background: var(--paper-grey) !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .ops .recall-orders tr { break-inside: avoid; }
 }

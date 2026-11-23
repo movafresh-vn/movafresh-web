@@ -30,7 +30,7 @@ li::before { content: ''; position: absolute; top: 20px; left: -50%; width: 100%
 li:first-child::before { display: none; }
 li.done::before, li.cur::before { background: var(--green); }
 .dot { position: relative; z-index: 1; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); font-size: 17px; font-weight: 800; color: var(--muted); }
-li.cur .dot { border-color: var(--green); background: var(--green); color: #fff; }
+li.cur .dot { border-color: var(--green-d); background: var(--green-d); color: var(--white); }
 li.done .dot { border-color: var(--green); background: var(--green-soft); color: var(--green-d); }
 .dot:disabled { cursor: default; }
 .lbl { font-size: 15px; font-weight: 600; color: var(--muted); line-height: 1.25; }

@@ -2,10 +2,22 @@
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="stop-title" @click.self="$emit('close')">
     <div class="mbox box">
       <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng">×</button>
-      <h2 id="stop-title" class="pl-h2">Dừng gói?</h2>
+      <h2 id="stop-title" class="pl-h2">{{ p && p.unpaid ? 'Hủy gói chưa thanh toán?' : 'Dừng gói?' }}</h2>
 
       <p v-if="loading" class="pl-note" style="text-align: center; padding: 24px 0;">Đang tính toán số bữa và số tiền hoàn lại...</p>
       <p v-else-if="loadError" class="pl-error" role="alert">{{ loadError }}</p>
+      <!-- Gói chưa trả tuần nào: hủy thẳng, không có bảng hoàn tiền -->
+      <template v-else-if="p && p.unpaid">
+        <section class="pl-panel good" aria-label="Hủy gói chưa thanh toán" data-testid="unpaid-cancel">
+          <p>Gói này chưa có tuần nào được thanh toán nên không có khoản tiền nào cần hoàn. MOVA hủy thẳng gói và không tính phí.</p>
+          <p v-if="p.weeks_cancelled" class="pl-note" style="margin: 6px 0 0;">{{ p.weeks_cancelled }} tuần chưa chốt sổ sản xuất sẽ được hủy.</p>
+        </section>
+        <p v-if="error" class="pl-error" role="alert">{{ error }}</p>
+        <div class="btns">
+          <button class="pl-btn" type="button" @click="$emit('close')">Giữ gói của tôi</button>
+          <button class="pl-btn danger" type="button" :disabled="busy" @click="confirm">Hủy gói chưa thanh toán</button>
+        </div>
+      </template>
       <template v-else-if="p">
         <!-- Thông báo nếu gói không có bữa nào chưa giao để hoàn tiền -->
         <section v-if="!hasUndelivered" class="pl-panel warn" aria-label="Không có bữa hoàn">
@@ -106,7 +118,7 @@ async function confirm() {
     }
     await store.refresh();
     const refundText = r.data?.refund_vnd ? ` MOVA hoàn ${fmt(r.data.refund_vnd)} trong 7 ngày làm việc.` : '';
-    store.toast(`Đã dừng gói.${refundText}`);
+    store.toast(p.value && p.value.unpaid ? 'Đã hủy gói chưa thanh toán.' : `Đã dừng gói.${refundText}`);
     emit('done', r.data);
   } catch (err) {
     error.value = err?.message || 'Có lỗi khi xử lý dừng gói.';
@@ -123,14 +135,14 @@ dl { margin: 0; display: grid; }
 dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 16px; }
 dt { color: var(--ink); }
 dd { margin: 0; font-weight: 700; }
-.total { border-top: 1px solid #F1C7B1; margin-top: 4px; padding-top: 10px !important; }
+.total { border-top: 1px solid var(--red-line); margin-top: 4px; padding-top: 10px !important; }
 .total dd { font-size: 20px; color: var(--orange-ink); }
 .refund { font-size: 28px; font-weight: 800; color: var(--green-d); margin: 4px 0; }
 .meals-summary { display: flex; align-items: center; gap: 12px; }
 .meals-summary .icon { font-size: 24px; }
-.refund-promise { background: #E8F5E9; border-radius: 8px; padding: 8px 12px; font-size: 14px; color: #1B5E20; margin: 8px 0; }
-.alt { background: var(--butter); border-color: #eadba6; }
+.refund-promise { background: var(--green-tint); border-radius: 8px; padding: 8px 12px; font-size: 14px; color: var(--green-d); margin: 8px 0; }
+.alt { background: var(--butter); border-color: var(--amber-line); }
 .btns { display: grid; gap: 10px; }
-.pl-btn.danger { background: #fff; border-color: var(--red); color: var(--red); }
-.pl-btn.danger:hover:not(:disabled) { background: #FBE5E2; }
+.pl-btn.danger { background: var(--white); border-color: var(--red); color: var(--red); }
+.pl-btn.danger:hover:not(:disabled) { background: var(--red-soft); }
 </style>

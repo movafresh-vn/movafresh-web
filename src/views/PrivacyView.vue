@@ -15,7 +15,7 @@
           </div>
           <h1 class="legal-h1">Chính sách Bảo mật Thông tin Khách hàng</h1>
           <p class="legal-sub">
-            MOVA Fresh cam kết bảo vệ tuyệt đối dữ liệu cá nhân, quyền riêng tư và thông tin khẩu vị của bạn và gia đình.
+            MOVA FRESH cam kết bảo vệ tuyệt đối dữ liệu cá nhân, quyền riêng tư và thông tin khẩu vị của bạn và gia đình.
           </p>
         </header>
 
@@ -43,7 +43,7 @@
 
           <h2>3. Cam kết Không chia sẻ dữ liệu trái phép</h2>
           <p>
-            3.1. MOVA Fresh <b>tuyệt đối không bán, không cho thuê, không chia sẻ</b> thông tin cá nhân của khách hàng cho bất kỳ tổ chức hay bên thứ ba nào vì mục đích quảng cáo hoặc thương mại.
+            3.1. MOVA FRESH <b>tuyệt đối không bán, không cho thuê, không chia sẻ</b> thông tin cá nhân của khách hàng cho bất kỳ tổ chức hay bên thứ ba nào vì mục đích quảng cáo hoặc thương mại.
           </p>
           <p>
             3.2. Dữ liệu chỉ được cung cấp cho các đối tác hạ tầng thiết yếu (cổng thanh toán thẻ, ngân hàng VietQR, hệ thống máy chủ chứng thực bảo mật) trong phạm vi tối thiểu để xử lý giao dịch.
@@ -56,17 +56,17 @@
           <ul>
             <li><b>Quyền xem và chỉnh sửa:</b> Tự do cập nhật số điện thoại, địa chỉ nhận hàng và danh mục khẩu vị bất kỳ lúc nào tại trang Quản lý tài khoản.</li>
             <li><b>Quyền từ chối nhận tin quảng cáo (Opt-out):</b> Bấm hủy nhận bản tin công thức qua link ở chân mỗi email hoặc tắt thông báo Zalo với 1 thao tác.</li>
-            <li><b>Quyền yêu cầu xóa hoặc ẩn danh hóa dữ liệu:</b> Quý khách có quyền yêu cầu xóa toàn bộ lịch sử tài khoản, thông tin liên hệ khỏi hệ thống cơ sở dữ liệu của MOVA Fresh khi ngừng sử dụng dịch vụ.</li>
+            <li><b>Quyền yêu cầu xóa hoặc ẩn danh hóa dữ liệu:</b> Quý khách có quyền yêu cầu xóa toàn bộ lịch sử tài khoản, thông tin liên hệ khỏi hệ thống cơ sở dữ liệu của MOVA FRESH khi ngừng sử dụng dịch vụ.</li>
           </ul>
 
           <h2>5. Lưu trữ và Bảo mật kỹ thuật</h2>
           <p>
-            Mọi dữ liệu truyền tải giữa thiết bị của quý khách và hệ thống MOVA Fresh được mã hóa theo tiêu chuẩn an toàn cao nhất (SSL/TLS 256-bit). Hệ thống kiểm soát truy cập phân quyền nghiêm ngặt theo vai trò với khóa bảo mật riêng biệt.
+            Mọi dữ liệu truyền tải giữa thiết bị của quý khách và hệ thống MOVA FRESH được mã hóa theo tiêu chuẩn an toàn cao nhất (SSL/TLS 256-bit). Hệ thống kiểm soát truy cập phân quyền nghiêm ngặt theo vai trò với khóa bảo mật riêng biệt.
           </p>
 
           <h2>6. Liên hệ Bộ phận Bảo vệ dữ liệu (DPO)</h2>
           <div class="contact-box">
-            <p><b>Phòng An ninh Thông tin &amp; Pháp chế — MOVA Fresh Việt Nam</b></p>
+            <p><b>Phòng An ninh Thông tin &amp; Pháp chế — MOVA FRESH Việt Nam</b></p>
             <p>✉️ Email tiếp nhận yêu cầu dữ liệu: <b>privacy@movafresh.vn</b></p>
             <p>📞 Hotline: <b>1900 8899</b> (Hỗ trợ 06:00 – 21:00)</p>
             <p>Thời hạn phản hồi và giải quyết yêu cầu xóa dữ liệu: Trong vòng <b>72 giờ làm việc</b>.</p>
@@ -133,8 +133,8 @@
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
-  background: #F1F5F9;
-  color: #475569;
+  background: var(--line-2);
+  color: var(--ink-2);
 }
 .l-badge.green {
   background: var(--green-soft);
@@ -158,7 +158,7 @@
 .legal-content {
   font-size: 14.5px;
   line-height: 1.65;
-  color: #1E293B;
+  color: var(--ink);
   display: grid;
   gap: 16px;
 }

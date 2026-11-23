@@ -65,9 +65,9 @@ async function renew() {
 </script>
 
 <style scoped>
-.renew { display: grid; gap: 14px; background: var(--green-soft); border-color: #BBD8C5; }
+.renew { display: grid; gap: 14px; background: var(--green-soft); border-color: var(--green-line); }
 .weeks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.weeks li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #cfe3d6; font-size: 16px; }
+.weeks li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--green-line); font-size: 16px; }
 .weeks small { display: block; color: var(--muted); font-size: 14px; }
 .agree { display: flex; gap: 12px; align-items: flex-start; font-size: 16px; cursor: pointer; min-height: 44px; }
 .agree input { width: 24px; height: 24px; margin-top: 2px; accent-color: var(--green); flex-shrink: 0; }

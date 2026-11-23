@@ -140,6 +140,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
+import { checkoutErrorMessage } from '../../shared/domain/checkoutError';
 import { useMovaStore } from '../../stores/useMovaStore';
 import { DISHES, SKUS } from '../../shared/data/catalog';
 import { recipeFor } from '../../shared/data/recipes';
@@ -215,7 +216,7 @@ async function choose(o) {
   error.value = '';
   picked = o;
   const p = await api.customer.previewMealChange({ ...base, dish_id: o.dish_id });
-  if (p.status === 'error') error.value = p.error.message;
+  if (p.status === 'error') error.value = checkoutErrorMessage(p.error.code, p.error.message);
   else preview.value = p.data;
 }
 
@@ -240,7 +241,8 @@ async function confirm() {
   const r = await api.customer.changeMeal({ ...base, dish_id: picked.dish_id });
   busy.value = false;
   if (r.status === 'error') {
-    error.value = r.error.message;
+    // MENU_LOCKED: tuần đã chốt món theo ưu đãi chiến dịch nên không đổi được
+    error.value = checkoutErrorMessage(r.error.code, r.error.message);
     return;
   }
   await store.refresh();
@@ -278,8 +280,8 @@ function topup() {
   white-space: nowrap;
 }
 .open-factory-btn:hover {
-  background: var(--green-d);
-  color: #FFFFFF;
+  background: var(--green-dd);
+  color: var(--white);
 }
 
 .cross-box {
@@ -294,7 +296,7 @@ function topup() {
 .cross-chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .sugg-chip {
   padding: 6px 8px;
-  background: #fff;
+  background: var(--white);
   border: 1px solid var(--line);
   border-radius: 8px;
   text-align: left;
@@ -318,7 +320,7 @@ function topup() {
   cursor: pointer;
   font-size: 16px;
 }
-.detail-mini-btn:hover { background: #e2e8f0; }
+.detail-mini-btn:hover { background: var(--line); }
 
 .sub-modal {
   position: absolute;
@@ -332,7 +334,7 @@ function topup() {
   z-index: 10;
 }
 .sub-modal-box {
-  background: #fff;
+  background: var(--white);
   border-radius: 16px;
   padding: 20px;
   width: 100%;
@@ -347,14 +349,14 @@ function topup() {
 .detail-header { display: grid; gap: 4px; }
 .terroir-pill { font-size: 12px; font-weight: 700; color: var(--green-d); background: var(--green-soft); padding: 2px 8px; border-radius: 6px; width: fit-content; }
 .detail-name { font-size: 18px; font-weight: 800; margin: 0; }
-.detail-story { background: #f8fafc; border-left: 3px solid var(--green); padding: 8px 10px; border-radius: 6px; font-size: 13px; line-height: 1.45; color: #334155; display: grid; gap: 4px; }
+.detail-story { background: var(--surface); border-left: 3px solid var(--green); padding: 8px 10px; border-radius: 6px; font-size: 13px; line-height: 1.45; color: var(--ink-2); display: grid; gap: 4px; }
 .detail-story p { margin: 0; }
-.chef-note { color: #0f766e; background: #f0fdfa; padding: 4px 8px; border-radius: 4px; }
+.chef-note { color: var(--green-d); background: var(--green-tint); padding: 4px 8px; border-radius: 4px; }
 .detail-section { font-size: 13px; display: grid; gap: 2px; }
 .spec-line { font-size: 13px; color: var(--muted); margin: 0; }
-.storage-line { font-size: 12px; color: #0284c7; margin: 0; }
+.storage-line { font-size: 12px; color: var(--blue); margin: 0; }
 .nutri-bar { font-size: 13px; color: var(--ink); background: var(--bg); padding: 6px 10px; border-radius: 6px; }
-.detail-steps { font-size: 13px; background: #fffbf6; border: 1px solid #fed7aa; padding: 8px 10px; border-radius: 8px; }
+.detail-steps { font-size: 13px; background: var(--amber-soft); border: 1px solid var(--amber-line); padding: 8px 10px; border-radius: 8px; }
 .detail-steps ol { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; }
 .detail-actions { margin-top: 6px; }
 </style>
