@@ -5,6 +5,7 @@
       <h2 id="skip-title" class="pl-h2">Tạm hoãn Tuần {{ week.number }}</h2>
 
       <p v-if="loadError" class="pl-error" role="alert">{{ loadError }}</p>
+      <p v-else-if="!preview" class="pl-note">Đang tính toán lịch giao mới...</p>
       <template v-else>
         <p class="pl-lead">Thực đơn tuần này không mất. MOVA dời nguyên cả tuần xuống cuối gói và giữ ưu đãi.</p>
         <div class="pl-panel good">
@@ -54,7 +55,8 @@ async function confirm() {
     return;
   }
   await store.refresh();
-  store.toast(`Đã tạm hoãn tuần ${props.week.number}, giao lại ${r.data.new_deliveries[0].delivery_label}`);
+  const newDateLabel = r.data.new_deliveries?.[0]?.delivery_label || r.data.new_week?.delivery_date || '';
+  store.toast(`Đã tạm hoãn tuần ${props.week.number}${newDateLabel ? ', giao lại ' + newDateLabel : ''}`);
   emit('done', r.data);
 }
 </script>

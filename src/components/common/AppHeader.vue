@@ -124,14 +124,19 @@ const router = useRouter();
 
 // Trên mobile: chưa đăng nhập thì mở đăng nhập, rồi vào tài khoản
 const openAccount = () => {
-  if (store.isLoggedIn) router.push('/account');
+  if (store.hasMovaSession) router.push('/account');
   else store.openModal('login');
 };
 
 const displayName = computed(() => store.userName || store.authUser?.email || store.authUser?.phone || 'MOVA');
-const userAvatar = computed(() => displayName.value.trim().split(/\s+/).pop().charAt(0));
+const userAvatar = computed(() => {
+  const d = displayName.value.trim();
+  const token = d.split(/\s+/).pop() || '';
+  const clean = token.replace(/^\+/, '');
+  return (clean.charAt(0) || d.charAt(0) || 'M').toUpperCase();
+});
 
-// Hiển thị gọn 1 dòng: "Lan • 850k"
+// Hiển thị gọn 1 dòng: "Lan • 850k" hoặc SĐT khi tài khoản mới chưa có hồ sơ
 const userLineText = computed(() => {
   if (!store.isLoggedIn) return displayName.value;
   const given = store.userName.trim().split(/\s+/).pop();

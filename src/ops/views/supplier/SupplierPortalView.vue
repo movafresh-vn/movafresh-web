@@ -243,7 +243,7 @@ const cert = reactive({ type: 'attp', number: '', expiresAt: '' });
 
 const CERT_TYPES = BUSINESS.suppliers.certTypes;
 const SUPPLIER_LIST = Object.values(SUPPLIERS);
-const isAdmin = computed(() => session.value.role === 'admin');
+const isAdmin = computed(() => Boolean(session.value && session.value.role === 'admin'));
 const certType = (k) => CERT_TYPES[k] || k;
 const skuName = (k) => (SKUS[k] ? SKUS[k].name : k);
 const qty = (n) => (Math.round((n || 0) * 10) / 10).toLocaleString('vi-VN');

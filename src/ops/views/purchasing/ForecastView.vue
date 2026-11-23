@@ -43,7 +43,7 @@ import { dm } from '../../format';
 const data = ref(null);
 const error = ref('');
 const msg = ref('');
-const canWrite = computed(() => ['purchasing', 'admin'].includes(session.value.role));
+const canWrite = computed(() => Boolean(session.value && ['purchasing', 'admin'].includes(session.value.role)));
 
 async function load() {
   try {

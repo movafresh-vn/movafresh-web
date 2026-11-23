@@ -276,6 +276,7 @@ function selectDish(dish) {
 }
 
 .f-modal-head {
+  flex-shrink: 0;
   padding: 24px 24px 14px;
   border-bottom: 1px solid var(--line-2);
 }
@@ -304,6 +305,7 @@ function selectDish(dish) {
 }
 
 .f-search-row {
+  flex-shrink: 0;
   padding: 12px 24px 8px;
 }
 .f-search-input-wrap {
@@ -345,6 +347,7 @@ function selectDish(dish) {
 
 .f-tabs {
   display: flex;
+  flex-shrink: 0;
   gap: 8px;
   padding: 4px 24px 12px;
   overflow-x: auto;
@@ -375,6 +378,7 @@ function selectDish(dish) {
 
 .f-dish-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 16px 24px;
   display: grid;

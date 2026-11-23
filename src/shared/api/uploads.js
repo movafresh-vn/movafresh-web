@@ -36,3 +36,23 @@ export async function uploadPhoto(dataUrl, purpose, { ticket, fetchImpl }) {
 
 /** Ảnh hiển thị được ngay (data URL hoặc http); đường dẫn trong kho cần URL tải riêng nên trả null. */
 export const photoSrc = (p) => (typeof p === 'string' && (p.startsWith('data:') || /^https?:\/\//.test(p)) ? p : null);
+
+const signedUrlCache = new Map();
+
+/**
+ * Lấy URL hiển thị ảnh: nếu là data URL hoặc https?:// thì dùng ngay;
+ * nếu là đường dẫn trong kho thì gọi fetchSignedUrl (nếu có) và lưu bộ nhớ đệm.
+ */
+export async function resolvePhotoUrl(path, fetchSignedUrl) {
+  if (!path || typeof path !== 'string') return null;
+  if (path.startsWith('data:') || /^https?:\/\//.test(path)) return path;
+  if (signedUrlCache.has(path)) return signedUrlCache.get(path);
+  if (!fetchSignedUrl) return null;
+  try {
+    const url = await fetchSignedUrl(path);
+    if (url) signedUrlCache.set(path, url);
+    return url;
+  } catch {
+    return null;
+  }
+}

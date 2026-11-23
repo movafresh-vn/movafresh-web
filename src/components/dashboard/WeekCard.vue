@@ -72,9 +72,28 @@
 
     <div v-if="week.boxes.some((b) => b.photo_url)" class="proof" data-testid="delivery-proof">
       <figure v-for="b in week.boxes.filter((x) => x.photo_url)" :key="b.order_id">
-        <img :src="b.photo_url" alt="Ảnh giao hàng" loading="lazy" />
+        <template v-if="!imgFailed[b.order_id]">
+          <img
+            :src="b.photo_url"
+            alt="Ảnh giao hàng"
+            loading="lazy"
+            title="Bấm để xem ảnh phóng to"
+            @error="onImgError(b.order_id)"
+            @click="previewImg = b.photo_url"
+          />
+        </template>
+        <span v-else class="pl-pill">Đã lưu ảnh giao hàng</span>
         <figcaption v-if="b.delivered_at">Giao lúc {{ fmtDeadline(new Date(b.delivered_at)) }}</figcaption>
       </figure>
+
+      <Teleport to="body">
+        <div v-if="previewImg" class="photo-modal-backdrop" role="dialog" aria-modal="true" @click.self="previewImg = ''">
+          <div class="photo-modal-content">
+            <button type="button" class="photo-modal-close" aria-label="Đóng" @click="previewImg = ''">✕</button>
+            <img :src="previewImg" alt="Ảnh giao hàng phóng to" />
+          </div>
+        </div>
+      </Teleport>
     </div>
     <p v-else-if="week.status === 'delivered'" class="pl-note" data-testid="delivery-proof-pending">Ảnh giao hàng sẽ hiện ở đây khi shipper tải lên.</p>
 
@@ -86,13 +105,19 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { fmt } from '../../shared/utils/formatters';
 import { fmtDeadline } from '../../shared/utils/time';
 
 const props = defineProps({ week: { type: Object, required: true } });
 defineEmits(['change', 'skip']);
 const SWAP = ['protein', 'veg', 'soup', 'carb'];
+
+const previewImg = ref('');
+const imgFailed = reactive({});
+const onImgError = (id) => {
+  imgFailed[id] = true;
+};
 
 const chargeText = computed(() => {
   const c = props.week.charge;
@@ -160,9 +185,62 @@ const skipHint = computed(() => (props.week.editable && props.week.skip.code ===
 .box-status li { padding: 6px 10px; border-radius: 10px; background: var(--line-2); }
 .box-status li[data-phase="delivered"] { background: var(--green-soft); color: var(--green-d); }
 .proof { display: grid; gap: 8px; }
-.proof img { width: 100%; max-height: 220px; object-fit: cover; border-radius: 12px; background: var(--line-2); }
+.proof img { width: 100%; max-height: 220px; object-fit: cover; border-radius: 12px; background: var(--line-2); cursor: pointer; transition: transform 0.15s ease; }
+.proof img:hover { transform: scale(1.02); }
 .proof figure { margin: 0; display: grid; gap: 4px; }
 .proof figcaption { font-size: 14px; color: var(--muted); }
+.photo-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 24px;
+  cursor: zoom-out;
+}
+.photo-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+.photo-modal-content img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  background: #111;
+}
+.photo-modal-close {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #111111;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.photo-modal-close:hover {
+  background: #f0f0f0;
+  transform: scale(1.08);
+}
 .late[data-tone="good"] { background: var(--green-soft); border-color: #bfe0cb; }
 .late[data-tone="wait"] { background: var(--orange-soft); border-color: #f3cdb8; }
 .late[data-tone="info"] { background: var(--blue-soft); }

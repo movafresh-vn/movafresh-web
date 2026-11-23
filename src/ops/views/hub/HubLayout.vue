@@ -32,8 +32,8 @@ const ALL = [
   { key: 'recall', to: '/kho/thu-hoi', title: 'Thu hồi lô', roles: ['hub', 'purchasing', 'admin'] }
 ];
 
-const tabs = computed(() => ALL.filter((t) => t.roles.includes(session.value.role)));
-const canBuy = computed(() => ['purchasing', 'admin'].includes(session.value.role));
+const tabs = computed(() => (session.value ? ALL.filter((t) => t.roles.includes(session.value.role)) : []));
+const canBuy = computed(() => Boolean(session.value && ['purchasing', 'admin'].includes(session.value.role)));
 
 // Vai trò không có tab "Nhận hàng" (điều phối) thì vào /kho được chuyển tới tab đầu tiên của mình
 watchEffect(() => {

@@ -117,6 +117,9 @@
       <section v-else class="ops-card" data-testid="arr-result">
         <h2 class="plan-h2">Kết quả nhận xe lúc {{ dt(cur.result.closedAt) }}</h2>
         <p>Nhiệt độ ngăn mát <b>{{ tempText(cur.result.tempC) }}</b><template v-if="cur.result.frozenTempC != null">, ngăn đông <b>{{ tempText(cur.result.frozenTempC) }}</b></template>.</p>
+        <div v-if="cur.result.photo" class="arrival-photo-wrap" style="margin: 8px 0;">
+          <PhotoThumbnail :photo="typeof cur.result.photo === 'string' ? cur.result.photo : ''" alt="Ảnh xe / thùng lúc nhận" cls="receipt-photo" />
+        </div>
         <p v-if="cur.result.missing.length" class="ops-error" data-testid="arr-result-missing">Thiếu {{ cur.result.missing.length }} thùng: {{ cur.result.missing.join(', ') }}. Đã chuyển cho điều phối xử lý.</p>
         <p v-if="resultDamaged.length" class="ops-error">Hỏng {{ resultDamaged.length }} thùng: {{ resultDamaged.join(', ') }}.</p>
         <p v-if="cur.extra.length" class="ops-error">Thừa {{ cur.extra.length }} thùng: {{ cur.extra.join(', ') }}.</p>
@@ -137,6 +140,7 @@ import { useLive } from '../../useLive';
 import { shortDay } from '../../format';
 import { dt, logisticsError, tempText } from '../../logisticsUi';
 import PhotoInput from '../../components/PhotoInput.vue';
+import PhotoThumbnail from '../../components/PhotoThumbnail.vue';
 
 const chill = BUSINESS.temperature.chill;
 const frozen = BUSINESS.temperature.frozen;

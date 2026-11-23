@@ -25,6 +25,9 @@ describe('W1-05: khách đăng nhập bằng mã OTP điện thoại', () => {
   it('W1-05: số điện thoại Việt Nam thành E.164, email giữ nguyên chữ thường, chữ lạ bị từ chối', () => {
     expect(otpIdentity('0908 123 456')).toBe('+84908123456');
     expect(otpIdentity('+84 908.123.456')).toBe('+84908123456');
+    expect(otpIdentity('0901000001')).toBe('+84901000001');
+    expect(otpIdentity('15555550100')).toBe('+15555550100');
+    expect(otpIdentity('+15555550100')).toBe('+15555550100');
     expect(otpIdentity('Lan@Mail.VN')).toBe('lan@mail.vn');
     expect(otpIdentity('12345')).toBeNull();
     expect(otpIdentity('')).toBeNull();
@@ -74,6 +77,32 @@ describe('W1-05: khách đăng nhập bằng mã OTP điện thoại', () => {
     expect(sb.signOut).toHaveBeenCalled();
     expect(s.customerId).toBeNull();
     expect(cust.reset).toHaveBeenCalled();
+  });
+
+  it('W1-05: tài khoản mới chưa có hồ sơ (404 / PROFILE_NOT_FOUND) không bị đăng xuất, giữ nguyên phiên Supabase', async () => {
+    const s = useMovaStore();
+    s.setAuthUser({ id: 'u1', phone: '+15555550100' });
+    cust.getAccount.mockResolvedValueOnce({ status: 'error', error: { code: 'PROFILE_NOT_FOUND', status: 404, message: 'Không tìm thấy hồ sơ của bạn.' } });
+    expect(await s.refresh()).toBe(false);
+    expect(sb.signOut).not.toHaveBeenCalled();
+    expect(s.customerId).toBe('u1');
+    expect(s.hasMovaSession).toBe(true);
+    expect(s.account).toBeNull();
+  });
+
+  it('W1-05: khách mới đăng nhập bằng SĐT test 15555550100 thành công dù chưa có hồ sơ (404)', async () => {
+    sb.verifyOtp.mockResolvedValue({ id: 'u_new', phone: '+15555550100' });
+    cust.getAccount.mockResolvedValueOnce({ status: 'error', error: { code: 'PROFILE_NOT_FOUND', status: 404, message: 'Không tìm thấy hồ sơ của bạn.' } });
+    const s = useMovaStore();
+    s.openModal('login');
+    expect(await s.verifyOtp('15555550100', '123456')).toBe('');
+    expect(sb.verifyOtp).toHaveBeenCalledWith('+15555550100', '123456');
+    expect(sb.signOut).not.toHaveBeenCalled();
+    expect(s.customerId).toBe('u_new');
+    expect(s.hasMovaSession).toBe(true);
+    expect(s.isLoggedIn).toBe(false);
+    expect(s.toastMessage).toMatch(/Đăng nhập MOVA thành công/);
+    expect(s.activeModal).toBeNull();
   });
 
   it('W1-05: đăng xuất xóa tài khoản, bản nháp thực đơn và phiên Supabase', async () => {

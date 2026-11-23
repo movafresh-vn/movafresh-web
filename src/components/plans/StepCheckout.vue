@@ -714,8 +714,14 @@ onMounted(async () => {
   const contact = normalizeContact(store.contact);
   if (!c.phone && contact && contact.type === 'phone') c.phone = contact.value;
   // Đã đăng nhập (OTP) bằng số này rồi thì không bắt xác thực lại
-  const authPhone = account.authUser && account.authUser.phone ? `0${String(account.authUser.phone).replace(/^\+?84/, '')}` : '';
-  if (authPhone && c.phone && authPhone === c.phone.replace(/[\s.\-]/g, '')) c.phoneVerified = true;
+  const rawAuthPhone = account.authUser && account.authUser.phone ? String(account.authUser.phone) : '';
+  const authPhone = rawAuthPhone.startsWith('+84')
+    ? `0${rawAuthPhone.slice(3)}`
+    : rawAuthPhone.replace(/^\+/, '');
+  const cleanPhone = (c.phone || '').replace(/[\s.\-()]/g, '').replace(/^\+/, '');
+  if (authPhone && cleanPhone && (authPhone === cleanPhone || (authPhone.startsWith('84') && `0${authPhone.slice(2)}` === cleanPhone))) {
+    c.phoneVerified = true;
+  }
   if (c.voucherCode) {
     voucherInput.value = c.voucherCode;
     await applyVoucher();

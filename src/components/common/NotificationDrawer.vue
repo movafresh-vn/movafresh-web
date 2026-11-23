@@ -6,7 +6,7 @@
         <button class="sheet-x" type="button" @click="store.notifDrawerOpen = false" aria-label="Đóng thông báo">×</button>
       </div>
       <div class="drawer-body">
-        <div v-if="!store.isLoggedIn" class="empty">
+        <div v-if="!store.hasMovaSession" class="empty">
           <p>Đăng nhập để xem thông báo về tuần giao, số tiền sắp trừ và trạng thái đơn.</p>
           <button class="pl-btn primary sm" type="button" @click="login">Đăng nhập</button>
         </div>

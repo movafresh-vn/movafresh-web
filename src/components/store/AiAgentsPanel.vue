@@ -3,9 +3,9 @@
     <div class="ai-panel">
       <div class="ai-heading">
         <div>
-          <p class="eyebrow">TRỢ LÝ MOVA</p>
-          <h2 id="ai-title">Bếp trưởng</h2>
-          <p class="muted">Dựa trên câu trả lời khảo sát để gợi ý thực đơn phù hợp gia đình bạn.</p>
+          <p class="eyebrow">BẾP TRƯỞNG MOVA</p>
+          <h2 id="ai-title">Gợi ý thực đơn chuẩn vị Đắk Lắk</h2>
+          <p class="muted">Dựa trên khẩu vị và nhu cầu gia đình bạn để gợi ý thực đơn 5 món dinh dưỡng, tiện lợi.</p>
         </div>
         <button
           class="btn primary"
@@ -13,34 +13,34 @@
           :disabled="loading || !personalDataConsent || !hasApiConfig"
           @click="runAgents"
         >
-          {{ loading ? 'Đang tạo thực đơn…' : mealPlan || props.hasAppliedMenu ? 'Tạo lại thực đơn' : 'Nhờ Bếp trưởng gợi ý' }}
+          {{ loading ? 'Đang lên thực đơn…' : mealPlan || props.hasAppliedMenu ? 'Lên lại thực đơn' : 'Nhờ Bếp trưởng gợi ý' }}
         </button>
       </div>
 
       <div class="ai-consents">
         <label>
           <input v-model="personalDataConsent" type="checkbox" @change="savePersonalDataConsent">
-          Tôi đồng ý gửi câu trả lời khảo sát (không gồm thông tin liên hệ) tới Trợ lý MOVA để tạo thực đơn.
+          Tôi đồng ý chia sẻ thông tin khảo sát khẩu vị (không gồm thông tin liên hệ) để Bếp trưởng MOVA gợi ý thực đơn.
         </label>
         <label>
           <input v-model="behaviorConsent" type="checkbox" :disabled="!personalDataConsent" @change="saveBehaviorConsent">
-          Tôi đồng ý để Gu ghi nhận các lượt xem chi tiết và đổi món nhằm cá nhân hóa gợi ý sau này (không bắt buộc).
+          Tôi đồng ý ghi nhận lượt xem chi tiết và đổi món để Bếp trưởng tối ưu khẩu vị cho các tuần tiếp theo (tùy chọn).
         </label>
       </div>
       <p v-if="behaviorConsent && !hasSupabaseSession" class="ai-hint">
-        Bếp trưởng vẫn dùng được ngay. Để lưu lịch sử Gu theo tài khoản web, hãy đăng nhập MOVA; việc theo dõi chỉ bắt đầu sau khi đăng nhập.
+        Bếp trưởng MOVA sẵn sàng gợi ý ngay. Đăng nhập để lưu lại sở thích khẩu vị của gia đình bạn cho các lần sau.
       </p>
 
       <p v-if="error" class="ai-error" role="alert">{{ error }}</p>
       <div v-if="mealPlan" class="ai-results">
-        <h3 v-if="mealPlan.meals.length">Bếp trưởng đã tạo gợi ý cho {{ mealPlan.meals.length }} bữa</h3>
+        <h3 v-if="mealPlan.meals.length">Bếp trưởng MOVA đã chuẩn bị thực đơn {{ mealPlan.meals.length }} bữa</h3>
         <h3 v-else>Bếp trưởng chưa tìm được món phù hợp từ dữ liệu hiện có</h3>
-        <p>MOVA sẽ dùng thực đơn gợi ý theo khảo sát nếu AI thiếu bữa hoặc món không khớp danh mục.</p>
+        <p>MOVA sẽ tự động áp dụng thực đơn cân đối theo khảo sát nếu chưa đồng bộ đủ số bữa.</p>
         <p v-if="mealPlan.fallback_notice" class="muted">{{ mealPlan.fallback_notice }}</p>
       </div>
 
       <div v-if="recommendations" class="ai-results">
-        <h3>Gợi ý dành riêng cho bạn</h3>
+        <h3>Gợi ý món ăn chuẩn vị dành riêng cho bạn</h3>
         <ul>
           <li v-for="item in recommendations.items" :key="item.dish_id">
             <strong>{{ item.name }}</strong>
@@ -50,7 +50,7 @@
       </div>
 
       <p v-if="!hasApiConfig" class="ai-hint">
-        Cần cấu hình VITE_API_BASE_URL để gọi Trợ lý MOVA.
+        Cần cấu hình VITE_API_BASE_URL để kết nối dịch vụ Bếp trưởng MOVA.
       </p>
     </div>
   </section>
@@ -163,7 +163,7 @@ async function saveBehaviorConsent() {
     emitBehaviorConsent();
   } catch (cause) {
     behaviorConsent.value = !behaviorConsent.value;
-    error.value = cause instanceof Error ? cause.message : 'Không thể lưu lựa chọn theo dõi của Gu.';
+    error.value = cause instanceof Error ? cause.message : 'Không thể lưu lựa chọn ghi nhận khẩu vị.';
     emitBehaviorConsent();
   }
 }
@@ -197,7 +197,7 @@ async function refreshGu() {
   try {
     recommendations.value = await getPersonalizedRecommendations();
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Chưa thể tải gợi ý của Gu.';
+    error.value = cause instanceof Error ? cause.message : 'Chưa thể tải gợi ý từ Bếp trưởng.';
   }
 }
 
@@ -240,7 +240,7 @@ async function runAgents() {
       await refreshGu();
     }
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Không thể kết nối AI Agent.';
+    error.value = cause instanceof Error ? cause.message : 'Không thể kết nối Bếp trưởng MOVA.';
     emit('meal-plan-unavailable');
   } finally {
     loading.value = false;

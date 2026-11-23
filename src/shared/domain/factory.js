@@ -418,6 +418,7 @@ const HANDLERS = {
     l.departedAt = op.at;
     l.missing = missing;
     l.tempOk = op.tempC <= cfg.temperature.chill.max;
+    if (op.photo) l.photo = op.photo;
     return ok();
   },
 

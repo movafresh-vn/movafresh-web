@@ -10,16 +10,19 @@ export function normalizeContact(raw) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? { type: 'email', value: email } : null;
   }
   let digits = text.replace(/[\s.\-()]/g, '');
-  if (digits.startsWith('+84')) digits = '0' + digits.slice(3);
-  else if (digits.startsWith('84') && digits.length === 11) digits = '0' + digits.slice(2);
-  return /^0\d{9}$/.test(digits) ? { type: 'phone', value: digits } : null;
+  if (digits.startsWith('+84')) digits = '0' + digits.slice(3).replace(/^0+/, '');
+  else if (digits.startsWith('84') && (digits.length === 11 || digits.length === 12)) digits = '0' + digits.slice(2).replace(/^0+/, '');
+  else if (digits.startsWith('+1') && digits.length === 12) digits = digits.slice(1);
+  else if (digits.startsWith('+')) digits = digits.slice(1);
+  return (/^0\d{9}$/.test(digits) || /^1\d{10}$/.test(digits)) ? { type: 'phone', value: digits } : null;
 }
 
 export const contactKey = (c) => `${c.type}:${c.value}`;
 
-/** Số điện thoại/email đã chuẩn hóa → định danh gửi Supabase Auth OTP (điện thoại dạng E.164: 0908123456 → +84908123456). */
+/** Số điện thoại/email đã chuẩn hóa → định danh gửi Supabase Auth OTP (điện thoại dạng E.164: 0908123456 → +84908123456, 15555550100 → +15555550100). */
 export function otpIdentity(raw) {
   const c = normalizeContact(raw);
   if (!c) return null;
-  return c.type === 'email' ? c.value : `+84${c.value.slice(1)}`;
+  if (c.type === 'email') return c.value;
+  return c.value.startsWith('0') ? `+84${c.value.slice(1)}` : `+${c.value}`;
 }

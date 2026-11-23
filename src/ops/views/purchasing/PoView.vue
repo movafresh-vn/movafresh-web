@@ -324,7 +324,7 @@ const showSheet = ref(false);
 
 const buffer = BUSINESS.purchasing.wasteBufferPct;
 const cashLimit = BUSINESS.alerts.cashPaymentVatLimitVnd;
-const role = computed(() => session.value.role);
+const role = computed(() => (session.value ? session.value.role : ''));
 const canWrite = computed(() => ['purchasing', 'admin'].includes(role.value));
 const canPay = computed(() => ['purchasing', 'accounting', 'admin'].includes(role.value));
 const canSubstitute = computed(() => ['purchasing', 'admin'].includes(role.value));

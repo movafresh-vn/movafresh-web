@@ -79,8 +79,12 @@ export const useMovaStore = defineStore('mova', {
         }
         const res = await api.customer.getAccount();
         if (res.status === 'error') {
-          // Phiên hết hạn hoặc tài khoản chưa có hồ sơ: coi như chưa đăng nhập
-          if (['UNAUTHORIZED', 'AUTH_REQUIRED', 'PROFILE_NOT_FOUND'].includes(res.error.code) || res.error.status === 401) await this.logout(true);
+          // Chỉ đăng xuất khi phiên hết hạn/không hợp lệ (401). Khi 404 (chưa có hồ sơ), giữ nguyên phiên đăng nhập Supabase.
+          if (res.error.status === 401 || ['UNAUTHORIZED', 'AUTH_REQUIRED'].includes(res.error.code)) {
+            await this.logout(true);
+          }
+          this.account = null;
+          this.notifications = [];
           this.loaded = true;
           return false;
         }

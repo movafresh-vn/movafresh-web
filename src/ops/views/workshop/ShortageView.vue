@@ -50,8 +50,7 @@
           <span v-if="r.status === 'closed'" class="ops-pill">Đã đóng</span>
         </div>
         <div class="ops-muted">{{ r.id }} · {{ r.qty }} {{ r.unit === 'bag' ? 'túi' : 'kg' }} · {{ fmtDeadline(new Date(r.at)) }}{{ r.note ? ` · ${r.note}` : '' }}</div>
-        <img v-if="photoSrc(r.photo)" :src="photoSrc(r.photo)" alt="Ảnh báo cáo" class="receipt-photo" />
-        <span v-else-if="r.photo" class="ops-pill">Đã lưu ảnh</span>
+        <PhotoThumbnail v-if="r.photo" :photo="r.photo" alt="Ảnh báo cáo" cls="receipt-photo" />
       </header>
 
       <p v-if="r.pending" class="ops-muted">Báo cáo chưa gửi lên hệ thống. Khi có mạng sẽ tự gửi, sau đó danh sách đơn bị ảnh hưởng hiện ra ở đây.</p>
@@ -140,6 +139,7 @@ import { apply, clientNow, hasUnsent, onQueueChange, online, submit as submitCal
 import { catalog, factory, selDay, slotLabel, zoneName } from '../../factoryStore';
 import { shortDay } from '../../format';
 import PhotoInput from '../../components/PhotoInput.vue';
+import PhotoThumbnail from '../../components/PhotoThumbnail.vue';
 
 const key = ref('');
 const qty = ref('');

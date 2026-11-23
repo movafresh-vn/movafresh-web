@@ -10,7 +10,7 @@
           <option value="" disabled>Chọn shipper</option>
           <option v-for="s in data ? data.shippers : []" :key="s.id" :value="s.id">{{ s.name }}</option>
         </select>
-        <p v-if="ctx.role === 'dispatch'" class="ops-muted">Điều phối chỉ xem, không thao tác thay shipper.</p>
+        <p v-if="ctx && ctx.role === 'dispatch'" class="ops-muted">Điều phối chỉ xem, không thao tác thay shipper.</p>
       </div>
     </header>
 
@@ -45,6 +45,9 @@
         <p v-if="st.recoverExpected" class="sp-recover" data-testid="sp-recover-hint">Thu lại lần giao trước: {{ st.recoverExpected.foam }} thùng xốp, {{ st.recoverExpected.gel }} túi gel</p>
         <p v-if="st.failReason" class="ops-error">Không giao được: {{ data.failReasons[st.failReason] }}. Điều phối sẽ xử lý.</p>
         <p v-if="st.recovered && (st.recovered.foam || st.recovered.gel)" class="ops-ok">Đã thu {{ st.recovered.foam }} thùng xốp, {{ st.recovered.gel }} túi gel.</p>
+        <div v-if="st.status === 'delivered' && st.photo" class="sp-proof-photo" style="margin: 8px 0;">
+          <PhotoThumbnail :photo="st.photo" alt="Ảnh bằng chứng giao hàng" cls="receipt-photo" />
+        </div>
 
         <div class="sp-actions">
           <button class="ops-btn" type="button" :disabled="!canAct || st.status !== 'pending'" data-testid="sp-call" @click="call(st)">Gọi khách{{ st.calls ? ` (${st.calls})` : '' }}</button>
@@ -114,6 +117,7 @@ import { useLive } from '../../useLive';
 import { hhmm } from '../../format';
 import { STOP_PILL, STOP_STATUS, logisticsError, photoRequired, routeLabel } from '../../logisticsUi';
 import PhotoInput from '../../components/PhotoInput.vue';
+import PhotoThumbnail from '../../components/PhotoThumbnail.vue';
 
 const data = ref(null);
 const error = ref('');
@@ -129,8 +133,8 @@ const reason = ref('');
 const note = ref('');
 const busy = ref(false);
 
-const isShipper = computed(() => ctx.value.role === 'shipper');
-const canAct = computed(() => ['shipper', 'admin'].includes(ctx.value.role));
+const isShipper = computed(() => Boolean(ctx.value && ctx.value.role === 'shipper'));
+const canAct = computed(() => Boolean(ctx.value && ['shipper', 'admin'].includes(ctx.value.role)));
 
 async function load() {
   try {

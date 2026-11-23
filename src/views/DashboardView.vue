@@ -2,12 +2,23 @@
   <div class="dash-view">
     <div class="wrap">
       <!-- Chưa có khách: mời đăng nhập hoặc thiết kế gói -->
-      <section v-if="store.loaded && !store.isLoggedIn" class="pl-card gate">
+      <section v-if="store.loaded && !store.hasMovaSession" class="pl-card gate">
         <h1 class="pl-h1">Gói của tôi</h1>
         <p class="pl-lead">Đăng nhập bằng số điện thoại đã dùng khi đăng ký để xem các tuần giao, đổi món và Fresh Credit.</p>
         <div class="gate-btns">
           <button class="pl-btn primary" type="button" @click="store.openModal('login')">Đăng nhập</button>
           <router-link to="/plans" class="pl-btn">Thiết kế thực đơn và đăng ký gói</router-link>
+        </div>
+      </section>
+
+      <!-- Đã đăng nhập nhưng chưa có gói ăn/hồ sơ (tài khoản mới) -->
+      <section v-else-if="store.loaded && !store.account" class="pl-card gate">
+        <h1 class="pl-h1">Gói của tôi</h1>
+        <p class="pl-lead">
+          Tài khoản <b>{{ store.authUser?.phone || store.authUser?.email || 'của bạn' }}</b> chưa có gói ăn hoặc thực đơn nào.
+        </p>
+        <div class="gate-btns">
+          <router-link to="/plans" class="pl-btn primary">Thiết kế thực đơn và đăng ký gói</router-link>
         </div>
       </section>
 

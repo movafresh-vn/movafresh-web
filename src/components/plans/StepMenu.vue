@@ -3,7 +3,7 @@
     <header class="m-head">
       <h1 class="pl-h1">Bếp trưởng lên thực đơn trước</h1>
       <p class="pl-lead">
-        Đồng ý gửi câu trả lời khảo sát để Bếp trưởng chọn món trong danh mục MOVA. Nếu AI chưa sẵn sàng hoặc thiếu món, MOVA vẫn có thực đơn gợi ý theo khảo sát.
+        Đồng ý chia sẻ thông tin khảo sát để Bếp trưởng MOVA chọn món trong danh mục thực đơn. Nếu dịch vụ chưa sẵn sàng hoặc thiếu món, MOVA vẫn luôn có thực đơn gợi ý cân đối theo khảo sát.
       </p>
     </header>
 
@@ -18,14 +18,14 @@
     <p v-if="fallbackNotice" class="menu-fallback" role="status">{{ fallbackNotice }}</p>
     <p v-if="store.error" class="pl-error" role="alert">{{ store.error }}</p>
     <p v-if="!menuReady && !store.error" class="menu-gate" role="status">
-      Menu món ăn và giá đang ẩn. Hãy nhờ Bếp trưởng tạo thực đơn trước khi tiếp tục.
+      Thực đơn chi tiết đang chờ xếp món. Hãy nhờ Bếp trưởng gợi ý thực đơn trước khi tiếp tục.
     </p>
 
     <template v-if="menuReady && plan">
       <header class="m-head">
         <h2 class="pl-h1">Thực đơn tuần 1 của bạn</h2>
         <p class="pl-lead">
-          {{ fallbackNotice ? 'MOVA gợi ý' : 'Bếp trưởng đã chọn' }} {{ plan.meals_per_week }} bữa cho {{ plan.household_size }} người từ danh mục MOVA. Bạn có thể đổi món trước khi thanh toán.
+          {{ fallbackNotice ? 'MOVA gợi ý' : 'Bếp trưởng MOVA đã chọn' }} {{ plan.meals_per_week }} bữa cho {{ plan.household_size }} người từ danh mục đặc sản. Bạn có thể đổi món linh hoạt trước khi thanh toán.
         </p>
       </header>
 
@@ -101,7 +101,7 @@ const assistant = ref(null);
 const hasAiConfig = Boolean(import.meta.env.VITE_API_BASE_URL);
 const menuReady = ref(store.chefMenuApplied || !hasAiConfig);
 const fallbackNotice = ref(!store.chefMenuApplied && !hasAiConfig
-  ? 'Trợ lý Bếp trưởng chưa được cấu hình; đang dùng thực đơn MOVA gợi ý theo khảo sát.'
+  ? 'Dịch vụ Bếp trưởng chưa được cấu hình; đang dùng thực đơn MOVA gợi ý theo khảo sát.'
   : '');
 const behaviorTrackingEnabled = ref(false);
 const trackedSwapCount = ref(0);

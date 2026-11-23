@@ -155,7 +155,9 @@ export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
       ticket: (_ctx, { purpose, contentType }) => uploadTicket(purpose, contentType),
       /** Tải một ảnh (data URL) lên và trả đường dẫn trong kho. */
       photo: (_ctx, dataUrl, purpose) => uploadPhoto(dataUrl, purpose, { ticket: uploadTicket, fetchImpl }),
-      purposeOf: (opType) => PHOTO_PURPOSE[opType] || null
+      purposeOf: (opType) => PHOTO_PURPOSE[opType] || null,
+      /** Lấy URL ký sẵn để xem/tải ảnh từ kho riêng tư. */
+      signedUrl: (_ctx, path) => call('photoSignedUrl', { query: { path } }).then((d) => d.url)
     },
 
     costing: {

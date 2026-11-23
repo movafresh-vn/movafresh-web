@@ -70,7 +70,7 @@ const o = ref(null);
 const integrity = ref(null);
 const error = ref('');
 const tile = computed(() => (o.value ? integrityTile(integrity.value) : null));
-const modules = computed(() => modulesFor(session.value.role).filter((m) => m.name !== 'overview'));
+const modules = computed(() => (session.value ? modulesFor(session.value.role).filter((m) => m.name !== 'overview') : []));
 
 async function load() {
   try {

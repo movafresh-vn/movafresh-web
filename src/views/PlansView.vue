@@ -70,5 +70,14 @@ watch(step, async () => {
 </script>
 
 <style scoped>
-.plans { padding: 22px 0 56px; min-height: 70vh; }
+.plans {
+  padding: 22px 0 140px;
+  min-height: 70vh;
+}
+
+@media (max-width: 768px) {
+  .plans {
+    padding: 16px 0 180px;
+  }
+}
 </style>

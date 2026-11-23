@@ -71,6 +71,9 @@
         <h2><span class="ops-pill ops-pill-ok">ĐÃ XUẤT BẾN</span> lúc {{ fmtDeadline(new Date(state.departedAt)) }}</h2>
         <p>Nhiệt độ thùng xe {{ state.tempC }}°C · niêm phong <strong class="mono">{{ state.sealNo }}</strong>
           <span v-if="state.tempOk === false" class="ops-pill ops-pill-bad">vượt {{ chillMax }}°C</span></p>
+        <div v-if="state.photo" class="depart-photo-wrap">
+          <PhotoThumbnail :photo="state.photo" alt="Ảnh thùng xe và nhiệt kế" cls="receipt-photo" />
+        </div>
         <p v-if="state.missing.length" class="ops-error">Thiếu {{ state.missing.length }} thùng khi xuất: {{ state.missing.join(', ') }}</p>
       </section>
 
@@ -118,6 +121,7 @@ import { apply, hasUnsent } from '../../queue';
 import { boxes, loadState as state, scope, selDay, slotLabel, tripInfo, tripOrders, zoneName } from '../../factoryStore';
 import { hhmm } from '../../format';
 import PhotoInput from '../../components/PhotoInput.vue';
+import PhotoThumbnail from '../../components/PhotoThumbnail.vue';
 import { checkDepart, departOp } from '../../departRules';
 
 const chillMax = BUSINESS.temperature.chill.max;
