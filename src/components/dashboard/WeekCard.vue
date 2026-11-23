@@ -5,7 +5,7 @@
         <h2 class="pl-h2">Tuần {{ week.number }}</h2>
         <p class="when">
           <span v-for="(b, i) in week.boxes" :key="b.order_id">{{ i ? ' và ' : '' }}{{ b.delivery_label }}</span>
-          <span class="muted"> · {{ week.boxes[0].slot_label }}</span>
+          <span class="muted"> · {{ week.boxes?.[0]?.slot_label }}</span>
         </p>
       </div>
       <span class="status" :class="week.status">{{ week.status_label }}</span>
@@ -42,7 +42,7 @@
       </div>
       <div v-if="chargeText">
         <dt>{{ chargeText.label }}</dt>
-        <dd :class="{ bad: week.charge.state === 'failed' }">{{ chargeText.value }}</dd>
+        <dd :class="{ bad: week.charge?.state === 'failed' }">{{ chargeText.value }}</dd>
       </div>
     </dl>
 
@@ -62,15 +62,15 @@
       </li>
     </ul>
 
-    <ul v-if="week.boxes.length > 1 && week.boxes.some((b) => ['shipping', 'delivered'].includes(b.phase))" class="box-status" aria-label="Trạng thái từng thùng">
+    <ul v-if="week.boxes?.length > 1 && week.boxes.some((b) => ['shipping', 'delivered'].includes(b.phase))" class="box-status" aria-label="Trạng thái từng thùng">
       <li v-for="b in week.boxes" :key="'bs' + b.order_id" :data-phase="b.phase"><b>{{ b.delivery_label }}</b>: {{ b.phase_label }}</li>
     </ul>
 
-    <p v-for="b in week.boxes.filter((x) => x.delivery_issue)" :key="'iss' + b.order_id" class="pl-panel note issue" :data-issue="b.delivery_issue.kind">
+    <p v-for="b in (week.boxes || []).filter((x) => x.delivery_issue)" :key="'iss' + b.order_id" class="pl-panel note issue" :data-issue="b.delivery_issue.kind">
       <b>{{ b.delivery_issue.label }}</b><br />{{ b.delivery_issue.detail }}
     </p>
 
-    <div v-if="week.boxes.some((b) => b.photo_url)" class="proof" data-testid="delivery-proof">
+    <div v-if="week.boxes?.some((b) => b.photo_url)" class="proof" data-testid="delivery-proof">
       <figure v-for="b in week.boxes.filter((x) => x.photo_url)" :key="b.order_id">
         <template v-if="!imgFailed[b.order_id]">
           <img
@@ -97,8 +97,8 @@
     </div>
     <p v-else-if="week.status === 'delivered'" class="pl-note" data-testid="delivery-proof-pending">Ảnh giao hàng sẽ hiện ở đây khi shipper tải lên.</p>
 
-    <footer v-if="week.skip.allowed || skipHint" class="foot">
-      <button v-if="week.skip.allowed" class="pl-btn" type="button" @click="$emit('skip', week)">Tạm hoãn tuần này</button>
+    <footer v-if="week.skip?.allowed || skipHint" class="foot">
+      <button v-if="week.skip?.allowed" class="pl-btn" type="button" @click="$emit('skip', week)">Tạm hoãn tuần này</button>
       <p v-else-if="skipHint" class="pl-note">{{ skipHint }}</p>
     </footer>
   </article>
@@ -132,7 +132,7 @@ const chargeText = computed(() => {
 });
 
 // Chỉ nhắc lý do khi tuần còn đổi món được mà không tạm hoãn được (hết lượt)
-const skipHint = computed(() => (props.week.editable && props.week.skip.code === 'SKIP_LIMIT' ? props.week.skip.reason : ''));
+const skipHint = computed(() => (props.week.editable && props.week.skip?.code === 'SKIP_LIMIT' ? props.week.skip.reason : ''));
 </script>
 
 <style scoped>

@@ -64,7 +64,7 @@ async function load() {
   if (r.status !== 'success') return;
   const c = r.data;
   claimed.value = c.profile_reward_claimed;
-  form.value = { name: c.name, phone: c.phone, email: c.email, address: c.address, members: c.members.map((m) => ({ ...m })) };
+  form.value = { name: c.name || '', phone: c.phone || '', email: c.email || '', address: c.address || '', members: (c.members || []).map((m) => ({ ...m })) };
 }
 load();
 

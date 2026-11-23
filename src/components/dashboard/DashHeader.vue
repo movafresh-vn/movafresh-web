@@ -3,20 +3,20 @@
     <div class="u-info">
       <div class="u-avatar" aria-hidden="true">{{ initial }}</div>
       <div>
-        <h1>{{ c.name }}</h1>
-        <p class="muted">{{ c.phone }}<template v-if="c.zone_name"> · Khu {{ c.zone_name }}</template></p>
+        <h1>{{ c?.name }}</h1>
+        <p class="muted">{{ c?.phone }}<template v-if="c?.zone_name"> · Khu {{ c.zone_name }}</template></p>
       </div>
     </div>
     <div class="u-stats">
       <button type="button" class="stat" @click="$emit('tab', 'credit')">
         <small>Fresh Credit</small>
-        <b class="num">{{ fmt(store.balance.total_vnd) }}</b>
-        <span class="num">Tiền thật {{ fmt(store.balance.real_vnd) }}</span>
+        <b class="num">{{ fmt(store.balance?.total_vnd ?? 0) }}</b>
+        <span class="num">Tiền thật {{ fmt(store.balance?.real_vnd ?? 0) }}</span>
       </button>
       <div class="stat plain" v-if="sub">
         <small>Gói của bạn</small>
         <b>{{ statusText }}</b>
-        <span>{{ sub.slot_label }}</span>
+        <span>{{ sub?.slot_label }}</span>
       </div>
     </div>
   </header>
@@ -29,10 +29,10 @@ import { fmt } from '../../shared/utils/formatters';
 
 defineEmits(['tab']);
 const store = useMovaStore();
-const c = computed(() => store.account.customer);
-const sub = computed(() => store.account.subscription);
-const initial = computed(() => (c.value.name || 'K').trim().split(/\s+/).pop().charAt(0));
-const statusText = computed(() => (sub.value.status === 'active' ? `${sub.value.weeks} tuần` : 'Đã dừng'));
+const c = computed(() => store.account?.customer || {});
+const sub = computed(() => store.account?.subscription || null);
+const initial = computed(() => (c.value?.name || 'K').trim().split(/\s+/).pop().charAt(0));
+const statusText = computed(() => (sub.value?.status === 'active' ? `${sub.value?.weeks || 0} tuần` : 'Đã dừng'));
 </script>
 
 <style scoped>

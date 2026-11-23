@@ -1,7 +1,7 @@
 <template>
   <div v-if="data" class="rewards">
     <!-- Bảng số dư Fresh Credit đa năng -->
-    <section v-if="creditSum" class="pl-card fc-card">
+    <section v-if="creditSum?.balance" class="pl-card fc-card">
       <div class="fc-head">
         <div>
           <span class="wallet-badge">TÀI KHOẢN SUẤT ĂN TRẢ TRƯỚC</span>

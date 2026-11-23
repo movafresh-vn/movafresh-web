@@ -86,11 +86,11 @@
             <template v-if="preview.delta_vnd === 0">Giá tuần không đổi.</template>
             <template v-else>Chênh lệch: <b class="big">{{ preview.delta_vnd > 0 ? '+' : '−' }}{{ fmt(Math.abs(preview.delta_vnd)) }}</b></template>
           </p>
-          <p v-if="preview.settle.mode === 'charge'" class="num">
+          <p v-if="preview.settle?.mode === 'charge'" class="num">
             Tuần này đã bị trừ tiền, nên phần chênh lệch trừ thêm vào Fresh Credit:
             còn <b>{{ fmt(preview.settle.balance_before_vnd) }}</b> → <b>{{ fmt(preview.settle.balance_after_vnd) }}</b>.
           </p>
-          <p v-else-if="preview.settle.mode === 'refund'" class="num">
+          <p v-else-if="preview.settle?.mode === 'refund'" class="num">
             Tuần này đã bị trừ tiền, nên MOVA hoàn phần chênh lệch vào Fresh Credit:
             từ <b>{{ fmt(preview.settle.balance_before_vnd) }}</b> lên <b>{{ fmt(preview.settle.balance_after_vnd) }}</b>.
           </p>
@@ -99,13 +99,13 @@
           </p>
         </div>
 
-        <p v-if="!preview.settle.enough" class="pl-error" role="alert">
+        <p v-if="preview.settle && !preview.settle.enough" class="pl-error" role="alert">
           Fresh Credit còn thiếu {{ fmt(preview.settle.short_vnd) }} cho phần chênh lệch này. Nạp thêm rồi đổi lại, hoặc chọn món khác.
         </p>
         <p v-if="error" class="pl-error" role="alert">{{ error }}</p>
 
         <div class="btns">
-          <button v-if="preview.settle.enough" class="pl-btn primary" type="button" :disabled="busy" @click="confirm">Xác nhận đổi món</button>
+          <button v-if="!preview.settle || preview.settle.enough" class="pl-btn primary" type="button" :disabled="busy" @click="confirm">Xác nhận đổi món</button>
           <button v-else class="pl-btn orange" type="button" @click="topup">Nạp thêm Fresh Credit</button>
           <button class="pl-btn" type="button" @click="preview = null">Chọn món khác</button>
         </div>

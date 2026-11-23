@@ -25,7 +25,7 @@
           :aria-pressed="w.week_index === selected" @click="selected = w.week_index"
         >
           <b>Tuần {{ w.number }}</b>
-          <span class="d">{{ shortDate(w.boxes[0].delivery_date) }}</span>
+          <span class="d">{{ w.boxes?.[0]?.delivery_date ? shortDate(w.boxes[0].delivery_date) : '' }}</span>
           <span class="s">{{ w.status_label }}</span>
         </button>
       </nav>
@@ -52,7 +52,7 @@
             💳 Hủy liên kết thẻ/ví đối tác
           </button>
           <button
-            v-if="current && current.skip && current.skip.allowed"
+            v-if="current?.skip?.allowed"
             class="pl-btn ghost"
             type="button"
             @click="skipping = current"

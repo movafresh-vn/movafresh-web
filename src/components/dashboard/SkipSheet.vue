@@ -42,7 +42,7 @@ const busy = ref(false);
 
 onMounted(async () => {
   const p = await api.customer.previewSkip(req);
-  if (p.status === 'error') loadError.value = p.error.message;
+  if (p.status === 'error') loadError.value = p.error?.message || 'Không thể tải thông tin tạm hoãn';
   else preview.value = p.data;
 });
 
@@ -51,7 +51,7 @@ async function confirm() {
   const r = await api.customer.skipWeek(req);
   busy.value = false;
   if (r.status === 'error') {
-    error.value = r.error.message;
+    error.value = r.error?.message || 'Có lỗi xảy ra khi tạm hoãn';
     return;
   }
   await store.refresh();

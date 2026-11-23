@@ -10,10 +10,10 @@
           <div class="row">
             <span class="dn">{{ d.name }}</span>
             <span class="thumbs">
-              <button type="button" class="thumb" :class="{ on: d.rating && d.rating.thumb === 'up' }" :aria-pressed="Boolean(d.rating && d.rating.thumb === 'up')" :aria-label="`Thích ${d.name}`" @click="rate(o, d, { thumb: 'up' })">
+              <button type="button" class="thumb" :class="{ on: d.rating?.thumb === 'up' }" :aria-pressed="Boolean(d.rating?.thumb === 'up')" :aria-label="`Thích ${d.name}`" @click="rate(o, d, { thumb: 'up' })">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4v-9h3zM7 11l4-8a2 2 0 0 1 2 2v4h6a2 2 0 0 1 2 2.3l-1.3 7A2 2 0 0 1 17.7 20H7"/></svg>
               </button>
-              <button type="button" class="thumb down" :class="{ on: d.rating && d.rating.thumb === 'down' }" :aria-pressed="Boolean(d.rating && d.rating.thumb === 'down')" :aria-label="`Chưa thích ${d.name}`" @click="rate(o, d, { thumb: 'down' })">
+              <button type="button" class="thumb down" :class="{ on: d.rating?.thumb === 'down' }" :aria-pressed="Boolean(d.rating?.thumb === 'down')" :aria-label="`Chưa thích ${d.name}`" @click="rate(o, d, { thumb: 'down' })">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 13V4h3v9h-3zM17 13l-4 8a2 2 0 0 1-2-2v-4H5a2 2 0 0 1-2-2.3l1.3-7A2 2 0 0 1 6.3 4H17"/></svg>
               </button>
             </span>
@@ -21,11 +21,11 @@
           <div v-if="d.sauce_code" class="taste">
             <div class="grp" role="group" :aria-label="`Vị ${d.sauce_name}`">
               <span class="gl">Xốt: {{ d.sauce_name }}</span>
-              <button v-for="s in SALT" :key="s.id" type="button" class="pl-chip sm" :class="{ on: d.rating && d.rating.sauce_salt === s.id }" :aria-pressed="Boolean(d.rating && d.rating.sauce_salt === s.id)" @click="rate(o, d, { sauce_salt: s.id })">{{ s.label }}</button>
+              <button v-for="s in SALT" :key="s.id" type="button" class="pl-chip sm" :class="{ on: d.rating?.sauce_salt === s.id }" :aria-pressed="Boolean(d.rating?.sauce_salt === s.id)" @click="rate(o, d, { sauce_salt: s.id })">{{ s.label }}</button>
             </div>
             <div class="grp" role="group" aria-label="Độ cay">
               <span class="gl">Cay</span>
-              <button v-for="s in SPICE" :key="s.id" type="button" class="pl-chip sm" :class="{ on: d.rating && d.rating.spice === s.id }" :aria-pressed="Boolean(d.rating && d.rating.spice === s.id)" @click="rate(o, d, { spice: s.id })">{{ s.label }}</button>
+              <button v-for="s in SPICE" :key="s.id" type="button" class="pl-chip sm" :class="{ on: d.rating?.spice === s.id }" :aria-pressed="Boolean(d.rating?.spice === s.id)" @click="rate(o, d, { spice: s.id })">{{ s.label }}</button>
             </div>
           </div>
         </li>
