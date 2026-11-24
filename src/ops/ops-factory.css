@@ -105,7 +105,7 @@
   text-decoration: none;
   white-space: nowrap;
 }
-.ops-subtab.active { background: var(--ink); border-color: var(--ink); color: var(--white); }
+.ops-subtab.active { background: var(--brown-soft); border-color: var(--brown-line); color: var(--ink); }
 
 /* Thanh tiến độ */
 .ops-bar-track { height: 12px; border-radius: 999px; background: var(--line-2); overflow: hidden; margin: 6px 0; }
@@ -185,7 +185,7 @@
 /* Đóng gói */
 .seg { display: flex; gap: 8px; margin: 8px 0 12px; }
 .seg-btn { flex: 1; min-height: 56px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); font-weight: 700; cursor: pointer; }
-.seg-btn.on { background: var(--ink); border-color: var(--ink); color: var(--white); }
+.seg-btn.on { background: var(--brown-soft); border-color: var(--brown-line); color: var(--ink); }
 .batch-line { padding: 12px 0; border-top: 1px solid var(--line-2); }
 .batch-line-head { display: grid; gap: 6px; }
 .batch-form { margin-top: 8px; padding: 12px; border-radius: 12px; background: var(--bg); }

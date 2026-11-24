@@ -79,7 +79,7 @@
 .ops .sp-stop.s-delivered { background: var(--green-tint); opacity: .85; }
 .ops .sp-stop.s-failed { background: var(--red-soft); border-color: var(--red-line); }
 .ops .sp-stop-top { display: flex; align-items: center; gap: 10px; }
-.ops .sp-seq { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: var(--white); font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.ops .sp-seq { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--brown-soft); border: 1px solid var(--brown-line); color: var(--ink); font-weight: 800; display: flex; align-items: center; justify-content: center; }
 .ops .sp-who2 { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .ops .sp-who2 strong { overflow-wrap: anywhere; }
 .ops .sp-addr { margin: 8px 0 2px; font-size: 18px; }

@@ -2,7 +2,7 @@
   <div class="ops">
     <header v-if="session" class="ops-bar ops-noprint">
       <div class="ops-brand">
-        <BrandLogo class="ops-bar-logo" variant="onBrown" :width="84" label="MOVA FRESH Vận hành" />
+        <BrandLogo class="ops-bar-logo" variant="onWhite" :width="84" label="MOVA FRESH Vận hành" />
         <span class="ops-role">{{ session.label }}</span>
       </div>
       <div class="ops-clock" :title="'Giờ nghiệp vụ theo máy chủ'" data-testid="ops-clock">
