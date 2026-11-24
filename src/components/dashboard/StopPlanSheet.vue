@@ -4,7 +4,7 @@
       <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng">×</button>
       <h2 id="stop-title" class="pl-h2">{{ p && p.unpaid ? 'Hủy gói chưa thanh toán?' : 'Dừng gói?' }}</h2>
 
-      <p v-if="loading" class="pl-note" style="text-align: center; padding: 24px 0;">Đang tính toán số bữa và số tiền hoàn lại...</p>
+      <p v-if="loading" class="pl-note" style="text-align: center; padding: 24px 0;">Đang tải thông tin hủy hoặc dừng gói...</p>
       <p v-else-if="loadError" class="pl-error" role="alert">{{ loadError }}</p>
       <!-- Gói chưa trả tuần nào: hủy thẳng, không có bảng hoàn tiền -->
       <template v-else-if="p && p.unpaid">
@@ -118,7 +118,7 @@ async function confirm() {
     }
     await store.refresh();
     const refundText = r.data?.refund_vnd ? ` MOVA hoàn ${fmt(r.data.refund_vnd)} trong 7 ngày làm việc.` : '';
-    store.toast(p.value && p.value.unpaid ? 'Đã hủy gói chưa thanh toán.' : `Đã dừng gói.${refundText}`);
+    store.toast(r.data?.unpaid ? 'Đã hủy gói chưa thanh toán.' : `Đã dừng gói.${refundText}`);
     emit('done', r.data);
   } catch (err) {
     error.value = err?.message || 'Có lỗi khi xử lý dừng gói.';

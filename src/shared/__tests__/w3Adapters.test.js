@@ -56,6 +56,13 @@ describe('W3-03: bộ chuyển đổi phản hồi backend sang hình dạng mà
     expect(adaptCancelResult(raw)).toMatchObject({ refund_vnd: 600_000, weeks_cancelled: 3, refund_days_commitment: 7 });
   });
 
+  it('gói chưa thanh toán chỉ được coi là hủy thẳng khi máy chủ xác nhận unpaid', () => {
+    const raw = { cancelled_weeks: 4, kept_weeks: 0, refund_vnd: 0, promo_forfeited_vnd: 0, discount_clawback_vnd: 0, has_paid_weeks: false, unpaid: true };
+    expect(adaptCancelPreview(raw)).toMatchObject({ unpaid: true, has_paid_weeks: false });
+    expect(adaptCancelResult(raw)).toMatchObject({ unpaid: true, refund_vnd: 0 });
+    expect(adaptCancelPreview({ ...raw, unpaid: false })).toMatchObject({ unpaid: false, has_paid_weeks: false });
+  });
+
   it('W3-03: lời mời gia hạn: tổng tiền, cách trả, các tuần với nhãn giờ', () => {
     const r = adaptRenewalOffer({ due: true, remaining_weeks: 1, weeks: [{ week_index: 5, delivery_date: '2027-01-05', charge_at: '2027-01-02T00:00:00.000Z', cutoff_at: '2027-01-03T01:00:00.000Z', amount_vnd: 700_000 }], total_vnd: 700_000, payment_method: 'fresh_credit', switched_from_bank: true, needs_credit: true, balance: { real_vnd: 1, promo_vnd: 2, total_vnd: 3 } });
     expect(r).toMatchObject({ due: true, total_vnd: 700_000, switched_from_bank: true, balance: { total_vnd: 3 } });

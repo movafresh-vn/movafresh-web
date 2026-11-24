@@ -158,7 +158,7 @@
     <section class="pl-card sec">
       <h2 class="pl-h2">3. Thanh toán</h2>
       <!-- Máy chủ báo chưa liên kết thẻ/ví (PAYMENT_TOKEN_REQUIRED): giữ nguyên danh sách phương thức, đưa nút liên kết -->
-      <div v-if="preview && store.cardLinkNeeded" class="pl-panel warn" role="alert" data-testid="card-link-needed">
+      <div v-if="store.cardLinkNeeded" class="pl-panel warn" role="alert" data-testid="card-link-needed">
         <p>{{ cardNotice }}</p>
         <button class="pl-btn primary sm-btn" type="button" @click="linkOpen = true">Liên kết thẻ/ví đối tác</button>
       </div>
@@ -169,14 +169,14 @@
       <p v-else-if="!preview && store.error" class="pl-error" role="alert">{{ store.error }}</p>
       <p v-else-if="!preview" class="pl-note">Chọn ngày và khung giờ giao để xem số tiền chi tiết.</p>
 
-      <div v-else class="methods" role="radiogroup" aria-label="Hình thức thanh toán">
+      <div class="methods" role="radiogroup" aria-label="Hình thức thanh toán">
         <!-- a. Fresh Credit -->
         <div class="method" :class="{ on: c.method === 'fresh_credit' }">
           <button type="button" role="radio" :aria-checked="c.method === 'fresh_credit'" class="m-head" @click="setMethod('fresh_credit')">
             <span class="radio" :class="{ on: c.method === 'fresh_credit' }"></span>
             <span class="m-title">Gói Suất ăn trả trước (Fresh Credit) <span class="pl-pill">Ưu đãi chiết khấu khi mua gói</span></span>
           </button>
-          <div v-if="c.method === 'fresh_credit'" class="m-body">
+          <div v-if="preview && c.method === 'fresh_credit'" class="m-body">
             <p v-if="fc.covered" class="pl-panel good" data-testid="credit-covered">
               Fresh Credit hiện có <b class="num">{{ fmt(fc.balance_vnd) }}</b> đủ trả tuần 1 (<b class="num">{{ fmt(fc.week1_payable_vnd) }}</b>). Bạn không cần mua thêm.
             </p>
@@ -213,9 +213,9 @@
         <div class="method" :class="{ on: c.method === 'bank_transfer_4w' }">
           <button type="button" role="radio" :aria-checked="c.method === 'bank_transfer_4w'" class="m-head" @click="setMethod('bank_transfer_4w')">
             <span class="radio" :class="{ on: c.method === 'bank_transfer_4w' }"></span>
-            <span class="m-title">Chuyển khoản VietQR một lần cho cả {{ preview.cycle_weeks.length }} tuần</span>
+            <span class="m-title">Chuyển khoản VietQR một lần cho cả chu kỳ<template v-if="preview"> {{ preview.cycle_weeks.length }} tuần</template></span>
           </button>
-          <div v-if="c.method === 'bank_transfer_4w'" class="m-body bank">
+          <div v-if="preview && c.method === 'bank_transfer_4w'" class="m-body bank">
             <div v-if="preview.payment_ref" class="qr"><VietQrSvg :seed="qrSeed" /></div>
             <div class="bank-info">
               <p>Số tiền: <b class="num big">{{ fmt(preview.bank_transfer_4w.pay_vnd) }}</b></p>
@@ -239,9 +239,9 @@
                 <b>Cam kết minh bạch:</b> Bạn có thể hủy liên kết thẻ/ví đối tác bất kỳ lúc nào chỉ với 1 chạm tại trang quản lý gói.
               </div>
             </div>
-            <p class="pl-note" data-testid="card-state">{{ store.cardLinkNeeded ? 'Chưa liên kết thẻ/ví đối tác.' : '✓ Đã liên kết thẻ/ví đối tác.' }}</p>
-            <button class="pl-btn outline sm-btn" type="button" data-testid="link-card-open" @click="linkOpen = true">{{ store.cardLinkNeeded ? 'Liên kết thẻ/ví đối tác' : 'Quản lý liên kết thẻ/ví' }}</button>
-            <ul class="charges">
+            <p v-if="store.cardLinkNeeded || preview" class="pl-note" data-testid="card-state">{{ store.cardLinkNeeded ? 'Chưa liên kết thẻ/ví đối tác.' : '✓ Đã liên kết thẻ/ví đối tác.' }}</p>
+            <button class="pl-btn outline sm-btn" type="button" data-testid="link-card-open" @click="linkOpen = true">{{ store.cardLinkNeeded ? 'Liên kết thẻ/ví đối tác' : preview ? 'Quản lý liên kết thẻ/ví' : 'Liên kết hoặc quản lý thẻ/ví' }}</button>
+            <ul v-if="preview" class="charges">
               <li v-for="(ch, i) in preview.card.charges" :key="i">
                 <span>{{ ch.now ? 'Hôm nay' : fmtDeadline(new Date(ch.charge_at)) }}<small class="muted"> · tuần {{ ch.week_index + 1 }}</small></span>
                 <b class="num">{{ fmt(ch.amount_vnd) }}</b>
@@ -391,7 +391,7 @@
       <button class="pl-btn orange" type="button" :disabled="problems.length > 0 || busy" @click="pay">{{ payLabel }}</button>
     </section>
 
-    <LinkCardSheet v-if="linkOpen" :linked="!store.cardLinkNeeded && c.method === 'card'" @close="linkOpen = false" @linked="onCardLinked" @unlinked="onCardUnlinked" />
+    <LinkCardSheet v-if="linkOpen" :linked="Boolean(preview) && !store.cardLinkNeeded && c.method === 'card'" @close="linkOpen = false" @linked="onCardLinked" @unlinked="onCardUnlinked" />
 
     <!-- Modal xác thực OTP -->
     <div v-if="showOtpModal" class="otp-modal-backdrop" @click.self="showOtpModal = false">
