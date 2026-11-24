@@ -577,7 +577,7 @@ async function openOtpModal() {
   phoneErr.value = '';
   const cleanPhone = phoneValue.value;
   if (!cleanPhone) {
-    phoneErr.value = 'Vui lòng nhập số điện thoại hợp lệ (chọn đúng mã vùng, hoặc gõ đủ dạng +81 90 1234 5678) trước khi xác thực OTP';
+    phoneErr.value = 'Vui lòng nhập số điện thoại hợp lệ (chọn đúng mã vùng, hoặc gõ đủ dạng +81 90 5678 9012) trước khi xác thực OTP';
     return;
   }
   otpInput.value = '';

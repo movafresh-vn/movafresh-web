@@ -298,6 +298,20 @@ function submitNewsletter() {
     gap: 28px;
   }
 }
+@media (max-width: 640px) {
+  .newsletter-card {
+    padding: 16px;
+    gap: 14px;
+  }
+  .newsletter-form {
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+  }
+  .nl-btn {
+    width: 100%;
+  }
+}
 @media (max-width: 560px) {
   .footer-grid {
     grid-template-columns: 1fr;

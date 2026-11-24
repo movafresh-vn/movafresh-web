@@ -412,7 +412,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
      */
     async recoverTokenRequired() {
       recoverFromTokenRequired(this.checkout);
-      clearPersistedPaymentChoice();
+      clearPersistedPaymentChoice(typeof localStorage !== 'undefined' ? localStorage : null);
       this.cardLinkNeeded = true;
       this.persist();
       await this.loadPreview(true);
@@ -458,7 +458,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
           }
           if (kind === PAYMENT_TOKEN_REQUIRED) {
             recoverFromTokenRequired(c);
-            clearPersistedPaymentChoice();
+            clearPersistedPaymentChoice(typeof localStorage !== 'undefined' ? localStorage : null);
             this.cardLinkNeeded = true;
             this.persist();
           }

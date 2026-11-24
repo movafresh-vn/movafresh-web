@@ -37,24 +37,27 @@ describe('W2-05: số tiền ở bước thanh toán do máy chủ tính', () =>
   });
 
   it('W2-05: Fresh Credit: chọn gói nhỏ nhất đủ phần còn thiếu; đủ số dư thì không phải mua; gói lớn hơn là lựa chọn thêm', () => {
-    const need = adaptPreview(raw(), { perWeek: 1, packs: PACKS, balanceVnd: 0 }).fresh_credit;
+    const need = adaptPreview(raw({ week1_payable_vnd: 3_600_000 }), { perWeek: 1, packs: PACKS, balanceVnd: 0 }).fresh_credit;
     // Gói 4 tuần (1,65 triệu) và gói gia đình (3,1 triệu) nhận được ít hơn 3,6 triệu cần có: gói đủ nhỏ nhất là gói 13 tuần
     expect(need).toMatchObject({ covered: false, need_vnd: 3_600_000, pack_id: 'nutrition_13w', pay_vnd: 6_000_000, credit_received_vnd: 6_900_000 });
     expect(need.packs).toEqual([]);
   });
 
   it('W2-05: chọn gói theo giá trị nhận được (không theo giá trả) và số dư hiện có được trừ trước', () => {
-    const partial = adaptPreview(raw(), { perWeek: 1, packs: PACKS, balanceVnd: 1_000_000 }).fresh_credit;
+    const partial = adaptPreview(raw({ week1_payable_vnd: 3_600_000 }), { perWeek: 1, packs: PACKS, balanceVnd: 1_000_000 }).fresh_credit;
     expect(partial).toMatchObject({ need_vnd: 2_600_000, pack_id: 'family_4w' });
     expect(partial.packs.map((p) => p.pack_id)).toEqual(['nutrition_13w']);
-    const covered = adaptPreview(raw(), { perWeek: 1, packs: PACKS, balanceVnd: 5_000_000 }).fresh_credit;
+    const covered = adaptPreview(raw({ week1_payable_vnd: 3_600_000 }), { perWeek: 1, packs: PACKS, balanceVnd: 5_000_000 }).fresh_credit;
     expect(covered).toMatchObject({ covered: true, pay_vnd: 0, pack_id: null, need_vnd: 0 });
     expect(pickPacks([], 100).exact).toBeNull();
+    // Quy tắc mới: chỉ cần đủ tiền tuần 1 (900.000đ): số dư 1.000.000đ là đã đủ (covered = true)
+    const week1Covered = adaptPreview(raw(), { perWeek: 1, packs: PACKS, balanceVnd: 1_000_000 }).fresh_credit;
+    expect(week1Covered.covered).toBe(true);
   });
 
   it('W2-05: store: số phải trả khi dùng Fresh Credit là giá gói đang chọn; chọn gói lớn hơn đổi số tiền', () => {
     const s = usePlanFlowStore();
-    s.preview = adaptPreview(raw(), { perWeek: 1, packs: PACKS, balanceVnd: 1_000_000 });
+    s.preview = adaptPreview(raw({ week1_payable_vnd: 3_600_000 }), { perWeek: 1, packs: PACKS, balanceVnd: 1_000_000 });
     expect(s.selectedPackId()).toBe('family_4w');
     expect(s.selectedTopupPay()).toBe(2_800_000);
     s.checkout.packId = 'nutrition_13w';
@@ -83,7 +86,7 @@ describe('W2-05: số tiền ở bước thanh toán do máy chủ tính', () =>
     cust.previewSubscription.mockResolvedValue({ status: 'success', data: { ok: true } });
     await s.loadPreview();
     expect(cust.previewSubscription.mock.calls[0][0]).toMatchObject({ referral_code: 'MOVA-AB12', payment_method: 'fresh_credit' });
-    s.preview = adaptPreview(raw(), { perWeek: 1, packs: PACKS, balanceVnd: 1_000_000 });
+    s.preview = adaptPreview(raw({ week1_payable_vnd: 3_600_000 }), { perWeek: 1, packs: PACKS, balanceVnd: 1_000_000 });
     cust.topUpCredit.mockResolvedValue({ status: 'success', data: { transfer_content: 'MOVA-X', pay_vnd: 2_800_000 } });
     const o = await s.orderSelectedPack();
     expect(cust.topUpCredit).toHaveBeenCalledWith({ pack_id: 'family_4w' });

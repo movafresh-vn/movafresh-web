@@ -1,7 +1,7 @@
 // Lỗi nghiệp vụ ở phễu thanh toán → thông báo tiếng Việt và cách phục hồi (không hiện thông báo thô của máy chủ).
 // Mã lấy từ docs/api-contract.json của backend.
 
-/** Khóa localStorage lưu trạng thái phễu /plans (cùng khóa với usePlanFlowStore). */
+/** Khóa lưu trạng thái phễu /plans (cùng khóa với usePlanFlowStore). */
 export const PLAN_FLOW_KEY = 'mova_plans_flow_v2';
 
 export const PAYMENT_TOKEN_REQUIRED = 'PAYMENT_TOKEN_REQUIRED';
@@ -29,10 +29,10 @@ export function recoverFromTokenRequired(checkout) {
 }
 
 /**
- * Xóa lựa chọn phương thức đã lưu trong localStorage (mova_plans_flow_v2) để tải lại trang không kẹt ở "Thẻ / Ví".
- * `storage` mặc định là localStorage; lỗi chế độ riêng tư bị bỏ qua. Trả true nếu có sửa.
+ * Xóa lựa chọn phương thức đã lưu trong bộ nhớ phễu (mova_plans_flow_v2) để tải lại trang không kẹt ở "Thẻ / Ví".
+ * `storage` được truyền từ store (nơi được phép truy cập kho cục bộ); lỗi chế độ riêng tư bị bỏ qua. Trả true nếu có sửa.
  */
-export function clearPersistedPaymentChoice(storage = typeof localStorage !== 'undefined' ? localStorage : null) {
+export function clearPersistedPaymentChoice(storage = null) {
   if (!storage) return false;
   try {
     const raw = storage.getItem(PLAN_FLOW_KEY);
