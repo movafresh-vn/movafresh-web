@@ -6,8 +6,8 @@ export function checkYieldInput({ skuId, rawKg, netKg }) {
   if (!skuId) return 'Chọn nguyên liệu.';
   const raw = toGrams(rawKg);
   const net = toGrams(netKg);
-  if (!(raw > 0)) return 'Nhập khối lượng nguyên liệu thô nhận vào (kg).';
-  if (!(net > 0)) return 'Nhập khối lượng thành phẩm sau sơ chế (kg).';
+  if (!(raw > 0)) return 'Khối lượng nguyên liệu thô nhận vào phải lớn hơn 0 kg.';
+  if (!(net > 0)) return 'Khối lượng thành phẩm sau sơ chế phải lớn hơn 0 kg.';
   if (net > raw) return 'Thành phẩm không thể nặng hơn nguyên liệu thô.';
   return '';
 }
