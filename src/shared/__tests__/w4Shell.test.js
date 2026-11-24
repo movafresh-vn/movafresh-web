@@ -44,6 +44,19 @@ describe('W4-01: app vận hành chặn theo hồ sơ nhân viên của máy ch�
     expect(modulesFor('workshop').map((m) => m.name)).toEqual(['workshop']);
   });
 
+  it('W4-01: truy xuất là phân hệ riêng, không còn là tab con của kho phụ', () => {
+    expect(mod('trace').roles).toEqual(['hub', 'purchasing', 'admin']);
+    expect(modulesFor('admin').map((m) => m.name)).toContain('trace');
+    expect(modulesFor('hub').map((m) => m.name)).toContain('trace');
+    expect(modulesFor('purchasing').map((m) => m.name)).toContain('trace');
+    const router = read('ops/router.js');
+    expect(router).toMatch(/trace:\s*\(\)\s*=> import\('\.\/views\/hub\/TraceView\.vue'\)/);
+    expect(router).toMatch(/path:\s*'\/kho\/truy-xuat',\s*redirect:\s*'\/truy-xuat'/);
+    const hubLayout = read('ops/views/hub/HubLayout.vue');
+    expect(hubLayout).not.toContain('/kho/truy-xuat');
+    expect(hubLayout).not.toContain("title: 'Truy xuất'");
+  });
+
   it('W4-01: router dùng guardNavigation và các màn mới có route + quyền; không còn tra PIN hay vai trò cứng', () => {
     const router = read('ops/router.js');
     expect(router).toMatch(/router\.beforeEach\(\(to\) => guardNavigation\(session\.value, to, \{ dev: devToolsEnabled\(\) \}\)\)/);

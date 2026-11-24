@@ -2,7 +2,7 @@
   <section class="proc">
     <nav class="ops-subnav ops-noprint" aria-label="Mua hàng">
       <RouterLink v-for="t in tabs" :key="t.to" :to="t.to" class="ops-subtab" exact-active-class="active" :data-tab="t.key">{{ t.title }}</RouterLink>
-      <RouterLink v-if="canKho" to="/kho" class="ops-subtab" data-tab="kho">Kho &amp; truy xuất →</RouterLink>
+      <RouterLink v-if="canKho" to="/kho" class="ops-subtab" data-tab="kho">Kho phụ TP.HCM →</RouterLink>
     </nav>
     <RouterView />
   </section>

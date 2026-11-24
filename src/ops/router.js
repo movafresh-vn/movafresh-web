@@ -20,7 +20,7 @@ import { guardNavigation } from './guard';
 import { ROLES } from '../shared/config/roles';
 
 // Màn thật: tổng quan founder (P2D), kế hoạch (P2A), cổng nhà cung cấp (P2B), giao hàng (P2C), giám sát nhà cung cấp (P2D). ModuleView chỉ còn là dự phòng.
-const COMPONENTS = { overview: HomeView, plan: PlanView, 'late-payments': LatePaymentsView, supplier: SupplierPortalView, shipper: ShipperView, monitoring: ScorecardView };
+const COMPONENTS = { overview: HomeView, plan: PlanView, 'late-payments': LatePaymentsView, supplier: SupplierPortalView, shipper: ShipperView, monitoring: ScorecardView, trace: () => import('./views/hub/TraceView.vue') };
 
 const workshopChildren = [
   { path: '', name: 'workshop', component: () => import('./views/workshop/TodayView.vue') },
@@ -32,7 +32,7 @@ const workshopChildren = [
   { path: 'bao-thieu', name: 'workshop-shortage', component: () => import('./views/workshop/ShortageView.vue') }
 ];
 
-// P2B: mua hàng (đơn mua, nhà cung cấp, SKU, bảng giá, dự báo, công nợ, mua trực tiếp, cài đặt) và kho phụ (nhận hàng, tồn kho, truy xuất, thu hồi)
+// P2B: mua hàng (đơn mua, nhà cung cấp, SKU, bảng giá, dự báo, công nợ, mua trực tiếp, cài đặt) và kho phụ (nhận hàng, tồn kho, thu hồi)
 const purchasingChildren = [
   { path: '', name: 'purchasing', component: () => import('./views/purchasing/PoView.vue') },
   { path: 'nha-cung-cap', name: 'purchasing-suppliers', component: () => import('./views/purchasing/SuppliersView.vue'), meta: { roles: ['purchasing', 'admin'] } },
@@ -47,7 +47,6 @@ const purchasingChildren = [
 const hubChildren = [
   { path: '', name: 'hub', component: () => import('./views/hub/ReceiveGoodsView.vue') },
   { path: 'ton-kho', name: 'hub-stock', component: () => import('./views/hub/StockView.vue') },
-  { path: 'truy-xuat', name: 'hub-trace', component: () => import('./views/hub/TraceView.vue') },
   { path: 'thu-hoi', name: 'hub-recall', component: () => import('./views/hub/RecallView.vue') },
   // P2C: nhận xe lạnh, ghép hải sản, chia khung giờ / tuyến, xuất kho
   { path: 'nhan-xe', name: 'hub-arrival', component: () => import('./views/hub/ArrivalView.vue'), meta: { roles: ['hub', 'admin'] } },
@@ -91,6 +90,7 @@ const routes = [
   { path: '/login', name: 'login', component: LoginView },
   { path: '/demo', name: 'demo', component: DemoView, meta: { module: MODULES.find((m) => m.name === 'demo') } },
   ...moduleRoutes,
+  { path: '/kho/truy-xuat', redirect: '/truy-xuat' },
   { path: '/', redirect: () => (session.value ? ROLES[session.value.role].home : '/login') },
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ];

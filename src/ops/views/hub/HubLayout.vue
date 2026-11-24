@@ -22,7 +22,7 @@ import BrandLogo from '../../../components/common/BrandLogo.vue';
 const route = useRoute();
 const router = useRouter();
 
-// Nhận hàng, tồn kho, truy xuất & thu hồi (P2B); nhận xe, ghép hải sản, chia khung / tuyến, xuất kho (P2C).
+// Nhận hàng, tồn kho & thu hồi (P2B); nhận xe, ghép hải sản, chia khung / tuyến, xuất kho (P2C).
 const ALL = [
   { key: 'receive', to: '/kho', title: 'Nhận hàng', roles: ['hub', 'purchasing', 'admin'] },
   { key: 'arrival', to: '/kho/nhan-xe', title: 'Nhận xe', roles: ['hub', 'admin'] },
@@ -30,7 +30,6 @@ const ALL = [
   { key: 'sort', to: '/kho/chia-tuyen', title: 'Chia khung/tuyến', roles: ['hub', 'admin', 'dispatch'] },
   { key: 'dispatch', to: '/kho/xuat-kho', title: 'Xuất kho', roles: ['hub', 'admin'] },
   { key: 'stock', to: '/kho/ton-kho', title: 'Tồn kho', roles: ['hub', 'purchasing', 'admin'] },
-  { key: 'trace', to: '/kho/truy-xuat', title: 'Truy xuất', roles: ['hub', 'purchasing', 'admin'] },
   { key: 'recall', to: '/kho/thu-hoi', title: 'Thu hồi lô', roles: ['hub', 'purchasing', 'admin'] }
 ];
 
