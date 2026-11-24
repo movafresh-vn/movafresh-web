@@ -136,7 +136,7 @@ export function createPlanDrafts({ cfg = BUSINESS, storage = localDraftStorage()
           carb_dish: dishOut(m.dishes.carb, size), dessert: dishOut(m.dishes.dessert, size)
         },
         highlight_sauce: protein.sauce && SAUCES[protein.sauce] ? { code: protein.sauce, name: SAUCES[protein.sauce].name } : null,
-        carb_choices: carbOptionsFor(m).map((id) => ({ dish_id: id, name: DISHES[id].name })),
+        carb_choices: carbOptionsFor(m, profile.restrictions).map((id) => ({ dish_id: id, name: DISHES[id].name })),
         nutrition_summary: { calories_total: n.kcal, protein_g: n.protein, carbs_g: n.carb, fat_g: n.fat },
         price_vnd: mealPriceVnd(m, size)
       };

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { aiMealsToBase, createPlanDrafts, profileGoalsFor } from '../api/planDraft';
 import { DISHES } from '../data/catalog';
+import { allowedDishes, swapOptionsFor } from '../domain/mealPlan';
 
 const store = () => { let v = { profiles: {}, plans: {} }; return { read: () => v, write: (x) => { v = x; } }; };
 const NOW = new Date('2026-11-23T01:00:00.000Z');
@@ -13,6 +14,43 @@ const setup = (e) => {
 };
 
 describe('W1-07: bản nháp thực đơn ở trình duyệt (kiểm lại ở máy chủ)', () => {
+  it('lọc các mã dị ứng mới theo nhãn món và không dùng món thiếu nhãn', () => {
+    const fixtures = {
+      'test-safe': { id: 'test-safe', kind: 'test', tags: [], allergen_codes: [] },
+      'test-nut': { id: 'test-nut', kind: 'test', tags: [], allergen_codes: ['tree_nut'] },
+      'test-peanut': { id: 'test-peanut', kind: 'test', tags: [], allergen_codes: ['peanut'] },
+      'test-shellfish': { id: 'test-shellfish', kind: 'test', tags: [], allergen_codes: ['shellfish'] },
+      'test-unknown': { id: 'test-unknown', kind: 'test', tags: [] }
+    };
+    Object.assign(DISHES, fixtures);
+    try {
+      const ids = (avoid) => allowedDishes('test', avoid).map((d) => d.id);
+      expect(ids(['no_nuts'])).toEqual(['test-safe', 'test-peanut', 'test-shellfish']);
+      expect(ids(['no_peanuts'])).toEqual(['test-safe', 'test-nut', 'test-shellfish']);
+      expect(ids(['no_shellfish'])).toEqual(['test-safe', 'test-nut', 'test-peanut']);
+      expect(ids(['no_nuts', 'no_peanuts', 'no_shellfish'])).toEqual(['test-safe']);
+    } finally {
+      for (const id of Object.keys(fixtures)) delete DISHES[id];
+    }
+  });
+
+  it('không cho đổi tinh bột sang món chứa chất dị ứng', () => {
+    const id = 'test-allergen-carb';
+    DISHES[id] = { id, kind: 'carb', tags: [], allergen_codes: ['tree_nut'], western: false };
+    try {
+      const protein = Object.values(DISHES).find((d) => d.kind === 'protein' && !d.western);
+      const previous = protein.carbAlt;
+      protein.carbAlt = [id];
+      try {
+        expect(swapOptionsFor({ dishes: { protein: protein.id, carb: id } }, 'carb', ['no_nuts']).map((d) => d.id)).not.toContain(id);
+      } finally {
+        protein.carbAlt = previous;
+      }
+    } finally {
+      delete DISHES[id];
+    }
+  });
+
   it('W1-07: hồ sơ nháp: trẻ nhỏ kéo theo không cay; tỉ lệ và khu từ máy chủ', () => {
     const { profile, out } = setup();
     expect(profile.restrictions).toEqual(expect.arrayContaining(['no_seafood', 'no_spicy']));

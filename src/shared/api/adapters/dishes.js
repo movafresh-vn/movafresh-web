@@ -17,7 +17,7 @@ export function dishFromBackend(d, prior = null) {
     prepMinutes: Number(d.prep_minutes ?? (prior && prior.prepMinutes) ?? 15),
     sauce: d.sauce_code || null,
     tags: Array.isArray(d.tags) ? [...d.tags] : [],
-    allergen_codes: Array.isArray(d.allergen_codes) ? [...d.allergen_codes] : [],
+    allergen_codes: Array.isArray(d.allergen_codes) ? [...d.allergen_codes] : null,
     western: Boolean(d.western),
     carbAlt: Array.isArray(d.carb_alt) ? [...d.carb_alt] : [],
     terroir_region: d.terroir_region || (prior && prior.terroir_region) || '',

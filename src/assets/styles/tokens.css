@@ -41,6 +41,8 @@
   --green-soft: #E3F4EC;
   --green-tint: #F1F9F4;
   --green-line: #BFE3D0;
+  --ink-soft: rgba(84, 63, 24, .08);
+  --ink-soft-border: rgba(84, 63, 24, .24);
   --orange-soft: #FEEFDC;
   --orange-ink: #8F4308;
   --red-orange-soft: #FDE9E1;

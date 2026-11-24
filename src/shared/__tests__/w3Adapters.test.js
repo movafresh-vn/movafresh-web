@@ -135,5 +135,6 @@ describe('W3-03: bộ chuyển đổi phản hồi backend sang hình dạng mà
     expect(target['D-PRT-001']).toMatchObject({ pricePerPersonVnd: 22_500, sauce: 'XOT-01', tags: ['pork'], carbAlt: ['D-CRB-004'], chef_note: 'ghi chú', bom: [{ sku: 'NL-HEO-02', gramsPerPerson: 120 }] });
     expect(applyDishCatalog([], target)).toBe(1); // danh sách rỗng (lỗi tải) không xóa catalog
     expect(dishFromBackend({ id: 'D-X', kind: 'veg', name: 'x', price_per_person_vnd: 1 }).prepMinutes).toBe(15);
+    expect(dishFromBackend({ id: 'D-X', kind: 'veg', name: 'x', price_per_person_vnd: 1 }).allergen_codes).toBeNull();
   });
 });

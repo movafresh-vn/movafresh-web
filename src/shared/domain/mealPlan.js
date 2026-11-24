@@ -9,6 +9,15 @@ const BLOCKING_TAG = {
   no_gluten: 'gluten',
   no_lactose: 'lactose'
 };
+const BLOCKING_ALLERGENS = {
+  no_seafood: ['seafood', 'shellfish'],
+  no_shellfish: ['seafood', 'shellfish'],
+  no_peanuts: ['peanut'],
+  no_nuts: ['tree_nut'],
+  no_gluten: ['gluten'],
+  no_lactose: ['lactose']
+};
+const REQUIRE_ALLERGEN_LABELS = ['no_shellfish', 'no_peanuts', 'no_nuts'];
 
 export const DEFAULT_CARB = 'D-CRB-001'; // cơm gạo ST25: tinh bột mặc định
 export const LOW_CARB_CARB = 'D-CRB-003'; // khoai lang thay cơm cho người cần ít tinh bột
@@ -18,8 +27,13 @@ const blockedSet = (restrictions) => new Set(restrictions.map((r) => BLOCKING_TA
 /** Món cùng loại, đã bỏ món bị kiêng. `western` chọn nhóm món Tây hoặc nhóm món Việt. */
 export function allowedDishes(kind, restrictions = [], { western = false } = {}) {
   const blocked = blockedSet(restrictions);
+  const allergens = new Set(restrictions.flatMap((r) => BLOCKING_ALLERGENS[r] || []));
+  const requireLabels = restrictions.some((r) => REQUIRE_ALLERGEN_LABELS.includes(r));
   return Object.values(DISHES).filter(
-    (d) => d.kind === kind && Boolean(d.western) === western && !d.tags.some((t) => blocked.has(t))
+    (d) => d.kind === kind && Boolean(d.western) === western &&
+      (!requireLabels || Array.isArray(d.allergen_codes)) &&
+      !d.tags.some((t) => blocked.has(t) || allergens.has(t)) &&
+      !(d.allergen_codes || []).some((a) => allergens.has(a))
   );
 }
 
@@ -56,7 +70,7 @@ export function generateMeals({
 }) {
   const pick = (kind, opts) => {
     const pool = allowedDishes(kind, restrictions, opts);
-    if (!pool.length) return null;
+    if (!pool.length) throw new Error('Chưa có đủ món phù hợp với mục kiêng của bạn.');
     return pool[Math.floor(rand() * pool.length)];
   };
   const lowCarb = goals.includes('low_carb') || goals.includes('limit_sugar');
@@ -70,7 +84,9 @@ export function generateMeals({
     const west = i >= westFrom;
     dishes.protein = pick('protein', { western: west }).id;
     dishes.veg = pick('veg').id;
-    dishes.carb = lowCarb ? LOW_CARB_CARB : DEFAULT_CARB;
+    const preferredCarb = lowCarb ? LOW_CARB_CARB : DEFAULT_CARB;
+    const carbs = allowedDishes('carb', restrictions);
+    dishes.carb = carbs.find((d) => d.id === preferredCarb)?.id || pick('carb').id;
     if (family) {
       if (!west) dishes.soup = pick('soup').id;
       dishes.dessert = pick('dessert').id;
@@ -128,8 +144,9 @@ export function mealNutrition(meal, householdSize) {
 }
 
 /** Các món tinh bột khách được chọn cho một bữa: cơm, món đang có, và món tinh bột hợp với các món trong bữa. */
-export function carbOptionsFor(meal) {
-  return [...new Set([DEFAULT_CARB, meal.dishes.carb, ...carbAlternatives(meal)])];
+export function carbOptionsFor(meal, restrictions = []) {
+  const allowed = new Set(allowedDishes('carb', restrictions).map((d) => d.id));
+  return [...new Set([DEFAULT_CARB, meal.dishes.carb, ...carbAlternatives(meal)])].filter((id) => allowed.has(id));
 }
 
 function carbAlternatives(meal) {
@@ -142,7 +159,7 @@ function carbAlternatives(meal) {
 
 /** Các món khách đổi được cho một phần của bữa (đạm, rau, canh, tinh bột). */
 export function swapOptionsFor(meal, kind, restrictions = []) {
-  if (kind === 'carb') return carbOptionsFor(meal).map((id) => DISHES[id]);
+  if (kind === 'carb') return carbOptionsFor(meal, restrictions).map((id) => DISHES[id]);
   if (!meal.dishes[kind]) return [];
   return allowedDishes(kind, restrictions, { western: kind === 'protein' && Boolean(meal.western) });
 }
@@ -162,8 +179,12 @@ export function applySwaps(meals, swaps = {}, restrictions = []) {
       if (!id || !next.dishes[kind]) continue;
       if (swapOptionsFor(next, kind, restrictions).some((d) => d.id === id)) next.dishes[kind] = id;
     }
-    if (sw.carb && carbOptionsFor(next).includes(sw.carb)) next.dishes.carb = sw.carb;
-    if (![DEFAULT_CARB, LOW_CARB_CARB, ...carbAlternatives(next)].includes(next.dishes.carb)) next.dishes.carb = DEFAULT_CARB;
+    const carbOptions = carbOptionsFor(next, restrictions);
+    if (sw.carb && carbOptions.includes(sw.carb)) next.dishes.carb = sw.carb;
+    if (!carbOptions.includes(next.dishes.carb) || ![DEFAULT_CARB, LOW_CARB_CARB, ...carbAlternatives(next)].includes(next.dishes.carb)) {
+      if (!carbOptions.length) throw new Error('Chưa có món tinh bột phù hợp với mục kiêng của bạn.');
+      next.dishes.carb = carbOptions.includes(DEFAULT_CARB) ? DEFAULT_CARB : carbOptions[0];
+    }
     return next;
   });
 }

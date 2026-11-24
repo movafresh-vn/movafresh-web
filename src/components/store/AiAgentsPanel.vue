@@ -220,12 +220,6 @@ async function runAgents() {
         weekly_grocery_budget_vnd: answers.weekly_grocery_budget_vnd,
         cuisines: cuisinePreferences.value,
         avoid: answers.avoid,
-        allergen_codes: answers.allergies_and_restrictions
-          .map((value) => ({ no_seafood: 'seafood', no_gluten: 'gluten', no_lactose: 'lactose' })[value])
-          .filter(Boolean),
-        avoid_tags: answers.allergies_and_restrictions
-          .map((value) => ({ no_beef: 'beef', no_pork: 'pork', no_spicy: 'spicy' })[value])
-          .filter(Boolean),
         household_needs: answers.household_needs
       });
       mealPlan.value = await generateMealPlan({ survey_answers: answers, max_prep_minutes: 20 });

@@ -38,7 +38,7 @@ describe('W8-03: ô sổ Fresh Credit ở màn tổng quan', () => {
     expect(t).toContain('await api.ops.finance.integrity(ctx.value)');
     expect(t).toContain('data-testid="ov-integrity"');
     expect(t).toContain('integrityTile(integrity.value)');
-    expect(t).toMatch(/catch \{\n\s*integrity\.value = null;/);
+    expect(t).toMatch(/catch \{\r?\n\s*integrity\.value = null;/);
   });
 
   it('W8-03: financeError nêu rõ số tiền lệch khi khớp tay sai tiền, và dịch mã lỗi tài chính', () => {

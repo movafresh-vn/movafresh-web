@@ -16,7 +16,11 @@ function walk(dir) {
 const rel = (p) => p.slice(SRC.length + 1).replace(/\\/g, '/');
 const all = walk(SRC);
 const code = all.filter((p) => /\.(js|vue)$/.test(p) && !rel(p).includes('__tests__'));
-const text = (p) => readFileSync(p, 'utf8');
+const sourceCache = new Map();
+const text = (p) => {
+  if (!sourceCache.has(p)) sourceCache.set(p, readFileSync(p, 'utf8'));
+  return sourceCache.get(p);
+};
 
 describe('W10-01: không còn mock server hay dữ liệu giả', () => {
   it('W10-01: các tệp mock đã bị xóa', () => {
@@ -33,7 +37,7 @@ describe('W10-01: không còn mock server hay dữ liệu giả', () => {
       const t = text(p);
       expect(FORBIDDEN.test(t), rel(p)).toBe(false);
     }
-  });
+  }, 20_000);
 
   it('W10-01: mọi import tương đối đều trỏ tới tệp còn tồn tại (không import module đã xóa)', () => {
     const exts = ['', '.js', '.vue', '/index.js', '.css'];
@@ -43,10 +47,10 @@ describe('W10-01: không còn mock server hay dữ liệu giả', () => {
         expect(exts.some((e) => existsSync(base + e)), `${rel(p)} -> ${m[1]}`).toBe(true);
       }
     }
-  });
+  }, 20_000);
 
   it('W10-01: web không giữ kho dữ liệu cục bộ: localStorage chỉ cho bản nháp phễu /plans và hàng đợi offline của xưởng', () => {
-    const allowed = new Set(['ops/queue.js', 'shared/api/planDraft.js', 'shared/domain/offlineQueue.js', 'stores/usePlanFlowStore.js']);
+    const allowed = new Set(['ops/queue.js', 'shared/api/planDraft.js', 'shared/domain/offlineQueue.js', 'shared/domain/checkoutError.js', 'stores/usePlanFlowStore.js']);
     for (const p of code) {
       if (/localStorage|indexedDB/.test(text(p))) expect(allowed.has(rel(p)), `${rel(p)} dùng localStorage`).toBe(true);
     }

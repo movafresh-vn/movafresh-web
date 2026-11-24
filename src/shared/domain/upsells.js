@@ -61,12 +61,16 @@ export function applyUpsells(meals, answers = {}, { householdSize, restrictions 
     const pool = allowedDishes('protein', restrictions, { western: true });
     const veg = allowedDishes('veg', restrictions);
     const dessert = allowedDishes('dessert', restrictions);
+    const carbs = allowedDishes('carb', restrictions);
+    if (!pool.length || !veg.length || !carbs.length || (householdSize >= 2 && !dessert.length)) {
+      throw new Error('Chưa có đủ món phù hợp với mục kiêng của bạn.');
+    }
     const pick = (list) => list[Math.floor(rand() * list.length)];
     const proteinDish = pick(pool);
     const dishes = {
       protein: proteinDish.id,
       veg: pick(veg).id,
-      carb: proteinDish.carbAlt?.[0] || LOW_CARB_CARB
+      carb: proteinDish.carbAlt?.find((id) => carbs.some((d) => d.id === id)) || carbs.find((d) => d.id === LOW_CARB_CARB)?.id || carbs[0].id
     };
     if (householdSize >= 2) dishes.dessert = pick(dessert).id;
     const base = out[0] || { proteinFactor: 1 };

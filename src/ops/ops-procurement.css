@@ -39,7 +39,7 @@
 .ops .stepper { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 10px 0; }
 .ops .stepper li { padding: 4px 10px; border-radius: 999px; background: var(--line-2); color: var(--muted); font-size: 14px; font-weight: 700; }
 .ops .stepper li.done { background: var(--green-soft); color: var(--green-d); }
-.ops .stepper li.now { background: var(--ink); color: var(--white); }
+.ops .stepper li.now { background: var(--ink-soft); color: var(--ink); }
 .ops .stepper li small { font-weight: 500; margin-left: 4px; }
 .ops .history { list-style: none; padding: 0; margin: 6px 0 0; font-size: 15px; }
 .ops .history li { padding: 4px 0; border-bottom: 1px dashed var(--line); }
@@ -53,7 +53,7 @@
 /* Tab con cuộn ngang được */
 .ops .seg-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 0 0 8px; margin: 0 0 8px; }
 .ops .seg-tab { flex: none; min-height: 52px; padding: 0 16px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); font: inherit; font-weight: 700; cursor: pointer; color: var(--ink); white-space: nowrap; }
-.ops .seg-tab.on { background: var(--ink); border-color: var(--ink); color: var(--white); }
+.ops .seg-tab.on { background: var(--ink-soft); border-color: var(--ink-soft-border); color: var(--ink); }
 .ops .seg-tab .badge { display: inline-block; min-width: 24px; margin-left: 6px; padding: 0 7px; border-radius: 999px; background: var(--line-2); color: var(--ink); font-size: 14px; text-align: center; }
 .ops .seg-tab.on .badge { background: var(--green-d); color: var(--white); }
 
@@ -83,7 +83,7 @@
 .ops .stock-card.bad { border-color: var(--red-line); background: var(--red-soft); }
 .ops .stock-card strong { display: block; }
 .ops .stock-n { font-size: 26px; font-weight: 800; }
-.ops .fefo-rank { display: inline-block; min-width: 28px; padding: 0 6px; text-align: center; border-radius: 8px; background: var(--ink); color: var(--white); font-weight: 800; font-size: 14px; }
+.ops .fefo-rank { display: inline-block; min-width: 28px; padding: 0 6px; text-align: center; border-radius: 8px; background: var(--ink-soft); color: var(--ink); font-weight: 800; font-size: 14px; }
 
 /* Truy xuất */
 .ops .chain { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 0; }

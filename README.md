@@ -107,10 +107,10 @@ Thứ tự bắt buộc:
 cd ../movafresh-platform/backend
 npm install
 npm run stack:up
-npm run stack:status          # lấy ANON_KEY và SERVICE_ROLE_KEY (chỉ dùng local)
+npm run stack:status          # Publishable dùng cho web; Secret dùng cho backend (chỉ local, không chia sẻ Secret)
 
 # 2. Điền backend/.env từ .env.example (SUPABASE_*, DATABASE_URL, AI_ENGINE_*, BANK_WEBHOOK_*);
-#    đặt DEV_TOOLS_ENABLED=true và CORS_ORIGINS có http://localhost:5173
+#    SUPABASE_SERVICE_ROLE_KEY nhận giá trị Secret; đặt DEV_TOOLS_ENABLED=true và CORS_ORIGINS có http://localhost:5173
 
 # 3. Dữ liệu mẫu (migration đã được stack:up áp). seed:dev làm trọn: món (nhãn dị ứng coi như đã duyệt, chỉ dev), SKU, lô mẫu,
 #    một nhân viên mỗi vai trò, 4 khách mẫu có gói 4 tuần. Chạy lại an toàn. Có thể chạy riêng từng phần: npm run seed, npm run seed:staff.
@@ -122,7 +122,7 @@ npm run dev
 # 5. Web (một terminal khác)
 cd ../../movafresh-web
 npm install
-cp .env.example .env.local    # điền VITE_SUPABASE_ANON_KEY từ bước 1; đặt VITE_DEV_TOOLS=true khi muốn có bảng demo
+cp .env.example .env.local    # điền VITE_SUPABASE_ANON_KEY bằng Publishable từ bước 1; đặt VITE_DEV_TOOLS=true khi muốn có bảng demo
 npm run dev
 # -> App khách:    http://localhost:5173/
 # -> App vận hành: http://localhost:5173/ops.html
