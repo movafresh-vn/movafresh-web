@@ -14,6 +14,9 @@ describe('W4-06: nhập sản lượng thực tế và cờ lệch hệ số', (
     expect(checkYieldInput({ skuId: '', rawKg: 10, netKg: 9 })).toMatch(/Chọn nguyên liệu/);
     expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: '', netKg: 9 })).toMatch(/thô/);
     expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 10, netKg: 0 })).toMatch(/thành phẩm/);
+    expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 0, netKg: 9 })).toMatch(/lớn hơn 0/);
+    expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: -5, netKg: 9 })).toMatch(/lớn hơn 0/);
+    expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 10, netKg: -5 })).toMatch(/lớn hơn 0/);
     expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 10, netKg: 10.5 })).toMatch(/không thể nặng hơn/);
     expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 10, netKg: 9.5 })).toBe('');
     expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 10, netKg: 10 })).toBe('');
