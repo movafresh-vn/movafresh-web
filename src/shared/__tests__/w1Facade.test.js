@@ -236,6 +236,19 @@ describe('W1-03: facade async giữ nguyên tên hàm', () => {
     expect(h.calls.filter((c) => c.path !== '/delivery/zones')).toHaveLength(0);
   });
 
+  it('xem trước và xác nhận hủy gói chưa thanh toán dùng cùng luồng hủy của máy chủ', async () => {
+    const raw = { cancelled_weeks: 4, kept_weeks: 0, refund_vnd: 0, promo_forfeited_vnd: 0, discount_clawback_vnd: 0, has_paid_weeks: false, unpaid: true };
+    const { api, h } = make({
+      'GET /subscription/weeks': { subscription: null, weeks: [] },
+      'POST /subscription/cancel': raw
+    });
+    expect((await api.previewCancel()).data).toMatchObject({ unpaid: true });
+    expect((await api.cancelSubscription({ confirm: true })).data).toMatchObject({ unpaid: true });
+    expect(h.calls.filter((c) => c.path === '/subscription/cancel').map((c) => c.body)).toEqual([
+      { confirm: true, dry_run: true }, { confirm: true }
+    ]);
+  });
+
   it('W1-03: mua gói là tạo lệnh chuyển khoản (không nạp tiền lẻ); số tiền lẻ bị từ chối ở web', async () => {
     const order = { order_id: '1', pack_id: 'standard_4w', label: 'Gói 4 tuần', pay_vnd: 1_500_000, credit_received_vnd: 1_650_000, transfer_content: 'MOVA-X1', status: 'pending', created_at: 'a', expires_at: 'b' };
     const { api, h } = make({ 'GET /credit/packs': { packs: [{ id: 'standard_4w', label: 'Gói 4 tuần', weeks: 4, meals: 20, portions: 40, price_vnd: 1_500_000, discount_vnd: 150_000, value_vnd: 1_650_000 }] }, 'POST /credit/pack-orders': order });

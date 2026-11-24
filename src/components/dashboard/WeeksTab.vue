@@ -37,11 +37,11 @@
         <div class="actions-header">
           <span class="shield-badge">🛡️ BẢO VỆ NGƯỜI TIÊU DÙNG</span>
           <h3 class="actions-h3">Quản lý gói &amp; Hủy 1 chạm bất kỳ lúc nào</h3>
-          <p class="actions-sub">Không cam kết trói buộc · Hoàn tiền trong 7 ngày làm việc cho các bữa chưa giao · Thông báo trước 7 ngày làm việc khi kết thúc chu kỳ.</p>
+          <p class="actions-sub">Không cam kết trói buộc · Xem thông tin hủy hoặc hoàn tiền trước khi xác nhận · Thông báo trước 7 ngày làm việc khi kết thúc chu kỳ.</p>
         </div>
         <div class="actions-btns">
           <button class="pl-btn outline danger-btn" type="button" @click="stopping = true">
-            🛑 Dừng gói 1 chạm (Hoàn tiền 7 ngày)
+            🛑 Dừng hoặc hủy gói
           </button>
           <button
             v-if="data.subscription.payment_method === 'card'"

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { read } from './helpers/asyncScan';
+import { parse } from '@vue/compiler-dom';
 
 const cust = vi.hoisted(() => ({ availableSlots: vi.fn(), previewSubscription: vi.fn(), createSubscription: vi.fn(), topUpCredit: vi.fn(), reset: vi.fn() }));
 vi.mock('../api', () => ({ api: { customer: cust } }));
@@ -101,5 +102,33 @@ describe('W2-05: số tiền ở bước thanh toán do máy chủ tính', () =>
     await s.loadPreview();
     expect(s.preview).toBeNull();
     expect(s.errorCode).toBe('AUTH_REQUIRED');
+  });
+
+  it('vẫn cho chọn phương thức khi xem trước sau hủy liên kết thất bại, không hiển thị giá cũ', async () => {
+    const s = usePlanFlowStore();
+    s.options = { zone_id: 'Z', province: 'P', districts: ['Q'], options: [{ preferred_days: ['monday'], first_dates: { monday: '2026-12-07' }, slots: [] }] };
+    Object.assign(s.checkout, { optionIndex: 0, slotId: 'x', method: 'card' });
+    cust.previewSubscription.mockResolvedValueOnce({ status: 'error', error: { code: 'PAYMENT_TOKEN_REQUIRED' } })
+      .mockResolvedValueOnce({ status: 'error', error: { code: 'NETWORK_ERROR', message: 'Không thể tải giá' } });
+    await s.loadPreview();
+    expect(s.checkout.method).toBe('fresh_credit');
+    expect(s.cardLinkNeeded).toBe(true);
+    expect(s.preview).toBeNull();
+
+    const ast = parse(read('components/plans/StepCheckout.vue').split('<script setup>')[0]);
+    const find = (node) => {
+      if (node.props?.some((p) => p.name === 'class' && p.value?.content === 'methods')) return node;
+      for (const child of node.children || []) {
+        const found = find(child);
+        if (found) return found;
+      }
+      return null;
+    };
+    const methods = find(ast);
+    expect(methods).toBeTruthy();
+    expect(methods.props.some((p) => p.type === 7 && ['if', 'else', 'else-if'].includes(p.name))).toBe(false);
+    expect(read('components/plans/StepCheckout.vue')).toContain('v-if="preview && c.method === \'fresh_credit\'"');
+    expect(read('components/plans/StepCheckout.vue')).toContain('v-if="preview && c.method === \'bank_transfer_4w\'"');
+    expect(read('components/plans/StepCheckout.vue')).toContain('<ul v-if="preview" class="charges">');
   });
 });
