@@ -20,7 +20,7 @@ import { guardNavigation } from './guard';
 import { ROLES } from '../shared/config/roles';
 
 // Màn thật: tổng quan founder (P2D), kế hoạch (P2A), cổng nhà cung cấp (P2B), giao hàng (P2C), giám sát nhà cung cấp (P2D). ModuleView chỉ còn là dự phòng.
-const COMPONENTS = { overview: HomeView, plan: PlanView, 'late-payments': LatePaymentsView, supplier: SupplierPortalView, shipper: ShipperView, monitoring: ScorecardView, trace: () => import('./views/hub/TraceView.vue') };
+const COMPONENTS = { overview: HomeView, plan: PlanView, 'late-payments': LatePaymentsView, support: () => import('./views/SupportView.vue'), supplier: SupplierPortalView, shipper: ShipperView, monitoring: ScorecardView, trace: () => import('./views/hub/TraceView.vue') };
 
 const workshopChildren = [
   { path: '', name: 'workshop', component: () => import('./views/workshop/TodayView.vue') },

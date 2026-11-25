@@ -308,18 +308,17 @@ const HISTORY_LABEL = {
   topup_bonus: 'Thưởng nạp'
 };
 
-/** Các bút toán của sổ Fresh Credit (mỗi ngăn một dòng) → lịch sử hiển thị: gộp theo thời điểm và loại. */
+/** Mỗi bút toán là một dòng; số dư trước và sau thuộc ngăn của bút đó. */
 export function adaptHistory(ledger = []) {
-  const groups = new Map();
-  for (const l of ledger) {
-    const key = `${l.created_at}|${l.entry_type}`;
-    const g = groups.get(key) || { id: key, kind: l.entry_type, label: HISTORY_LABEL[l.entry_type] || 'Điều chỉnh Fresh Credit', amount_vnd: 0, real_vnd: 0, promo_vnd: 0, at: l.created_at };
-    g.amount_vnd += l.amount_vnd;
-    if (l.compartment === 'real') g.real_vnd += l.amount_vnd;
-    else g.promo_vnd += l.amount_vnd;
-    groups.set(key, g);
-  }
-  return [...groups.values()].sort((a, b) => b.at.localeCompare(a.at));
+  return ledger.map((l, index) => ({
+    id: l.id ?? `${l.created_at}|${index}`, kind: l.entry_type,
+    label: HISTORY_LABEL[l.entry_type] || l.entry_type, amount_vnd: l.amount_vnd,
+    real_vnd: l.compartment === 'real' ? l.amount_vnd : 0,
+    promo_vnd: l.compartment === 'promo' ? l.amount_vnd : 0,
+    compartment: l.compartment, before_vnd: l.balance_after_vnd - l.amount_vnd,
+    after_vnd: l.balance_after_vnd, ref_id: l.ref_id, order_code: l.order_code,
+    week_index: l.week_index, at: l.created_at
+  })).sort((a, b) => b.at.localeCompare(a.at));
 }
 
 /** Gói Suất ăn trả trước (GET /credit/packs) → thẻ chọn gói. */
@@ -337,12 +336,14 @@ export function adaptPacks(packs = []) {
 }
 
 /** GET /credit/account + /credit/packs + cảnh báo của /account/overview → api.customer.creditSummary */
-export function adaptCreditSummary({ account, packs, overview }) {
+export function adaptCreditSummary({ account, packs, overview, alert_unavailable = false }) {
   const bal = account.balance;
   const list = adaptPacks(packs);
   return {
     balance: balanceOut(bal),
+    spend_order: account.spend_order ?? null,
     alert: overview ? adaptAlert(overview.alert) : null,
+    alert_unavailable,
     history: adaptHistory(account.ledger),
     next_cursor: account.next_cursor || null,
     packs: list,

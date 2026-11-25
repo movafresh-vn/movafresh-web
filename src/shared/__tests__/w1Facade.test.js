@@ -62,6 +62,43 @@ describe('W1-03: facade async giữ nguyên tên hàm', () => {
     await expect(down.api.getAccount()).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
   });
 
+  it('gửi lại cùng thao tác đổi món và yêu cầu hỗ trợ với khóa do giao diện giữ', async () => {
+    let attempts = 0;
+    const { api, h } = make({
+      'POST /subscription/meal-change': () => {
+        attempts += 1;
+        if (attempts === 1) return new HttpError('mất mạng', { code: 'NETWORK_ERROR', status: 0 });
+        return { replayed: true, week_index: 1, balance: { real_vnd: 1, promo_vnd: 2 } };
+      },
+      'POST /account/support-requests': { id: '1', replayed: false }
+    });
+    const req = { week_index: 0, meal_index: 1, kind: 'protein', dish_id: 'D-PRT-002', key: 'intent-12345' };
+    await expect(api.changeMeal(req)).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
+    expect((await api.changeMeal(req)).data.replayed).toBe(true);
+    expect(h.calls.filter((c) => c.path === '/subscription/meal-change').map((c) => c.key)).toEqual(['intent-12345', 'intent-12345']);
+    await api.supportRequest({ category: 'damaged_goods', message: 'Hàng hỏng', key: 'support-12345' });
+    expect(h.calls.find((c) => c.path === '/account/support-requests')).toMatchObject({
+      key: 'support-12345', body: { category: 'damaged_goods', message: 'Hàng hỏng' }
+    });
+  });
+
+  it('lịch sử gửi mã đơn và cursor, báo khi không tải được cảnh báo', async () => {
+    const { api, h } = make({
+      'GET /credit/account': { balance: { real_vnd: 10, promo_vnd: 0 }, spend_order: ['real', 'promo'], ledger: [], next_cursor: null },
+      'GET /credit/packs': { packs: [] },
+      'GET /account/overview': { alert: null }
+    });
+    const r = await api.creditSummary({ order_code: 'MOVA-001', cursor: '42' });
+    expect(r.data.spend_order).toEqual(['real', 'promo']);
+    expect(h.calls.find((c) => c.path === '/credit/account').query).toEqual({ order_code: 'MOVA-001', cursor: '42' });
+    const down = make({
+      'GET /credit/account': { balance: { real_vnd: 10, promo_vnd: 0 }, ledger: [] },
+      'GET /credit/packs': { packs: [] },
+      'GET /account/overview': new HttpError('mất mạng', { code: 'NETWORK_ERROR', status: 0 })
+    });
+    expect((await down.api.creditSummary()).data).toMatchObject({ alert_unavailable: true, balance: { total_vnd: 10 } });
+  });
+
   it('W1-03: serviceAreas và checkArea dùng danh sách khu của máy chủ (khớp quận trong chữ tự gõ)', async () => {
     const { api } = make({});
     const areas = await api.serviceAreas();

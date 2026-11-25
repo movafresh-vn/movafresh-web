@@ -8,6 +8,7 @@
       <p v-else-if="!sum" class="pl-error" role="alert">{{ error || 'Không tải được danh sách gói. Bạn thử lại sau nhé.' }}</p>
 
       <template v-else-if="!order">
+        <p v-if="sum.alert_unavailable" class="pl-error" role="alert">Không tải được cảnh báo số dư cho tuần giao. Vui lòng thử lại.</p>
         <p v-if="alert" class="pl-panel warn" role="status">
           Tuần {{ alert.week_index + 1 }} cần <b class="num">{{ fmt(alert.amount_vnd) }}</b>, bạn đang có <b class="num">{{ fmt(alert.balance_vnd) }}</b>.
           Bổ sung trước <b>{{ alert.charge_label }}</b> để MOVA trừ được điểm bữa ăn.

@@ -14,7 +14,7 @@ export class HttpError extends Error {
 
 const WRITE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-function newKey() {
+export function newKey() {
   const c = globalThis.crypto;
   if (c && typeof c.randomUUID === 'function') return c.randomUUID();
   return `k-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;

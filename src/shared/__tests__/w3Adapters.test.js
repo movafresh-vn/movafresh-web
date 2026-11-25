@@ -70,20 +70,22 @@ describe('W3-03: bộ chuyển đổi phản hồi backend sang hình dạng mà
     expect(r.weeks[0].deadline_label).toMatch(/\d{2}:\d{2}/);
   });
 
-  it('W3-03: Fresh Credit: gói trả trước cố định, lịch sử gộp theo bút toán, không nạp tiền lẻ', () => {
+  it('W3-03: Fresh Credit: lịch sử giữ từng bút và số dư theo ngăn', () => {
     const packs = adaptPacks([{ id: 'standard_4w', label: 'Gói 4 tuần', weeks: 4, meals: 20, portions: 40, price_vnd: 1_500_000, discount_vnd: 150_000, value_vnd: 1_650_000 }]);
     expect(packs[0]).toMatchObject({ pack_id: 'standard_4w', pay_vnd: 1_500_000, bonus_vnd: 150_000, credit_received_vnd: 1_650_000 });
     expect(packs[0].bonus_pct).toBeCloseTo(0.1);
     const ledger = [
-      { entry_type: 'pack_purchase', compartment: 'real', amount_vnd: 1_500_000, balance_after_vnd: 1_500_000, created_at: '2026-11-20T01:00:00.000Z' },
-      { entry_type: 'pack_discount', compartment: 'promo', amount_vnd: 150_000, balance_after_vnd: 150_000, created_at: '2026-11-20T01:00:00.000Z' },
-      { entry_type: 'week_charge', compartment: 'real', amount_vnd: -200_000, balance_after_vnd: 1_300_000, created_at: '2026-11-25T01:00:00.000Z' }
+      { id: '1', entry_type: 'pack_purchase', compartment: 'real', amount_vnd: 1_500_000, balance_after_vnd: 1_500_000, created_at: '2026-11-20T01:00:00.000Z' },
+      { id: '2', entry_type: 'pack_discount', compartment: 'promo', amount_vnd: 150_000, balance_after_vnd: 150_000, created_at: '2026-11-20T01:00:00.000Z' },
+      { id: '3', entry_type: 'week_charge', compartment: 'real', amount_vnd: -200_000, balance_after_vnd: 1_300_000, created_at: '2026-11-25T01:00:00.000Z', order_code: 'MOVA-001' },
+      { id: '4', entry_type: 'week_charge', compartment: 'real', amount_vnd: -50_000, balance_after_vnd: 1_250_000, created_at: '2026-11-25T01:00:00.000Z', order_code: 'MOVA-002' }
     ];
     const h = adaptHistory(ledger);
-    expect(h.map((x) => x.kind)).toEqual(['week_charge', 'pack_purchase', 'pack_discount']);
-    expect(h[0]).toMatchObject({ amount_vnd: -200_000, real_vnd: -200_000, promo_vnd: 0 });
-    const s = adaptCreditSummary({ account: { balance: { real_vnd: 1, promo_vnd: 2 }, ledger, next_cursor: null }, packs: [{ id: 'standard_4w', label: 'G', weeks: 4, meals: 20, portions: 40, price_vnd: 1_500_000, discount_vnd: 150_000, value_vnd: 1_650_000 }], overview: null });
+    expect(h.map((x) => x.id)).toEqual(['3', '4', '1', '2']);
+    expect(h[0]).toMatchObject({ amount_vnd: -200_000, real_vnd: -200_000, promo_vnd: 0, before_vnd: 1_500_000, after_vnd: 1_300_000, order_code: 'MOVA-001' });
+    const s = adaptCreditSummary({ account: { balance: { real_vnd: 1, promo_vnd: 2 }, spend_order: ['promo', 'real'], ledger, next_cursor: null }, packs: [{ id: 'standard_4w', label: 'G', weeks: 4, meals: 20, portions: 40, price_vnd: 1_500_000, discount_vnd: 150_000, value_vnd: 1_650_000 }], overview: null });
     expect(s.balance.total_vnd).toBe(3);
+    expect(s.spend_order).toEqual(['promo', 'real']);
     expect(s.alert).toBeNull();
     expect(s).not.toHaveProperty('min_topup_vnd');
     const o = adaptPackOrder({ order_id: '1', pack_id: 'standard_4w', label: 'G', pay_vnd: 1_500_000, credit_received_vnd: 1_650_000, transfer_content: 'MOVA-X', status: 'pending', created_at: 'a', expires_at: 'b' });

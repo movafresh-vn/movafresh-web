@@ -3,6 +3,7 @@
 export const OPS_ROUTES = {
   me: ['GET', '/ops/me'],
   summary: ['GET', '/ops/summary'],
+  supportRequests: ['GET', '/ops/support-requests'],
   uploadTicket: ['POST', '/ops/uploads'],
   photoSignedUrl: ['GET', '/ops/uploads/signed-url'],
 

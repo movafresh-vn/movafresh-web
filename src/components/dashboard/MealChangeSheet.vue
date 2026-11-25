@@ -1,7 +1,7 @@
 <template>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="swap-title" @click.self="$emit('close')">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="swap-title" @click.self="close">
     <div class="mbox box">
-      <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng">×</button>
+      <button class="mclose" type="button" :disabled="busy" @click="close" aria-label="Đóng">×</button>
       <h2 id="swap-title" class="pl-h2">Đổi món linh hoạt</h2>
       <p class="pl-note">Tuần {{ week.number }}, bữa {{ target.meal.meal_index }}. Đang chọn: <b>{{ target.dish.name }}</b></p>
 
@@ -75,6 +75,7 @@
       </template>
 
       <template v-else>
+        <p class="pl-note">Hạn đổi món: <b>{{ preview.deadline_label }}</b>.</p>
         <div class="sum">
           <p><span class="muted">Từ</span> <b>{{ preview.from.name }}</b></p>
           <p><span class="muted">Sang</span> <b>{{ preview.to.name }}</b></p>
@@ -107,7 +108,7 @@
         <div class="btns">
           <button v-if="!preview.settle || preview.settle.enough" class="pl-btn primary" type="button" :disabled="busy" @click="confirm">Xác nhận đổi món</button>
           <button v-else class="pl-btn orange" type="button" @click="topup">Nạp thêm Fresh Credit</button>
-          <button class="pl-btn" type="button" @click="preview = null">Chọn món khác</button>
+          <button class="pl-btn" type="button" :disabled="busy || uncertain" @click="preview = null">Chọn món khác</button>
         </div>
       </template>
 
@@ -139,6 +140,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { api } from '../../shared/api';
+import { newKey } from '../../shared/api/http';
 import { fmt } from '../../shared/utils/formatters';
 import { checkoutErrorMessage } from '../../shared/domain/checkoutError';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -170,10 +172,12 @@ onMounted(async () => {
 const preview = ref(null);
 const error = ref('');
 const busy = ref(false);
+const uncertain = ref(false);
 const searchQuery = ref('');
 const showFactoryModal = ref(false);
 const selectedDishDetail = ref(null);
 let picked = null;
+let requestKey = null;
 
 async function onFactorySelect(dish) {
   showFactoryModal.value = false;
@@ -215,6 +219,7 @@ const filteredOptions = computed(() => {
 async function choose(o) {
   error.value = '';
   picked = o;
+  requestKey = null;
   const p = await api.customer.previewMealChange({ ...base, dish_id: o.dish_id });
   if (p.status === 'error') error.value = checkoutErrorMessage(p.error.code, p.error.message);
   else preview.value = p.data;
@@ -237,17 +242,34 @@ function chooseFromDetail(dish) {
 }
 
 async function confirm() {
+  if (busy.value) return;
   busy.value = true;
-  const r = await api.customer.changeMeal({ ...base, dish_id: picked.dish_id });
-  busy.value = false;
-  if (r.status === 'error') {
-    // MENU_LOCKED: tuần đã chốt món theo ưu đãi chiến dịch nên không đổi được
-    error.value = checkoutErrorMessage(r.error.code, r.error.message);
-    return;
+  requestKey ||= newKey();
+  try {
+    const r = await api.customer.changeMeal({ ...base, dish_id: picked.dish_id, key: requestKey });
+    if (r.status === 'error') {
+      if (r.error.code === 'BAD_RESPONSE' || r.error.status >= 500) uncertain.value = true;
+      error.value = uncertain.value
+        ? 'Chưa xác nhận được kết quả. Hãy bấm xác nhận lại tại đây để dùng cùng mã yêu cầu.'
+        : checkoutErrorMessage(r.error.code, r.error.message);
+      return;
+    }
+    uncertain.value = false;
+    await store.refresh();
+    store.toast(`Đã đổi sang ${picked.name}`);
+    emit('done');
+  } catch {
+    uncertain.value = true;
+    error.value = 'Chưa xác nhận được kết quả. Kiểm tra kết nối rồi bấm xác nhận lại tại đây; MOVA sẽ dùng cùng mã yêu cầu.';
+  } finally {
+    busy.value = false;
   }
-  await store.refresh();
-  store.toast(`Đã đổi sang ${picked.name}`);
-  emit('done');
+}
+
+function close() {
+  if (busy.value) return;
+  if (uncertain.value && !window.confirm('Kết quả đổi món chưa rõ. Hãy kiểm tra tuần giao trước khi thử thao tác mới. Bạn vẫn muốn đóng?')) return;
+  emit('close');
 }
 
 function topup() {

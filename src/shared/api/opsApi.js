@@ -70,6 +70,7 @@ export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
 
   return {
     me: () => call('me'),
+    supportRequests: (_ctx, cursor = null) => call('supportRequests', { query: { cursor } }),
 
     /** Tóm tắt + giờ máy chủ. Mỗi lần gọi đồng bộ đồng hồ web (ngày giờ nghiệp vụ do máy chủ quyết định). */
     async summary() {

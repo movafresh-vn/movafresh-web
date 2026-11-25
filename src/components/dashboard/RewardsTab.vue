@@ -2,6 +2,7 @@
   <div v-if="data" class="rewards">
     <!-- Bảng số dư Fresh Credit đa năng -->
     <section v-if="creditSum?.balance" class="pl-card fc-card">
+      <p v-if="creditSum.alert_unavailable" class="pl-error" role="alert">Không tải được cảnh báo số dư cho tuần giao. Vui lòng thử lại.</p>
       <div class="fc-head">
         <div>
           <span class="wallet-badge">TÀI KHOẢN SUẤT ĂN TRẢ TRƯỚC</span>

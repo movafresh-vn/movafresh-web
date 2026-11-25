@@ -45,7 +45,8 @@
           <WeeksTab v-if="tab === 'weeks'" @tab="setTab" />
           <CreditTab v-else-if="tab === 'credit'" />
           <RewardsTab v-else-if="tab === 'rewards'" @tab="setTab" />
-          <ProfileTab v-else />
+          <ProfileTab v-else-if="tab === 'profile'" />
+          <SupportPanel v-if="supportOpened" v-show="tab === 'support'" />
         </div>
 
       </template>
@@ -65,11 +66,13 @@ import WeeksTab from '../components/dashboard/WeeksTab.vue';
 import CreditTab from '../components/dashboard/CreditTab.vue';
 import RewardsTab from '../components/dashboard/RewardsTab.vue';
 import ProfileTab from '../components/dashboard/ProfileTab.vue';
+import SupportPanel from '../components/dashboard/SupportPanel.vue';
 
 const TABS = [
   { id: 'weeks', label: 'Các tuần của tôi' },
   { id: 'credit', label: 'Fresh Credit' },
   { id: 'rewards', label: 'Thưởng và mời bạn' },
+  { id: 'support', label: 'Hỗ trợ' },
   { id: 'profile', label: 'Hồ sơ' }
 ];
 
@@ -78,7 +81,9 @@ const route = useRoute();
 const router = useRouter();
 
 const tab = ref(TABS.some((t) => t.id === route.query.tab) ? route.query.tab : 'weeks');
+const supportOpened = ref(tab.value === 'support');
 const alert = computed(() => (store.account ? store.account.alert : null));
+watch(tab, (value) => { if (value === 'support') supportOpened.value = true; });
 
 function setTab(id) {
   tab.value = id;

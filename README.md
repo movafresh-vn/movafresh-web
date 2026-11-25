@@ -23,6 +23,8 @@
   - **Số chỗ còn lại theo từng ngày giao** (khung giờ và chu kỳ sản xuất); ngày đã đầy không chọn được và hiện lý do (`SLOT_FULL`, `CYCLE_FULL`).
   - Phương thức: Fresh Credit (mua Gói Suất ăn trả trước cố định), chuyển khoản VietQR 4 tuần, thẻ liên kết (tự trừ trước 72 giờ). Voucher và thưởng giới thiệu theo luật của máy chủ.
 - **Tài khoản (`/account`):** đổi món trước giờ chốt sổ (mặc định **08:00 ngày D-2**, cấu hình ở máy chủ, luôn hiện ngày giờ cụ thể), hoãn tuần, gia hạn có đồng ý rõ ràng, Fresh Credit 2 ngăn (`real` / `promo`), thưởng và chia sẻ, mời bạn. Thẻ tuần hiện **ảnh giao hàng** khi đã giao, hóa đơn, và huy hiệu **thanh toán muộn** (đang chờ admin / dời ngày / hoàn Fresh Credit).
+- **Fresh Credit và hỗ trợ:** lịch sử hiển thị từng bút và số dư trước/sau của ngăn tương ứng, phân trang và tìm chính xác mã đơn đã được cấp. Thứ tự trừ tuần giao lấy từ máy chủ; chênh lệch đổi món có quy tắc riêng. Tab Hỗ trợ đọc số dư và trạng thái tuần, gửi yêu cầu đổi địa chỉ/hàng hỏng/khác tới danh sách chỉ admin xem; không tự đổi đơn hay hoàn tiền. Danh sách chưa có trạng thái xử lý. Nếu mất kết nối khi gửi hoặc đổi món, thử lại ngay tại màn hình đó với cùng mã yêu cầu; mã chưa được giữ qua tải lại trang.
+- Khi triển khai các chức năng hỗ trợ, áp dụng migration `034_customer_support.sql` trước khi triển khai backend mới, rồi triển khai web; kiểm tra hợp đồng và phân quyền trên môi trường thử trước.
 
 ---
 
@@ -38,7 +40,7 @@
 | `supplier` Cổng nhà cung cấp (s-factory@, s-seafood@, s-truck@, s-lastmile@, s-pack@) | Xác nhận PO, hóa đơn, trả lời khiếu nại; chỉ thấy dữ liệu của chính nhà cung cấp đó. |
 | `shipper` Giao hàng (shipper1@ đến shipper4@) | Điểm dừng của tuyến mình, gọi khách (SĐT che một phần), đã giao (**ảnh bằng chứng theo hướng dẫn giao**) / không giao được (mở ngoại lệ). |
 | `accounting` Kế toán (accounting@) | Sổ Fresh Credit, đề nghị điều chỉnh, đối soát ngân hàng, doanh thu và hóa đơn, giá vốn và margin, công nợ và pay-run, dòng tiền, xuất bút toán CSV, **bảng giá vốn món (cờ đỏ >35%)**. |
-| `admin` Quản trị (admin@) | Tổng quan founder, **hàng đợi thanh toán muộn** (nhận vào lô còn khóa hoặc từ chối: dời ngày / hoàn Fresh Credit, khách được báo), duyệt điều chỉnh, ô **toàn vẹn sổ cái** (xanh khi sổ cái khớp số dư), bảng dev. |
+| `admin` Quản trị (admin@) | Tổng quan founder, danh sách yêu cầu hỗ trợ, **hàng đợi thanh toán muộn** (nhận vào lô còn khóa hoặc từ chối: dời ngày / hoàn Fresh Credit, khách được báo), duyệt điều chỉnh, ô **toàn vẹn sổ cái** (xanh khi sổ cái khớp số dư), bảng dev. |
 
 Màn "Bảng demo" (`/demo`): đồng hồ máy chủ giả lập (nhảy tới giờ trừ tiền / chốt sổ / giao), chạy job, nạp dữ liệu mẫu, chuyển khoản ngân hàng giả có chữ ký. **Chỉ hiện khi build với `VITE_DEV_TOOLS=true` ** và backend bật `DEV_TOOLS_ENABLED=true`; không bao giờ ở production.
 

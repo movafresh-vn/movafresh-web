@@ -24,6 +24,7 @@ export const CUSTOMER_ROUTES = {
   expressRelease: ['POST', '/delivery/express/holds/:id/release'],
   createSubscription: ['POST', '/subscription/create-or-renew'],
   getAccount: ['GET', '/account/overview'],
+  supportRequest: ['POST', '/account/support-requests'],
   myWeeks: ['GET', '/subscription/weeks'],
   mealOptions: ['GET', '/subscription/weeks/:week_index/meals/:meal_index/options'],
   changeMeal: ['POST', '/subscription/meal-change'],

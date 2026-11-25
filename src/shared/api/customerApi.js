@@ -274,6 +274,9 @@ export function createCustomerApi(deps = {}) {
     getAccount() {
       return envelope(async () => adaptOverview(await call('getAccount')));
     },
+    supportRequest(req) {
+      return envelope(() => call('supportRequest', { body: { category: req.category, message: req.message }, key: req.key }));
+    },
     async findCustomer() {
       const r = await this.getAccount();
       return r.status === 'success' ? ok(r.data.customer) : r;
@@ -288,10 +291,8 @@ export function createCustomerApi(deps = {}) {
       return envelope(async () => adaptMealChange(await call('changeMeal', { body: { week_index: toApiIndex(req.week_index), meal_index: req.meal_index, kind: req.kind, dish_id: req.dish_id, dry_run: true } })));
     },
     changeMeal(req = {}) {
-      // Khóa theo nội dung đổi: bấm hai lần cùng một lựa chọn là cùng một lần đổi (máy chủ trả lại kết quả cũ, không trừ tiền hai lần).
-      const key = `mc-${req.week_index}-${req.meal_index}-${req.kind}-${req.dish_id}-${Math.floor(clock().getTime() / 60_000)}`;
       return envelope(async () => {
-        const raw = await call('changeMeal', { body: { week_index: toApiIndex(req.week_index), meal_index: req.meal_index, kind: req.kind, dish_id: req.dish_id }, key });
+        const raw = await call('changeMeal', { body: { week_index: toApiIndex(req.week_index), meal_index: req.meal_index, kind: req.kind, dish_id: req.dish_id }, key: req.key });
         return raw.replayed && !raw.from ? { replayed: true, week_index: req.week_index, balance: raw.balance } : adaptMealChange(raw);
       });
     },
@@ -336,10 +337,14 @@ export function createCustomerApi(deps = {}) {
     },
 
     // ---------- Fresh Credit (chỉ mua Gói Suất ăn trả trước cố định) ----------
-    creditSummary() {
+    creditSummary({ cursor, order_code } = {}) {
       return envelope(async () => {
-        const [account, plist, overview] = await Promise.all([call('creditAccount'), call('creditPacks'), call('getAccount').catch(() => null)]);
-        return adaptCreditSummary({ account, packs: plist.packs, overview });
+        const [account, plist, overview] = await Promise.all([
+          call('creditAccount', { query: { cursor, order_code } }),
+          call('creditPacks'),
+          call('getAccount').then((value) => ({ value, failed: false }), () => ({ value: null, failed: true }))
+        ]);
+        return adaptCreditSummary({ account, packs: plist.packs, overview: overview.value, alert_unavailable: overview.failed });
       });
     },
     /** Đặt mua một gói: tiền về qua chuyển khoản ngân hàng mới được cộng vào Fresh Credit (không có nạp số tiền lẻ). */
