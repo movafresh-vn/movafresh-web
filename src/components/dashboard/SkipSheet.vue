@@ -34,7 +34,7 @@ const props = defineProps({ week: { type: Object, required: true } });
 const emit = defineEmits(['close', 'done']);
 const store = useMovaStore();
 
-const req = { week_index: props.week.week_index };
+const req = { subscription_id: props.week.subscription_id, week_index: props.week.week_index };
 const loadError = ref('');
 const preview = ref(null);
 const error = ref('');

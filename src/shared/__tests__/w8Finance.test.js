@@ -65,6 +65,15 @@ describe('W8-api: tài chính, giám sát, tổng quan trên backend thật', ()
     expect(http.calls[3].key).toBeUndefined();
   });
 
+  it('xác nhận hoàn gửi mã yêu cầu và chứng từ đã đối soát', async () => {
+    const { http, a } = mk({
+      'POST /ops/finance/refunds/42/confirmation': { id: '42', status: 'paid', duplicate: false }
+    });
+    expect(await a.finance.confirmRefund(null, { id: '42', reference: 'BANK-123', note: 'Đã hoàn đủ' }))
+      .toEqual({ id: '42', status: 'paid', duplicate: false });
+    expect(http.calls[0].body).toEqual({ reference: 'BANK-123', note: 'Đã hoàn đủ' });
+  });
+
   it('W8-04: xuất hóa đơn trả { issued }; chi cả đợt gửi mã PO + cách chi; cài đặt chỉ gửi trường có giá trị', async () => {
     const { http, a } = mk({
       'POST /ops/finance/invoices/issue': { issued: 4 },

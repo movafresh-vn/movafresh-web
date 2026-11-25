@@ -16,6 +16,42 @@
         <div class="fin-tile"><span class="n">{{ fmt(data.cards.totals.netVnd) }}</span><strong>Thẻ: thực nhận sau phí</strong><small>phí cổng {{ fmt(data.cards.totals.feeVnd) }}</small></div>
       </div>
 
+      <section class="ops-card" aria-label="Yêu cầu hoàn tiền">
+        <h2>Yêu cầu hoàn tiền đang chờ</h2>
+        <p class="ops-muted">Hiển thị tối đa 200 yêu cầu gần hạn nhất. Đối soát từng nguồn và thực hiện hoàn bên ngoài trước khi xác nhận toàn bộ; thao tác này không chuyển tiền.</p>
+        <p v-if="!data.refunds" class="fin-warn">Máy chủ chưa hỗ trợ danh sách hoàn tiền; không thể đối soát tại đây.</p>
+        <p v-else-if="!data.refunds.length" class="ops-muted">Không có yêu cầu hoàn tiền đang chờ.</p>
+        <div v-for="r in data.refunds || []" :key="r.id" class="impact-order" :data-refund="r.id">
+          <strong>{{ fmt(r.amountVnd) }}</strong> · yêu cầu <span class="mono">{{ r.id }}</span> · hạn {{ r.dueBy }}
+          <div class="ops-muted">Khách: {{ r.customerId }} · gói: {{ r.subscriptionId }}</div>
+          <ul v-if="r.sources.length">
+            <li v-for="s in r.sources" :key="`${s.weekId}:${s.type}`">
+              {{ s.type }} · {{ fmt(s.amountVnd) }} · tuần {{ s.weekId }}
+              <span v-if="s.bankTransactionId"> · giao dịch ngân hàng {{ s.bankTransactionId }}</span>
+              <span v-if="s.cardProviderRef"> · mã thẻ {{ s.cardProviderRef }}</span>
+              <strong v-if="s.reconciliationRequired"> · cần đối soát thủ công</strong>
+            </li>
+          </ul>
+          <p v-if="r.unallocatedVnd > 0" class="fin-warn">Chưa xác định nguồn cho {{ fmt(r.unallocatedVnd) }}. Phải đối soát lịch sử thủ công trước khi hoàn.</p>
+          <div class="fin-tools">
+            <div><label :for="`refund-ref-${r.id}`">Mã chứng từ hoàn</label><input :id="`refund-ref-${r.id}`" v-model="refundReference[r.id]" class="ops-input" maxlength="200" /></div>
+            <div><label :for="`refund-note-${r.id}`">Ghi chú đối soát các nguồn</label><input :id="`refund-note-${r.id}`" v-model="refundNote[r.id]" class="ops-input" maxlength="500" /></div>
+            <button class="ops-btn ops-btn-primary" :disabled="refundBusy[r.id] || !refundReference[r.id]?.trim() || !refundNote[r.id]?.trim()" @click="confirmRefund(r)">Xác nhận đã hoàn toàn bộ</button>
+          </div>
+        </div>
+      </section>
+
+      <section v-if="data.refundConfirmations" class="ops-card" aria-label="Lịch sử xác nhận hoàn tiền">
+        <h2>Lịch sử xác nhận hoàn tiền</h2>
+        <p class="ops-muted">Tối đa 100 xác nhận gần đây. Đây là ghi nhận thao tác thủ công, không phải xác nhận từ ngân hàng.</p>
+        <div v-for="r in data.refundConfirmations" :key="r.id" class="impact-order">
+          <strong>{{ fmt(r.amountVnd) }}</strong> · yêu cầu {{ r.id }} · khách {{ r.customerId }}
+          <div>Chứng từ: {{ r.reference }} · {{ r.note }}</div>
+          <div class="ops-muted">{{ r.actorRole }} · {{ r.actorId }} · {{ fmtDeadline(new Date(r.confirmedAt)) }}</div>
+        </div>
+        <p v-if="!data.refundConfirmations.length" class="ops-muted">Chưa có xác nhận thủ công.</p>
+      </section>
+
       <section class="ops-card" aria-label="Khoản chờ tiền về">
         <div class="head-row">
           <h2>Khoản chờ tiền về</h2>
@@ -145,6 +181,9 @@ const msg = ref('');
 const actionError = ref('');
 const pick = reactive({});
 const note = reactive({});
+const refundReference = reactive({});
+const refundNote = reactive({});
+const refundBusy = reactive({});
 const line = reactive({ txnId: '', amountVnd: null, content: '' });
 
 async function load() {
@@ -186,4 +225,16 @@ const match = (q) =>
     () => `Đã khớp tay giao dịch ${q.txnId}.`
   );
 const ignore = (q) => run(() => api.ops.finance.ignoreBankTxn(ctx.value, { bankId: q.id, note: note[q.id] || '' }), () => `Đã loại giao dịch ${q.txnId}.`);
+async function confirmRefund(r) {
+  if (!window.confirm('Xác nhận đã đối soát và hoàn TOÀN BỘ yêu cầu này bên ngoài hệ thống?')) return;
+  refundBusy[r.id] = true;
+  try {
+    await run(
+      () => api.ops.finance.confirmRefund(ctx.value, { id: r.id, reference: refundReference[r.id].trim(), note: refundNote[r.id].trim() }),
+      (result) => result.duplicate ? `Yêu cầu ${r.id} đã được xác nhận trước đó.` : `Đã ghi nhận hoàn tiền cho yêu cầu ${r.id}.`
+    );
+  } finally {
+    refundBusy[r.id] = false;
+  }
+}
 </script>

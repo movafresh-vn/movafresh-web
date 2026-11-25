@@ -27,6 +27,7 @@ const freshAnswers = () => ({
 
 const freshCheckout = () => ({
   frequency: 1,
+  startDate: '',
   optionIndex: 0,
   slotId: '',
   // Hướng dẫn giao BẮT BUỘC chọn; mặc định "để ở lễ tân, shipper chụp ảnh" (hàng lạnh để lại thì phải có ảnh bằng chứng).
@@ -67,6 +68,11 @@ function load() {
       const s = JSON.parse(raw);
       const fresh = freshCheckout();
       const checkout = { ...fresh, ...s.checkout, instruction: normalizeInstruction({ ...fresh.instruction, ...(s.checkout && s.checkout.instruction) }) };
+      if (checkout.frequency !== 1) {
+        checkout.frequency = 1;
+        checkout.optionIndex = 0;
+        checkout.slotId = '';
+      }
       return { ...freshState(), ...s, answers: { ...freshAnswers(), ...s.answers }, checkout };
     }
   } catch {
@@ -297,7 +303,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
 
     async loadOptions() {
       try {
-        const res = await api.customer.deliveryOptions({ profile_id: this.profileId, deliveries_per_week: this.checkout.frequency });
+        const res = await api.customer.deliveryOptions({ profile_id: this.profileId, deliveries_per_week: this.checkout.frequency, start_date: this.checkout.startDate });
         if (res.status === 'error') {
           this.fail(res);
           return;
@@ -330,7 +336,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
         return;
       }
       try {
-        const res = await api.customer.availableSlots(profile.zone_id, BUSINESS.subscription.defaultWeeks * 7, opt.preferred_days);
+        const res = await api.customer.availableSlots(profile.zone_id, BUSINESS.subscription.defaultWeeks * 7, opt.preferred_days, opt.first_delivery_date);
         if (res.status === 'error') {
           this.capacity = null;
           return;

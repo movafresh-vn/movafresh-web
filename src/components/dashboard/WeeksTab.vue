@@ -1,5 +1,6 @@
 <template>
   <div class="weeks-tab">
+    <p v-if="loadError" class="pl-error" role="alert">{{ loadError }}</p>
     <p v-if="!data" class="pl-note">Đang tải…</p>
 
     <section v-else-if="!data.subscription" class="pl-card empty">
@@ -9,6 +10,14 @@
     </section>
 
     <template v-else>
+      <label v-if="subscriptions.length > 1" class="pl-card">
+        <span class="pl-label">Chọn gói của bạn</span>
+        <select v-model="selectedSubscription" class="pl-input" @change="changeSubscription">
+          <option v-for="s in subscriptions" :key="s.id" :value="s.id">
+            {{ s.first_delivery_date ? `Giao từ ${shortDate(s.first_delivery_date)}` : 'Gói chưa có lịch' }} — {{ s.status === 'active' ? 'Đang hoạt động' : 'Đã dừng' }}
+          </option>
+        </select>
+      </label>
       <section v-if="data.subscription.status !== 'active'" class="pl-panel note-end">
         Gói này đã dừng. Các chuyến đã chốt sổ trước đó vẫn được giao.
         <router-link to="/plans" class="pl-btn sm">Đăng ký gói mới</router-link>
@@ -16,7 +25,7 @@
 
       <RatingCard v-if="ratings.length" :orders="ratings" @rated="loadRatings" />
 
-      <RenewCard v-if="data.renewal && data.renewal.due && data.subscription.status === 'active'" :key="data.weeks.length" :remaining="data.renewal.remaining_weeks" @done="load" />
+      <RenewCard v-if="data.renewal && data.renewal.due && data.subscription.status === 'active'" :key="data.subscription.id + ':' + data.weeks.length" :subscription-id="data.subscription.id" :remaining="data.renewal.remaining_weeks" @done="load" />
 
       <!-- Dải tuần -->
       <nav class="strip" aria-label="Các tuần của tôi">
@@ -75,7 +84,7 @@
     <MealChangeSheet v-if="changing" :week="changing.week" :target="changing.target" @close="changing = null" @done="changing = null" />
     <SkipSheet v-if="skipping" :week="skipping" @close="skipping = null" @done="afterSkip" />
     <LinkCardSheet v-if="linking && data && data.subscription" :linked="data.subscription.payment_method === 'card'" @close="linking = false" @linked="afterLink" @unlinked="afterUnlink" />
-    <StopPlanSheet v-if="stopping" @close="stopping = false" @done="stopping = false" @skip="skipFromStop" />
+    <StopPlanSheet v-if="stopping && data?.subscription" :subscription-id="data.subscription.id" @close="stopping = false" @done="afterStop" @skip="skipFromStop" />
   </div>
 </template>
 
@@ -98,6 +107,9 @@ const store = useMovaStore();
 const route = useRoute();
 
 const data = ref(null);
+const subscriptions = ref([]);
+const selectedSubscription = ref('');
+const loadError = ref('');
 const ratings = ref([]);
 const selected = ref(null);
 const changing = ref(null);
@@ -115,8 +127,23 @@ function shortDate(key) {
 }
 
 async function load() {
-  const res = await api.customer.myWeeks();
-  if (res.status === 'error') return;
+  const account = await api.customer.getAccount();
+  if (account.status === 'error') {
+    loadError.value = account.error.message;
+    return;
+  }
+  subscriptions.value = account.data.subscriptions;
+  if (!subscriptions.value.some((s) => s.id === selectedSubscription.value)) {
+    selectedSubscription.value = subscriptions.value.find((s) => s.status === 'active')?.id || account.data.subscription?.id || '';
+  }
+  const requested = selectedSubscription.value;
+  const res = await api.customer.myWeeks(requested || undefined);
+  if (requested !== selectedSubscription.value) return;
+  if (res.status === 'error') {
+    loadError.value = res.error.message;
+    return;
+  }
+  loadError.value = '';
   data.value = res.data;
   const weeks = res.data.weeks;
   if (!weeks.some((w) => w.week_index === selected.value)) {
@@ -124,6 +151,17 @@ async function load() {
     selected.value = next ? next.week_index : null;
   }
   await loadRatings();
+}
+
+function changeSubscription() {
+  selected.value = null;
+  data.value = null;
+  load();
+}
+
+async function afterStop() {
+  stopping.value = false;
+  await load();
 }
 
 async function loadRatings() {

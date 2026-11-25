@@ -36,7 +36,7 @@ import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
 
-defineProps({ remaining: { type: Number, default: 0 } });
+const props = defineProps({ remaining: { type: Number, default: 0 }, subscriptionId: { type: String, required: true } });
 const emit = defineEmits(['done']);
 const store = useMovaStore();
 
@@ -46,13 +46,13 @@ const error = ref('');
 const busy = ref(false);
 
 onMounted(async () => {
-  const res = await api.customer.renewalOffer();
+  const res = await api.customer.renewalOffer(props.subscriptionId);
   offer.value = res.status === 'success' ? res.data : null;
 });
 
 async function renew() {
   busy.value = true;
-  const r = await api.customer.renewSubscription({ consent: agree.value });
+  const r = await api.customer.renewSubscription({ consent: agree.value, subscription_id: props.subscriptionId });
   busy.value = false;
   if (r.status === 'error') {
     error.value = r.error.message;

@@ -31,7 +31,7 @@
           </p>
           <p>
             1.3. <b>Khung giờ xanh &amp; Tần suất giao hàng:</b>
-            MOVA khuyến khích giao hàng vào <b>Khung giờ xanh (06:00 – 08:00 sáng)</b> với ưu đãi giảm ngay 15.000đ để né kẹt xe, xe lạnh di chuyển nhanh nhất đến bếp của bạn. Tần suất chuẩn là 1 lần/tuần (hoặc 2 lần/tuần) tối ưu chi phí vận hành.
+            MOVA khuyến khích giao hàng vào <b>Khung giờ xanh (06:00 – 08:00 sáng)</b> với ưu đãi giảm ngay 15.000đ để né kẹt xe, xe lạnh di chuyển nhanh nhất đến bếp của bạn. Gói mới được giao 1 lần/tuần.
           </p>
 
           <h2>2. Chính sách Đổi trả &amp; Đền bù sự cố chất lượng</h2>

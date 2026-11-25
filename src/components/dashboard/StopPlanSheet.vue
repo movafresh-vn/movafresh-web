@@ -76,6 +76,7 @@ import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
 
+const props = defineProps({ subscriptionId: { type: String, required: true } });
 const emit = defineEmits(['close', 'done', 'skip']);
 const store = useMovaStore();
 
@@ -94,7 +95,7 @@ onMounted(async () => {
   loading.value = true;
   loadError.value = '';
   try {
-    const res = await api.customer.previewCancel();
+    const res = await api.customer.previewCancel(props.subscriptionId);
     if (res.status === 'error') {
       loadError.value = res.error?.message || 'Không thể tải thông tin dừng gói.';
     } else {
@@ -111,7 +112,7 @@ async function confirm() {
   busy.value = true;
   error.value = '';
   try {
-    const r = await api.customer.cancelSubscription({ confirm: true });
+    const r = await api.customer.cancelSubscription({ confirm: true, subscription_id: props.subscriptionId });
     if (r.status === 'error') {
       error.value = r.error?.message || 'Không thể thực hiện dừng gói.';
       return;

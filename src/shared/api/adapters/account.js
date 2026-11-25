@@ -65,6 +65,7 @@ export function adaptOverview(o) {
   return {
     customer: { ...c, zone_id: o.subscription ? o.subscription.zone_id : null, zone_name: o.subscription ? o.subscription.zone_name : '' },
     subscription: adaptSubscription(o.subscription),
+    subscriptions: (o.subscriptions || (o.subscription ? [o.subscription] : [])).map(adaptSubscription),
     credit: balanceOut(o.credit),
     alert: adaptAlert(o.alert),
     unread_notifications: o.unread_notifications,
@@ -123,6 +124,7 @@ export function adaptWeeks(r) {
     };
     return {
       week_index: idx,
+      subscription_id: sub?.id || null,
       number: idx + 1,
       status: phase,
       status_label: w.status_label,

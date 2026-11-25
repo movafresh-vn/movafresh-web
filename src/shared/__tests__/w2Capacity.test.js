@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { read } from './helpers/asyncScan';
 
-const cust = vi.hoisted(() => ({ availableSlots: vi.fn(), previewSubscription: vi.fn(), createSubscription: vi.fn(), topUpCredit: vi.fn(), reset: vi.fn() }));
+const cust = vi.hoisted(() => ({ deliveryOptions: vi.fn(), availableSlots: vi.fn(), previewSubscription: vi.fn(), createSubscription: vi.fn(), topUpCredit: vi.fn(), reset: vi.fn() }));
 vi.mock('../api', () => ({ api: { customer: cust } }));
 
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
@@ -26,7 +26,7 @@ beforeEach(() => {
 
 describe('W2-04: sức chứa còn lại theo từng ngày giao', () => {
   function withOption(s) {
-    s.options = { zone_id: 'Z2', province: 'P', districts: ['Quận 7'], options: [{ preferred_days: ['tuesday'], first_dates: { tuesday: '2026-12-01' }, slots: [{ slot_id: 'early_morning_06_08', label: 'S' }] }] };
+    s.options = { zone_id: 'Z2', province: 'P', districts: ['Quận 7'], options: [{ preferred_days: ['tuesday'], first_dates: { tuesday: '2026-12-01' }, first_delivery_date: '2026-12-01', slots: [{ slot_id: 'early_morning_06_08', label: 'S' }] }] };
     s.checkout.optionIndex = 0;
     s.checkout.slotId = 'early_morning_06_08';
   }
@@ -45,9 +45,18 @@ describe('W2-04: sức chứa còn lại theo từng ngày giao', () => {
     const s = usePlanFlowStore();
     withOption(s);
     await s.loadCapacity();
-    expect(cust.availableSlots).toHaveBeenCalledWith('Z2', 28, ['tuesday']);
+    expect(cust.availableSlots).toHaveBeenCalledWith('Z2', 28, ['tuesday'], '2026-12-01');
     expect(s.capacity.map((d) => d.effective_remaining)).toEqual([2, 0]);
     expect(s.fullDates).toEqual(['2026-12-08']);
+  });
+
+  it('gửi ngày bắt đầu khách chọn khi tải lịch giao', async () => {
+    const s = usePlanFlowStore();
+    s.profileId = 'profile';
+    s.checkout.startDate = '2026-12-21';
+    cust.deliveryOptions.mockResolvedValue({ status: 'success', data: { options: [], districts: [] } });
+    await s.loadOptions();
+    expect(cust.deliveryOptions).toHaveBeenCalledWith({ profile_id: 'profile', deliveries_per_week: 1, start_date: '2026-12-21' });
   });
 
   it('W2-04: chưa chọn khung giờ hoặc lỗi máy chủ thì không có số liệu sức chứa (không đoán)', async () => {

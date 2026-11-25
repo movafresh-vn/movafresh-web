@@ -370,6 +370,7 @@ export function createOpsApi({ http = sharedHttp, fetchImpl } = {}) {
       decideAdjustment: (_ctx, { id, approve, note = '' }) => call('finDecideAdjustment', { params: { id }, body: { approve: Boolean(approve), ...(note ? { note } : {}) } }),
 
       reconciliation: () => call('finReconciliation'),
+      confirmRefund: (_ctx, { id, reference, note }) => call('finConfirmRefund', { params: { id }, body: { reference, note } }),
       /** Kế toán nhập dòng sao kê (cùng đường với webhook ngân hàng). Trả { txn, result, duplicate }. */
       bankWebhook: (_ctx, txn = {}) =>
         call('finImportBankLine', { body: compact({ txnId: txn.txnId || undefined, amountVnd: txn.amountVnd, content: txn.content ?? '', at: txn.at }), key: keyOf(txn.txnId) }),

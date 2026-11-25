@@ -185,11 +185,16 @@ describe('W1-03: facade async giữ nguyên tên hàm', () => {
     const done = await api.createSubscription({ ...req, newsletter_optin: true });
     expect(done.status).toBe('success');
     const create = h.calls.find((c) => c.path === '/subscription/create-or-renew');
-    expect(create.key).toBe(`sub-${prof.data.profile_id}-${plan.data.plan_id}`);
+    expect(create.key).toMatch(new RegExp(`^sub-${prof.data.profile_id}-[0-9a-f]{64}$`));
     expect(create.body).toMatchObject({ newsletter_opt_in: true, phone_verified: true });
     expect(done.data).toMatchObject({ subscription_id: 'sub_1', payment_ref: 'MOVA-AB12CD', referral_code: 'MOVA-AB12', paid_now_vnd: 220_000, fresh_credit_balance_remaining_vnd: 100 });
     expect(done.data.next_delivery.slot).toMatch(/06:00/);
     expect(done.data.cycle_weeks).toHaveLength(4);
+    await api.createSubscription({ ...req, newsletter_optin: true });
+    await api.createSubscription({ ...req, newsletter_optin: false });
+    const calls = h.calls.filter((c) => c.path === '/subscription/create-or-renew');
+    expect(calls[1].key).toBe(calls[0].key);
+    expect(calls[2].key).not.toBe(calls[0].key);
   });
 
   it('W1-03: chưa đăng nhập thì xem trước và đăng ký trả AUTH_REQUIRED, không gọi máy chủ', async () => {

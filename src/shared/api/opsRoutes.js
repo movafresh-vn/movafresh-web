@@ -152,6 +152,7 @@ export const OPS_ROUTES = {
   finRequestAdjustment: ['POST', '/ops/finance/credit/adjustments'],
   finDecideAdjustment: ['POST', '/ops/finance/credit/adjustments/:id/decision'],
   finReconciliation: ['GET', '/ops/finance/reconciliation'],
+  finConfirmRefund: ['POST', '/ops/finance/refunds/:id/confirmation'],
   finImportBankLine: ['POST', '/ops/finance/bank-transactions'],
   finManualMatch: ['POST', '/ops/finance/bank-transactions/:id/match'],
   finIgnoreBankTxn: ['POST', '/ops/finance/bank-transactions/:id/ignore'],

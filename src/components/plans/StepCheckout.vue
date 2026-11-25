@@ -9,19 +9,15 @@
     <section class="pl-card sec">
       <h2 class="pl-h2">1. Ngày và giờ giao</h2>
       <div class="pl-chips freq-chips">
-        <button
-          v-for="f in [1, 2]"
-          :key="f"
-          type="button"
-          class="pl-chip freq-chip"
-          :class="{ on: c.frequency === f }"
-          :aria-pressed="c.frequency === f"
-          @click="setFrequency(f)"
-        >
-          <span class="freq-title">{{ f }} lần mỗi tuần</span>
-          <span v-if="f === 1" class="pl-pill recommend-pill">Khuyên dùng (tối ưu phí thùng &amp; ship 39.000đ/hộp)</span>
-        </button>
+        <span class="pl-chip freq-chip on">
+          <span class="freq-title">1 lần mỗi tuần</span>
+          <span class="pl-pill recommend-pill">Tối ưu phí thùng &amp; ship 39.000đ/hộp</span>
+        </span>
       </div>
+
+      <label class="pl-label" for="first-date">Ngày bắt đầu sớm nhất (không bắt buộc)</label>
+      <input id="first-date" v-model="c.startDate" class="pl-input" type="date" :disabled="loadingDates" @change="changeStartDate" />
+      <p class="pl-note">MOVA sẽ tìm ngày giao phù hợp từ ngày bạn chọn.</p>
 
       <template v-if="options && options.options.length">
         <p class="pl-label">Ngày giao cố định hằng tuần</p>
@@ -98,7 +94,7 @@
       </template>
       <div v-else-if="options" class="pl-panel warn" role="alert">
         <b>Khu của bạn hiện đã kín chỗ giao.</b>
-        <p>Bạn thử chọn {{ c.frequency === 1 ? '2 lần mỗi tuần' : '1 lần mỗi tuần' }}, hoặc để lại thông tin ở màn đầu để MOVA báo khi có chỗ.</p>
+        <p>Bạn có thể để lại thông tin ở màn đầu để MOVA báo khi có chỗ.</p>
       </div>
     </section>
 
@@ -219,11 +215,9 @@
             <span class="m-title">Chuyển khoản VietQR một lần cho cả chu kỳ<template v-if="preview"> {{ preview.cycle_weeks.length }} tuần</template></span>
           </button>
           <div v-if="preview && c.method === 'bank_transfer_4w'" class="m-body bank">
-            <div v-if="preview.payment_ref" class="qr"><VietQrSvg :seed="qrSeed" /></div>
             <div class="bank-info">
               <p>Số tiền: <b class="num big">{{ fmt(preview.bank_transfer_4w.pay_vnd) }}</b></p>
-              <p v-if="preview.payment_ref">Nội dung chuyển khoản: <b class="ref">{{ preview.payment_ref }}</b></p>
-              <p v-else class="pl-note">Mã chuyển khoản của bạn hiện ngay sau khi bạn bấm đăng ký gói.</p>
+              <p class="pl-note">Mã chuyển khoản riêng cho gói hiện sau khi bạn bấm đăng ký gói.</p>
               <p class="pl-note">Giữ nguyên nội dung này để MOVA khớp khoản chuyển với gói của bạn. Gói bắt đầu khi ngân hàng báo tiền về.</p>
             </div>
           </div>
@@ -391,7 +385,7 @@
       </div>
       <p v-if="problems.length" class="pl-note need">Còn thiếu: {{ problems.join(', ') }}.</p>
       <p v-if="message" class="pl-error" role="alert">{{ message }}</p>
-      <button class="pl-btn orange" type="button" :disabled="problems.length > 0 || busy" @click="pay">{{ payLabel }}</button>
+      <button class="pl-btn orange" type="button" :disabled="problems.length > 0 || busy || loadingDates" @click="pay">{{ payLabel }}</button>
     </section>
 
     <LinkCardSheet v-if="linkOpen" :linked="Boolean(preview) && !store.cardLinkNeeded && c.method === 'card'" @close="linkOpen = false" @linked="onCardLinked" @unlinked="onCardUnlinked" />
@@ -423,7 +417,6 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
-import VietQrSvg from '../common/VietQrSvg.vue';
 import ExpressPanel from './ExpressPanel.vue';
 import DialSelect from '../modals/DialSelect.vue';
 import LinkCardSheet from '../dashboard/LinkCardSheet.vue';
@@ -432,7 +425,7 @@ import { useMovaStore } from '../../stores/useMovaStore';
 import { BUSINESS } from '../../shared/config/business';
 import { INSTRUCTION_MODES, payTodayInfo } from '../../shared/api/adapters/checkout';
 import { checkoutErrorMessage } from '../../shared/domain/checkoutError';
-import { fmt, hash } from '../../shared/utils/formatters';
+import { fmt } from '../../shared/utils/formatters';
 import { fmtDay, fmtDeadline } from '../../shared/utils/time';
 import { normalizeContact, splitPhone } from '../../shared/domain/leads';
 
@@ -504,7 +497,6 @@ function toggleFaq(id) {
 
 const slots = computed(() => (options.value && options.value.options[c.optionIndex] ? options.value.options[c.optionIndex].slots : []));
 const fc = computed(() => preview.value.fresh_credit);
-const qrSeed = computed(() => Math.abs(hash(preview.value ? preview.value.payment_ref : 'mova')));
 
 const householdSize = computed(() => store.plan?.household_size || 2);
 const mealsCount = computed(() => store.plan?.quote?.meals_per_week || 5);
@@ -670,13 +662,21 @@ async function refresh() {
   store.persist();
 }
 
-async function setFrequency(f) {
-  c.frequency = f;
+const loadingDates = ref(false);
+async function changeStartDate() {
+  loadingDates.value = true;
   c.optionIndex = 0;
   c.slotId = '';
-  await store.loadOptions();
-  autoPick();
-  await refresh();
+  store.options = null;
+  store.preview = null;
+  store.capacity = null;
+  try {
+    await store.loadOptions();
+    autoPick();
+    await refresh();
+  } finally {
+    loadingDates.value = false;
+  }
 }
 
 async function pickOption(i) {

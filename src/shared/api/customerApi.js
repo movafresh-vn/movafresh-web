@@ -41,6 +41,13 @@ async function envelope(fn) {
 
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 
+async function subscriptionRequestKey(profileId, body) {
+  if (!globalThis.crypto?.subtle) throw new HttpError('Trình duyệt không hỗ trợ xác thực yêu cầu thanh toán an toàn.', { code: 'VALIDATION_ERROR', status: 400 });
+  const hash = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(body)));
+  const digest = Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `sub-${profileId}-${digest}`;
+}
+
 /**
  * @param {{ http?: ReturnType<typeof sharedHttp>, ai?: typeof aiApi, drafts?: ReturnType<typeof createPlanDrafts>, token?: () => Promise<string|null>, now?: () => Date, cfg?: typeof BUSINESS }} [deps]
  */
@@ -205,14 +212,14 @@ export function createCustomerApi(deps = {}) {
 
     // ---------- Giao hàng ----------
     /** Sức chứa còn lại từng ngày giao của một khu (khung giờ → từng ngày: còn chỗ khung giờ, còn năng lực chu kỳ, và số nhỏ hơn trong hai). */
-    availableSlots(zoneId, days = 4, preferredDays = null) {
-      return envelope(() => call('availableSlots', { query: { zone_id: zoneId, start_date: dayKey(clock()), weeks: Math.max(1, Math.ceil(days / 7)), ...(preferredDays && preferredDays.length ? { preferred_days: preferredDays.join(',') } : {}) } }));
+    availableSlots(zoneId, days = 4, preferredDays = null, startDate = null) {
+      return envelope(() => call('availableSlots', { query: { zone_id: zoneId, start_date: startDate || dayKey(clock()), weeks: Math.max(1, Math.ceil(days / 7)), ...(preferredDays && preferredDays.length ? { preferred_days: preferredDays.join(',') } : {}) } }));
     },
 
     async deliveryOptions(req = {}) {
       const profile = drafts.profileOf(req.profile_id);
       if (!profile) return fail('PROFILE_NOT_FOUND', 'Không tìm thấy hồ sơ');
-      return envelope(async () => adaptDeliveryOptions(await call('deliveryOptions', { query: { zone_id: profile.zoneId, weeks: cfg.subscription.defaultWeeks } }), { perWeek: req.deliveries_per_week === 2 ? 2 : 1 }));
+      return envelope(async () => adaptDeliveryOptions(await call('deliveryOptions', { query: { zone_id: profile.zoneId, weeks: cfg.subscription.defaultWeeks, ...(req.start_date ? { start_date: req.start_date } : {}) } }), { perWeek: req.deliveries_per_week === 2 ? 2 : 1 }));
     },
 
     // ---------- Giao nhanh 24-36 giờ (ĐỀ XUẤT 2.4.0; máy chủ trả enabled=false khi tắt) ----------
@@ -259,8 +266,7 @@ export function createCustomerApi(deps = {}) {
       if (built.error) return fail(built.error.code, built.error.message);
       return envelope(async () => {
         await ensureSetup(built.profile, req.schedule && req.schedule.shipping_address);
-        // Khóa cố định theo (hồ sơ, thực đơn): bấm trả tiền hai lần hoặc gửi lại khi mạng chập chờn không tạo hai gói.
-        const key = `sub-${req.profile_id}-${req.plan_id}${req.express && req.express.hold_id ? `-${req.express.hold_id}` : ''}`.slice(0, 120);
+        const key = await subscriptionRequestKey(req.profile_id, built.body);
         const raw = await call('createSubscription', { body: built.body, key });
         const out = adaptCreated(raw, { perWeek: built.perWeek, slotId: built.body.schedule.preferred_time_slot });
         const overview = await call('getAccount').catch(() => null);
@@ -281,30 +287,30 @@ export function createCustomerApi(deps = {}) {
       const r = await this.getAccount();
       return r.status === 'success' ? ok(r.data.customer) : r;
     },
-    myWeeks() {
-      return envelope(async () => adaptWeeks(await call('myWeeks')));
+    myWeeks(subscriptionId) {
+      return envelope(async () => adaptWeeks(await call('myWeeks', { query: { subscription_id: subscriptionId } })));
     },
     mealOptions(req = {}) {
-      return envelope(async () => adaptMealOptions(await call('mealOptions', { params: { week_index: toApiIndex(req.week_index), meal_index: req.meal_index }, query: { kind: req.kind } })));
+      return envelope(async () => adaptMealOptions(await call('mealOptions', { params: { week_index: toApiIndex(req.week_index), meal_index: req.meal_index }, query: { kind: req.kind, subscription_id: req.subscription_id } })));
     },
     previewMealChange(req = {}) {
-      return envelope(async () => adaptMealChange(await call('changeMeal', { body: { week_index: toApiIndex(req.week_index), meal_index: req.meal_index, kind: req.kind, dish_id: req.dish_id, dry_run: true } })));
+      return envelope(async () => adaptMealChange(await call('changeMeal', { body: { week_index: toApiIndex(req.week_index), meal_index: req.meal_index, kind: req.kind, dish_id: req.dish_id, dry_run: true, ...(req.subscription_id ? { subscription_id: req.subscription_id } : {}) } })));
     },
     changeMeal(req = {}) {
       return envelope(async () => {
-        const raw = await call('changeMeal', { body: { week_index: toApiIndex(req.week_index), meal_index: req.meal_index, kind: req.kind, dish_id: req.dish_id }, key: req.key });
+        const raw = await call('changeMeal', { body: { week_index: toApiIndex(req.week_index), meal_index: req.meal_index, kind: req.kind, dish_id: req.dish_id, ...(req.subscription_id ? { subscription_id: req.subscription_id } : {}) }, key: req.key });
         return raw.replayed && !raw.from ? { replayed: true, week_index: req.week_index, balance: raw.balance } : adaptMealChange(raw);
       });
     },
     previewSkip(req = {}) {
-      return envelope(async () => adaptSkipPreview(await call('previewSkip', { query: { week_index: toApiIndex(req.week_index) } })));
+      return envelope(async () => adaptSkipPreview(await call('previewSkip', { query: { week_index: toApiIndex(req.week_index), subscription_id: req.subscription_id } })));
     },
     skipWeek(req = {}) {
-      return envelope(async () => adaptSkipResult(await call('skipWeek', { body: { week_index: toApiIndex(req.week_index) } })));
+      return envelope(async () => adaptSkipResult(await call('skipWeek', { body: { week_index: toApiIndex(req.week_index), ...(req.subscription_id ? { subscription_id: req.subscription_id } : {}) } })));
     },
-    previewCancel() {
+    previewCancel(subscriptionId) {
       return envelope(async () => {
-        const [raw, weeks] = await Promise.all([call('cancelSubscription', { body: { confirm: true, dry_run: true } }), call('myWeeks')]);
+        const [raw, weeks] = await Promise.all([call('cancelSubscription', { body: { confirm: true, dry_run: true, ...(subscriptionId ? { subscription_id: subscriptionId } : {}) } }), call('myWeeks', { query: { subscription_id: subscriptionId } })]);
         const view = adaptWeeks(weeks);
         const skippable = view.weeks.find((w) => w.skip && w.skip.allowed);
         const perWeek = view.weeks[0] ? new Set(view.weeks[0].meals.map((m) => m.meal_index)).size : undefined;
@@ -316,7 +322,7 @@ export function createCustomerApi(deps = {}) {
     },
     cancelSubscription(req = {}) {
       if (req.confirm !== true) return Promise.resolve(fail('CONFIRM_REQUIRED', 'Cần xác nhận dừng gói'));
-      return envelope(async () => adaptCancelResult(await call('cancelSubscription', { body: { confirm: true } })));
+      return envelope(async () => adaptCancelResult(await call('cancelSubscription', { body: { confirm: true, ...(req.subscription_id ? { subscription_id: req.subscription_id } : {}) } })));
     },
     unlinkCard() {
       return envelope(() => call('unlinkCard', { body: {} }));
@@ -328,12 +334,12 @@ export function createCustomerApi(deps = {}) {
     linkCard(returnUrl) {
       return envelope(() => call('linkCard', { body: { return_url: returnUrl } }));
     },
-    renewalOffer() {
-      return envelope(async () => adaptRenewalOffer(await call('renewalOffer')));
+    renewalOffer(subscriptionId) {
+      return envelope(async () => adaptRenewalOffer(await call('renewalOffer', { query: { subscription_id: subscriptionId } })));
     },
     renewSubscription(req = {}) {
       if (req.consent !== true) return Promise.resolve(fail('CONSENT_REQUIRED', 'Cần bạn đồng ý rõ ràng trước khi gia hạn'));
-      return envelope(() => call('renewSubscription', { body: { consent: true } }));
+      return envelope(() => call('renewSubscription', { body: { consent: true, ...(req.subscription_id ? { subscription_id: req.subscription_id } : {}) } }));
     },
 
     // ---------- Fresh Credit (chỉ mua Gói Suất ăn trả trước cố định) ----------

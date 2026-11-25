@@ -156,7 +156,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'done']);
 const store = useMovaStore();
 
-const base = { week_index: props.week.week_index, meal_index: props.target.meal.meal_index, kind: props.target.dish.kind };
+const base = { subscription_id: props.week.subscription_id, week_index: props.week.week_index, meal_index: props.target.meal.meal_index, kind: props.target.dish.kind };
 const loadError = ref('');
 const options = ref([]);
 const deadline = ref('');
