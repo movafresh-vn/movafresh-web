@@ -25,7 +25,13 @@ const sauceNameOf = (dishId) => {
   return d && d.sauce && SAUCES[d.sauce] ? SAUCES[d.sauce].name : null;
 };
 
-const balanceOut = (b) => ({ real_vnd: b.real_vnd, promo_vnd: b.promo_vnd, total_vnd: b.total_vnd ?? b.real_vnd + b.promo_vnd });
+const balanceOut = (b) => ({
+  real_vnd: b.real_vnd,
+  promo_vnd: b.promo_vnd,
+  ...(b.held_real_vnd !== undefined ? { held_real_vnd: b.held_real_vnd } : {}),
+  ...(b.held_promo_vnd !== undefined ? { held_promo_vnd: b.held_promo_vnd } : {}),
+  total_vnd: b.total_vnd ?? b.real_vnd + b.promo_vnd
+});
 
 export function adaptSubscription(s) {
   if (!s) return null;
@@ -295,9 +301,13 @@ const HISTORY_LABEL = {
   pack_purchase: 'Mua Gói Suất ăn trả trước',
   pack_discount: 'Chiết khấu khi mua gói',
   week_charge: 'MOVA trừ tiền tuần giao',
+  week_hold: 'Tạm giữ cho tuần giao',
+  week_hold_capture: 'Chốt trừ khi khóa lô',
+  week_hold_release: 'Giải tỏa tạm giữ tuần giao',
+  extra_meal_charge: 'Thêm bữa / tăng suất trước giờ chốt',
   week_charge_reversal: 'Hoàn lại tuần đã trừ',
   week_refund_diff: 'Hoàn chênh lệch khi đổi món',
-  cancel_refund: 'Hoàn tiền thật khi dừng gói',
+  cancel_refund: 'Hoàn tiền ăn khi dừng gói',
   discount_clawback: 'Thu hồi ưu đãi khi dừng gói',
   reward: 'Thưởng từ MOVA',
   promo_revoke: 'Khuyến mãi bị thu hồi khi dừng gói',
@@ -317,9 +327,13 @@ export function adaptHistory(ledger = []) {
     label: HISTORY_LABEL[l.entry_type] || l.entry_type, amount_vnd: l.amount_vnd,
     real_vnd: l.compartment === 'real' ? l.amount_vnd : 0,
     promo_vnd: l.compartment === 'promo' ? l.amount_vnd : 0,
-    compartment: l.compartment, before_vnd: l.balance_after_vnd - l.amount_vnd,
+    compartment: l.compartment,
+    before_vnd: l.balance_before_vnd ?? (l.balance_after_vnd - l.amount_vnd),
     after_vnd: l.balance_after_vnd, ref_id: l.ref_id, order_code: l.order_code,
-    week_index: l.week_index, at: l.created_at
+    week_index: l.week_index,
+    source_allocations: l.source_allocations || [],
+    manual_reconciliation_required: Boolean(l.manual_reconciliation_required),
+    at: l.created_at
   })).sort((a, b) => b.at.localeCompare(a.at));
 }
 
@@ -344,6 +358,7 @@ export function adaptCreditSummary({ account, packs, overview, alert_unavailable
   return {
     balance: balanceOut(bal),
     spend_order: account.spend_order ?? null,
+    reconciliation: account.reconciliation ?? { unallocated_real_vnd: 0, manual_reconciliation_required: false },
     alert: overview ? adaptAlert(overview.alert) : null,
     alert_unavailable,
     history: adaptHistory(account.ledger),

@@ -5,16 +5,21 @@
       <p class="total num">{{ fmt(sum.balance.total_vnd) }}</p>
       <div class="split">
         <div class="part">
-          <small>Tiền thật</small>
+          <small>Tiền ăn</small>
           <b class="num">{{ fmt(sum.balance.real_vnd) }}</b>
-          <span>Bạn đã nạp. Hoàn lại được khi dừng gói.</span>
+          <span v-if="sum.balance.held_real_vnd > 0" class="num">Đang tạm giữ cho tuần giao: {{ fmt(sum.balance.held_real_vnd) }}</span>
+          <span>Số dư dùng để đổi bữa ăn tại MOVA Fresh (không rút tiền mặt).</span>
         </div>
         <div class="part promo">
           <small>Khuyến mãi</small>
           <b class="num">{{ fmt(sum.balance.promo_vnd) }}</b>
-          <span>Ưu đãi gói trả trước, thưởng mời bạn. Không hoàn khi dừng gói.</span>
+          <span v-if="sum.balance.held_promo_vnd > 0" class="num">Đang tạm giữ cho tuần giao: {{ fmt(sum.balance.held_promo_vnd) }}</span>
+          <span>Ưu đãi gói trả trước, thưởng mời bạn. Không chuyển thành tiền ăn.</span>
         </div>
       </div>
+      <p v-if="sum.reconciliation?.manual_reconciliation_required" class="pl-panel warn">
+        Có số dư lịch sử chưa đủ bằng chứng nguồn thanh toán ({{ fmt(sum.reconciliation.unallocated_real_vnd) }}): trạng thái <b>Cần đối soát thủ công</b>.
+      </p>
       <p v-if="sum.spend_order" class="pl-note">Khi trừ tiền tuần giao, MOVA dùng {{ spendOrderText }}. Phần chênh lệch khi đổi món có quy tắc riêng.</p>
       <p v-else class="pl-note">Không tải được thứ tự trừ tiền tuần giao từ máy chủ.</p>
       <button class="pl-btn primary" type="button" @click="store.openModal('topup')">Mua Gói Suất ăn trả trước</button>
@@ -28,6 +33,26 @@
       </button>
     </section>
     <p v-if="sum.alert_unavailable" class="pl-error" role="alert">Không tải được cảnh báo số dư cho tuần giao. Vui lòng thử lại.</p>
+
+    <section v-if="weekFlows.length" class="pl-card flows">
+      <h2 class="pl-h2">Dòng tiền theo từng đơn tuần</h2>
+      <ul>
+        <li v-for="w in weekFlows" :key="w.week_id">
+          <div>
+            <b>Tuần {{ w.week_index }}<template v-if="w.order_code"> · {{ w.order_code }}</template></b>
+            <small>Ngày giao: {{ w.delivery_date }} · Trạng thái giữ tiền: {{ holdLabel(w.hold_state) }}</small>
+            <small class="num">
+              <template v-if="w.held_real_vnd || w.held_promo_vnd">Đang tạm giữ: Tiền ăn {{ fmt(w.held_real_vnd) }}, KM {{ fmt(w.held_promo_vnd) }} · </template>
+              <template v-if="w.captured_real_vnd || w.captured_promo_vnd">Đã chốt trừ: Tiền ăn {{ fmt(w.captured_real_vnd) }}, KM {{ fmt(w.captured_promo_vnd) }} · </template>
+              <template v-if="w.refunded_real_vnd || w.refunded_promo_vnd">Đã hoàn: Tiền ăn {{ fmt(w.refunded_real_vnd) }}, KM {{ fmt(w.refunded_promo_vnd) }} · </template>
+              <template v-if="w.external_paid_vnd">Thanh toán trực tiếp: {{ fmt(w.external_paid_vnd) }}</template>
+            </small>
+            <small v-if="w.manual_reconciliation_required" class="warn-tag">Cần đối soát thủ công</small>
+          </div>
+          <span class="amt num">{{ fmt(w.payable_vnd) }}</span>
+        </li>
+      </ul>
+    </section>
 
     <section class="pl-card hist">
       <h2 class="pl-h2">Lịch sử</h2>
@@ -43,9 +68,10 @@
           <div>
             <b>{{ h.label }}</b>
             <small class="num">{{ fmtDeadline(new Date(h.at)) }}</small>
-            <small class="num">{{ h.compartment === 'real' ? 'Tiền thật' : 'Khuyến mãi' }}: {{ fmt(h.before_vnd) }} → {{ fmt(h.after_vnd) }}</small>
+            <small class="num">{{ h.compartment === 'real' ? 'Tiền ăn' : 'Khuyến mãi' }}: {{ fmt(h.before_vnd) }} → {{ fmt(h.after_vnd) }}</small>
             <small v-if="h.order_code">Mã đơn: {{ h.order_code }}</small>
             <small v-else-if="h.ref_id">Tham chiếu: {{ h.ref_id }}</small>
+            <small v-if="h.manual_reconciliation_required" class="warn-tag">Cần đối soát thủ công</small>
           </div>
           <span class="amt num" :class="{ minus: h.amount_vnd < 0 }">{{ signed(h.amount_vnd) }}</span>
         </li>
@@ -65,12 +91,15 @@ import { useMovaStore } from '../../stores/useMovaStore';
 
 const store = useMovaStore();
 const sum = ref(null);
+const weekFlows = ref([]);
 const error = ref('');
 const loading = ref(false);
 const orderInput = ref('');
 const orderCode = ref('');
 let sequence = 0;
-const spendOrderText = computed(() => sum.value.spend_order.map((b) => b === 'real' ? 'tiền thật' : 'khuyến mãi').join(' trước, rồi '));
+const spendOrderText = computed(() => sum.value.spend_order.map((b) => b === 'real' ? 'tiền ăn' : 'khuyến mãi').join(' trước, rồi '));
+const HOLD_LABELS = { none: 'Chưa giữ tiền', held: 'Đang tạm giữ (Hold)', captured: 'Đã chốt trừ (Capture)', released: 'Đã giải tỏa (Release)' };
+const holdLabel = (s) => HOLD_LABELS[s] || s;
 
 const signed = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${fmt(Math.abs(v))}`;
 
@@ -87,6 +116,10 @@ async function load(cursor = null) {
     }
     if (cursor && sum.value) r.data.history = [...sum.value.history, ...r.data.history];
     sum.value = r.data;
+    if (!cursor) {
+      const wf = await api.customer.weekCashflow(orderCode.value ? { order_code: orderCode.value } : {});
+      if (seq === sequence && wf.status === 'success') weekFlows.value = wf.data.weeks || [];
+    }
   } catch {
     if (seq === sequence) error.value = 'Không tải được lịch sử Fresh Credit. Vui lòng kiểm tra kết nối và thử lại.';
   } finally {

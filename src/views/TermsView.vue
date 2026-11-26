@@ -58,7 +58,7 @@
             3.1. <b>Quyền dừng gói 1 chạm:</b> Tuân thủ Điều 27 Luật Bảo vệ quyền lợi người tiêu dùng 19/2023/QH15, khách hàng có toàn quyền chủ động bấm <b>"Dừng gói"</b> hoặc <b>"Hủy liên kết thẻ/ví đối tác"</b> bất kỳ lúc nào trực tiếp trên giao diện quản lý tài khoản mà không phải chịu bất kỳ thủ tục gây khó khăn nào.
           </p>
           <p>
-            3.2. <b>Cam kết hoàn tiền trong 7 ngày làm việc:</b> Khi khách hàng yêu cầu dừng gói trước khi chu kỳ 4 tuần kết thúc, MOVA FRESH cam kết hoàn trả 100% số tiền thật tương ứng với các bữa ăn chưa giao về đúng tài khoản nguồn trong vòng <b>7 ngày làm việc</b> kể từ thời điểm tiếp nhận yêu cầu.
+            3.2. <b>Cam kết hoàn tiền trong 7 ngày làm việc:</b> Khi khách hàng yêu cầu dừng gói trước khi chu kỳ 4 tuần kết thúc, MOVA FRESH cam kết hoàn trả 100% số tiền ăn tương ứng với các bữa ăn chưa giao về đúng tài khoản nguồn trong vòng <b>7 ngày làm việc</b> kể từ thời điểm tiếp nhận yêu cầu.
           </p>
           <p>
             3.3. <b>Công thức tất toán ưu đãi:</b> Tiền hoàn lại = Tổng tiền thực trả của gói − (Số bữa đã nhận × Đơn giá bữa ăn niêm yết không ưu đãi). Nếu số tiền còn lại là số dương, MOVA hoàn trả đầy đủ cho khách hàng.

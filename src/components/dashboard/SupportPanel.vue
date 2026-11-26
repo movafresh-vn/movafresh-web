@@ -5,7 +5,7 @@
     <p v-if="loadError" class="pl-error" role="alert">{{ loadError }}</p>
     <template v-if="account">
       <p class="num">Fresh Credit: <b>{{ fmt(account.credit.total_vnd) }}</b>
-        (tiền thật {{ fmt(account.credit.real_vnd) }}, khuyến mãi {{ fmt(account.credit.promo_vnd) }}).</p>
+        (tiền ăn {{ fmt(account.credit.real_vnd) }}, khuyến mãi {{ fmt(account.credit.promo_vnd) }}).</p>
       <p v-if="account.alert" class="pl-error">Tuần {{ account.alert.week_index + 1 }} còn thiếu {{ fmt(account.alert.shortfall_vnd) }}; trừ lúc {{ account.alert.charge_label }}.</p>
     </template>
     <ul v-if="weeks.length">
@@ -15,6 +15,21 @@
     </ul>
     <p v-else-if="loaded && !loadError" class="pl-note">Chưa có tuần giao.</p>
     <button class="pl-btn sm" type="button" :disabled="loading" @click="load">Cập nhật thông tin</button>
+
+    <div v-if="requests.length" class="history">
+      <h3>Yêu cầu bạn đã gửi</h3>
+      <ul>
+        <li v-for="req in requests" :key="req.id" class="req-item">
+          <div>
+            <b>#{{ req.id }} · {{ statusLabel[req.status] || req.status }}</b>
+            <p class="msg">{{ req.message }}</p>
+            <p v-if="req.reply_message" class="reply">
+              <b>Phản hồi từ MOVA Fresh:</b> {{ req.reply_message }}
+            </p>
+          </div>
+        </li>
+      </ul>
+    </div>
     <form class="support-form" @submit.prevent="submit">
       <label for="support-category">Loại yêu cầu</label>
       <select id="support-category" v-model="category" class="pl-input" :disabled="busy || uncertain">
@@ -39,6 +54,8 @@ import { fmt } from '../../shared/utils/formatters';
 
 const account = ref(null);
 const weeks = ref([]);
+const requests = ref([]);
+const statusLabel = { open: 'Chờ tiếp nhận', in_progress: 'Đang xử lý', resolved: 'Đã xử lý' };
 const loading = ref(false);
 const loaded = ref(false);
 const loadError = ref('');
@@ -54,13 +71,14 @@ async function load() {
   loading.value = true;
   loadError.value = '';
   try {
-    const [a, w] = await Promise.all([api.customer.getAccount(), api.customer.myWeeks()]);
+    const [a, w, reqs] = await Promise.all([api.customer.getAccount(), api.customer.myWeeks(), api.customer.listSupportRequests()]);
     if (a.status === 'error' || w.status === 'error') {
       loadError.value = (a.status === 'error' ? a.error : w.error).message;
       return;
     }
     account.value = a.data;
     weeks.value = w.data.weeks;
+    if (reqs.status === 'success') requests.value = reqs.data.requests || [];
   } catch {
     loadError.value = 'Không tải được thông tin. Vui lòng thử lại.';
   } finally {
@@ -87,6 +105,7 @@ async function submit() {
     message.value = '';
     uncertain.value = false;
     key = null;
+    await load();
   } catch {
     uncertain.value = true;
     sendError.value = 'Chưa xác nhận được kết quả. Kiểm tra kết nối và gửi lại cùng yêu cầu tại đây, không tải lại trang.';

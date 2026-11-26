@@ -17,7 +17,36 @@
 
       <label class="pl-label" for="first-date">Ngày bắt đầu sớm nhất (không bắt buộc)</label>
       <input id="first-date" v-model="c.startDate" class="pl-input" type="date" :disabled="loadingDates" @change="changeStartDate" />
-      <p class="pl-note">MOVA sẽ tìm ngày giao phù hợp từ ngày bạn chọn.</p>
+      <p class="pl-note">MOVA sẽ tìm ngày giao phù hợp từ ngày bạn chọn<template v-if="availDatesMeta.min_lead_hours"> (đặt trước tối thiểu {{ availDatesMeta.min_lead_hours }} giờ theo khu vực)</template>.</p>
+
+      <!-- Bảng ngày giao khả dụng theo giờ máy chủ kèm khung giờ & trạng thái khóa lô -->
+      <div v-if="availDates.length" class="avail-board" data-testid="available-dates">
+        <p class="pl-label">Chọn nhanh ngày giao khả dụng</p>
+        <ul class="avail-list">
+          <li v-for="d in availDates" :key="d.delivery_date" class="avail-day">
+            <div class="avail-day-head">
+              <b>{{ fmtDay(d.delivery_date) }}</b>
+              <span v-if="d.is_holiday" class="pl-pill">Ngày lễ</span>
+              <span v-else-if="d.batch_locked" class="pl-pill">Lô đã chốt</span>
+            </div>
+            <div class="avail-slots">
+              <button
+                v-for="s in d.slots"
+                :key="d.delivery_date + ':' + s.slot_id"
+                type="button"
+                class="pl-chip sm"
+                :class="{ on: c.startDate === d.delivery_date && c.slotId === s.slot_id }"
+                :disabled="!s.available || loadingDates"
+                @click="pickAvailableDate(d, s)"
+              >
+                <span>{{ s.label }}</span>
+                <small v-if="s.available" class="num">Còn {{ s.remaining }}</small>
+                <small v-else>{{ reasonLabel(s.reason) }}</small>
+              </button>
+            </div>
+          </li>
+        </ul>
+      </div>
 
       <template v-if="options && options.options.length">
         <p class="pl-label">Ngày giao cố định hằng tuần</p>
@@ -304,7 +333,7 @@
         </div>
         <ul class="rules legal-list">
           <li><b>Cam kết dừng gói 1 chạm bất kỳ lúc nào:</b> Bạn có thể chủ động bấm Dừng gói hoặc Hủy liên kết thẻ/ví đối tác ngay tại trang tài khoản mà không cần gọi tổng đài hay chờ duyệt phức tạp.</li>
-          <li><b>Cam kết hoàn tiền trong vòng 7 ngày làm việc:</b> Khi dừng gói giữa chừng, MOVA hoàn trả 100% tiền thật tương ứng với các bữa ăn chưa giao về đúng phương thức/tài khoản nguồn (tất toán lại phần ưu đãi chiết khấu chu kỳ dài nếu dừng trước hạn theo đúng giá trị bữa ăn thực tế).</li>
+          <li><b>Cam kết hoàn tiền trong vòng 7 ngày làm việc:</b> Khi dừng gói giữa chừng, MOVA hoàn trả 100% tiền ăn tương ứng với các bữa ăn chưa giao về đúng phương thức/tài khoản nguồn (tất toán lại phần ưu đãi chiết khấu chu kỳ dài nếu dừng trước hạn theo đúng giá trị bữa ăn thực tế).</li>
           <li><b>Báo trước 7 ngày làm việc trước khi hết chu kỳ gói:</b> Hệ thống thông báo thực đơn và số tiền dự kiến trước 7 ngày làm việc để bạn chủ động quyết định tiếp tục hoặc tạm dừng; tuyệt đối KHÔNG âm thầm tự động gia hạn gói lớn.</li>
           <li><b>Linh hoạt tạm hoãn:</b> Được tạm hoãn tối đa {{ maxSkip }} tuần trong mỗi chu kỳ 4 tuần (chỉ cần báo trước giờ chốt sổ D-2) mà không mất ưu đãi hay bị phạt.</li>
           <li><b>Minh bạch hóa đơn điện tử:</b> Xuất hóa đơn điện tử GTGT hợp lệ tại mỗi lần giao hàng theo đúng quy định tại Điều 9 Nghị định 254/2026/NĐ-CP.</li>
@@ -780,6 +809,21 @@ async function pay() {
 
 onMounted(async () => {
   await store.loadOptions();
+  // Tự điền thông tin đã có của khách đã đăng nhập (khách vẫn tự do sửa trước khi xác nhận, không tự ghi đè hồ sơ gốc).
+  const cust = account.account?.customer;
+  if (cust) {
+    if (!c.name && cust.name) c.name = cust.name;
+    if (!c.street && cust.address) c.street = cust.address;
+    if (!c.district && cust.district) c.district = cust.district;
+    if (!c.phone && cust.phone) {
+      const norm = normalizeContact(cust.phone);
+      if (norm && norm.type === 'phone') {
+        const sp = splitPhone(norm.value);
+        c.phoneDial = sp.dial;
+        c.phone = sp.national;
+      }
+    }
+  }
   const contact = normalizeContact(store.contact);
   if (!c.phone && contact && contact.type === 'phone') {
     const sp = splitPhone(contact.value);
@@ -800,8 +844,43 @@ onMounted(async () => {
     await applyVoucher();
   }
   autoPick();
+  await loadAvailableDates();
   await refresh();
 });
+
+const availDates = ref([]);
+const availDatesMeta = ref({ min_lead_hours: 36 });
+const REASON_LABELS = {
+  holiday: 'Ngày lễ',
+  batch_locked: 'Lô đã chốt',
+  cutoff_passed: 'Qua giờ chốt',
+  lead_time_not_met: 'Chưa đủ giờ đặt trước',
+  slot_full: 'Hết chỗ'
+};
+const reasonLabel = (r) => REASON_LABELS[r] || 'Không khả dụng';
+
+async function loadAvailableDates() {
+  const zoneId = options.value?.zone_id;
+  if (!zoneId) return;
+  const r = await api.customer.availableDates(zoneId, 14);
+  if (r.status === 'success' && r.data) {
+    availDates.value = (r.data.dates || []).slice(0, 8);
+    availDatesMeta.value = { min_lead_hours: r.data.min_lead_hours ?? 36 };
+  }
+}
+
+async function pickAvailableDate(dayObj, slotObj) {
+  if (!slotObj.available) return;
+  c.startDate = dayObj.delivery_date;
+  await changeStartDate();
+  if (options.value?.options?.length) {
+    const idx = options.value.options.findIndex((o) => o.preferred_days.includes(dayObj.day_name));
+    if (idx >= 0) c.optionIndex = idx;
+  }
+  c.slotId = slotObj.slot_id;
+  save();
+  await refresh();
+}
 
 watch(() => c.packId, save);
 </script>

@@ -3,6 +3,7 @@
     <header class="head">
       <div>
         <h2 class="pl-h2">Tuần {{ week.number }}</h2>
+        <p v-if="week.order_code" class="muted num" data-testid="week-order-code">Mã đơn: <b>{{ week.order_code }}</b></p>
         <p class="when">
           <span v-for="(b, i) in week.boxes" :key="b.order_id">{{ i ? ' và ' : '' }}{{ b.delivery_label }}</span>
           <span class="muted"> · {{ week.boxes?.[0]?.slot_label }}</span>
@@ -100,21 +101,91 @@
     </div>
     <p v-else-if="week.status === 'delivered'" class="pl-note" data-testid="delivery-proof-pending">Ảnh giao hàng sẽ hiện ở đây khi shipper tải lên.</p>
 
-    <footer v-if="week.skip?.allowed || skipHint" class="foot">
-      <button v-if="week.skip?.allowed" class="pl-btn" type="button" @click="$emit('skip', week)">Tạm hoãn tuần này</button>
-      <p v-else-if="skipHint" class="pl-note">{{ skipHint }}</p>
+    <footer v-if="week.editable || week.skip?.allowed || skipHint" class="foot">
+      <div class="foot-actions">
+        <button v-if="week.editable" class="pl-btn sm" type="button" data-testid="toggle-extra-meals" @click="showExtra = !showExtra">
+          {{ showExtra ? 'Đóng thêm bữa / tăng suất' : 'Thêm bữa / tăng suất' }}
+        </button>
+        <button v-if="week.skip?.allowed" class="pl-btn" type="button" @click="$emit('skip', week)">Tạm hoãn tuần này</button>
+      </div>
+      <p v-if="!week.skip?.allowed && skipHint" class="pl-note">{{ skipHint }}</p>
+
+      <form v-if="week.editable && showExtra" class="extra-form" @submit.prevent="submitExtra">
+        <p class="pl-note">Tối đa 21 bữa/tuần (bao gồm bữa bổ sung) và tối đa 10 suất/món. Phần tăng thêm của tuần đã thanh toán được trừ bằng Fresh Credit; ưu đãi tuần đầu giữ nguyên.</p>
+        <div class="extra-row">
+          <label>
+            <span>Bữa cần tăng suất</span>
+            <select v-model.number="extraMealIdx" class="pl-input">
+              <option v-for="m in week.meals" :key="m.meal_index" :value="m.meal_index">Bữa {{ m.meal_index }}</option>
+            </select>
+          </label>
+          <label>
+            <span>Số suất mới (1–10)</span>
+            <input v-model.number="extraServings" class="pl-input num" type="number" min="1" max="10" required />
+          </label>
+        </div>
+        <p v-if="extraError" class="pl-error" role="alert">{{ extraError }}</p>
+        <p v-if="extraOk" role="status">{{ extraOk }}</p>
+        <button class="pl-btn primary sm" type="submit" :disabled="extraBusy">
+          {{ extraBusy ? 'Đang cập nhật...' : 'Xác nhận tăng suất' }}
+        </button>
+      </form>
     </footer>
   </article>
 </template>
 
 <script setup>
 import { computed, reactive, ref } from 'vue';
+import { api } from '../../shared/api';
+import { newKey } from '../../shared/api/http';
 import { fmt } from '../../shared/utils/formatters';
 import { fmtDay, fmtDeadline } from '../../shared/utils/time';
+import { useMovaStore } from '../../stores/useMovaStore';
 
 const props = defineProps({ week: { type: Object, required: true } });
 defineEmits(['change', 'skip']);
+const store = useMovaStore();
 const SWAP = ['protein', 'veg', 'soup', 'carb'];
+
+const showExtra = ref(false);
+const extraMealIdx = ref(props.week.meals?.[0]?.meal_index || 1);
+const extraServings = ref(3);
+const extraBusy = ref(false);
+const extraError = ref('');
+const extraOk = ref('');
+let extraKey = null;
+
+async function submitExtra() {
+  if (extraBusy.value) return;
+  const meal = (props.week.meals || []).find((m) => m.meal_index === extraMealIdx.value);
+  if (!meal || !meal.dishes?.length) {
+    extraError.value = 'Không tìm thấy bữa ăn hợp lệ.';
+    return;
+  }
+  extraBusy.value = true;
+  extraError.value = '';
+  extraOk.value = '';
+  extraKey ||= newKey();
+  try {
+    const r = await api.customer.addWeekMeals({
+      week_index: props.week.number,
+      portion_updates: meal.dishes.map((d) => ({ meal_index: meal.meal_index, kind: d.kind, servings: extraServings.value })),
+      idempotency_key: extraKey
+    });
+    if (r.status === 'error') {
+      extraError.value = r.error.message;
+      if (r.error.status < 500) extraKey = null;
+      return;
+    }
+    extraKey = null;
+    extraOk.value = `Đã cập nhật! Chênh lệch: ${fmt(r.data.delta_vnd)}.`;
+    await store.refresh();
+  } catch {
+    extraError.value = 'Không kết nối được máy chủ. Bấm xác nhận lại để gửi cùng yêu cầu an toàn.';
+  } finally {
+    extraBusy.value = false;
+  }
+}
 
 const previewImg = ref('');
 const imgFailed = reactive({});

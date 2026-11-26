@@ -11,7 +11,7 @@
       <button type="button" class="stat" @click="$emit('tab', 'credit')">
         <small>Fresh Credit</small>
         <b class="num">{{ fmt(store.balance?.total_vnd ?? 0) }}</b>
-        <span class="num">Tiền thật {{ fmt(store.balance?.real_vnd ?? 0) }}</span>
+        <span class="num">Tiền ăn {{ fmt(store.balance?.real_vnd ?? 0) }}</span>
       </button>
       <div class="stat plain" v-if="sub">
         <small>Gói của bạn</small>

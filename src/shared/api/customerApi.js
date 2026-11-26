@@ -215,6 +215,9 @@ export function createCustomerApi(deps = {}) {
     availableSlots(zoneId, days = 4, preferredDays = null, startDate = null) {
       return envelope(() => call('availableSlots', { query: { zone_id: zoneId, start_date: startDate || dayKey(clock()), weeks: Math.max(1, Math.ceil(days / 7)), ...(preferredDays && preferredDays.length ? { preferred_days: preferredDays.join(',') } : {}) } }));
     },
+    availableDates(zoneId, days = 21) {
+      return envelope(() => call('availableDates', { query: { zone_id: zoneId, days } }));
+    },
 
     async deliveryOptions(req = {}) {
       const profile = drafts.profileOf(req.profile_id);
@@ -282,6 +285,9 @@ export function createCustomerApi(deps = {}) {
     },
     supportRequest(req) {
       return envelope(() => call('supportRequest', { body: { category: req.category, message: req.message }, key: req.key }));
+    },
+    listSupportRequests() {
+      return envelope(() => call('listSupportRequests'));
     },
     async findCustomer() {
       const r = await this.getAccount();
@@ -353,6 +359,9 @@ export function createCustomerApi(deps = {}) {
         return adaptCreditSummary({ account, packs: plist.packs, overview: overview.value, alert_unavailable: overview.failed });
       });
     },
+    weekCashflow(query = {}) {
+      return envelope(() => call('creditWeekCashflow', { query }));
+    },
     /** Đặt mua một gói: tiền về qua chuyển khoản ngân hàng mới được cộng vào Fresh Credit (không có nạp số tiền lẻ). */
     topUpCredit(req = {}) {
       return envelope(async () => {
@@ -422,6 +431,19 @@ export function createCustomerApi(deps = {}) {
         }
         return call('saveProfile', { body });
       });
+    },
+    saveSafetyProfile(body = {}) {
+      return envelope(() => call('saveSafetyProfile', { body }));
+    },
+    addWeekMeals(req = {}) {
+      const key = req.idempotency_key || `add-meals-${req.week_index}-${Date.now().toString(36)}`;
+      const body = {
+        ...(req.subscription_id ? { subscription_id: req.subscription_id } : {}),
+        week_index: req.week_index,
+        ...(req.add_meals ? { add_meals: req.add_meals } : {}),
+        ...(req.portion_updates ? { portion_updates: req.portion_updates } : {})
+      };
+      return envelope(() => call('addWeekMeals', { body, key }));
     },
     claimShare(req = {}) {
       return envelope(() => call('claimShare', { body: { kind: ['photo', 'qr'].includes(req.kind) ? req.kind : 'menu', ref: String(req.ref || '').trim(), ...(req.photo_name ? { photo_name: req.photo_name } : {}) } }));

@@ -50,7 +50,7 @@
           <div class="refund-promise">
             🛡️ <b>Cam kết Luật BVQLNTD 19/2023:</b> Hoàn tiền về tài khoản nguồn trong vòng <b>7 ngày làm việc</b>.
           </div>
-          <p class="pl-note" style="margin-top: 6px;">Hoàn 100% phần tiền thật tương ứng với các bữa ăn chưa giao. {{ p.weeks_cancelled }} tuần chưa chốt sổ sẽ được hủy<template v-if="p.kept_orders">; {{ p.kept_orders }} chuyến đã chốt sổ nhà máy vẫn được giao đúng hẹn</template>.</p>
+          <p class="pl-note" style="margin-top: 6px;">Hoàn 100% phần tiền ăn tương ứng với các bữa ăn chưa giao. {{ p.weeks_cancelled }} tuần chưa chốt sổ sẽ được hủy<template v-if="p.kept_orders">; {{ p.kept_orders }} chuyến đã chốt sổ nhà máy vẫn được giao đúng hẹn</template>.</p>
         </section>
 
         <section v-if="p.skip_instead" class="pl-panel alt">

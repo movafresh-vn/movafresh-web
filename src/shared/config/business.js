@@ -89,7 +89,7 @@ export const BUSINESS = {
     householdMax: 10,
     householdDefault: 2,
     mealsPerWeekMin: 3,
-    mealsPerWeekMax: 7,
+    mealsPerWeekMax: 21,
     mealsPerWeekDefault: 5,
     // Số bữa Tây mỗi tuần khi khách chọn "Việt + 1–2 bữa Tây": từ 5 bữa/tuần trở lên thì 2 bữa
     westernMealsWhenMixed: { base: 1, withMealsAtLeast: 5, extra: 2 },

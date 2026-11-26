@@ -849,7 +849,7 @@ const currentCommitment = computed(() => {
       return {
         icon: '💰',
         title: 'Kiểm soát chi tiêu, hoàn tiền minh bạch trong 7 ngày:',
-        desc: 'Ngân sách chỉ là trần mềm định hướng. Bạn trả trước theo gói nhưng luôn có thể dừng gói bất kỳ lúc nào và nhận hoàn 100% tiền thật các bữa chưa giao trong 7 ngày làm việc.'
+        desc: 'Ngân sách chỉ là trần mềm định hướng. Bạn trả trước theo gói nhưng luôn có thể dừng gói bất kỳ lúc nào và nhận hoàn 100% tiền ăn các bữa chưa giao trong 7 ngày làm việc.'
       };
     default:
       return {

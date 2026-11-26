@@ -178,7 +178,7 @@ const RAW_FAQS = [
     id: 'p2',
     groupId: 'payment',
     q: 'Fresh Credit là gì? Tôi nạp tiền vào có rút ra được không?',
-    a: '<p><b>Fresh Credit</b> là điểm suất ăn trả trước nội bộ theo Thông tư 99/2025/TT-BTC, dùng để đổi bữa ăn tại MOVA FRESH nhận chiết khấu khoảng 10%. Fresh Credit không phải là ví điện tử trung gian thanh toán (tuân thủ Nghị định 52/2024/NĐ-CP). Khi dừng gói giữa chừng, MOVA hoàn trả 100% tiền thật các bữa chưa giao về tài khoản ngân hàng của bạn trong 7 ngày làm việc.</p>'
+    a: '<p><b>Fresh Credit</b> là điểm suất ăn trả trước nội bộ theo Thông tư 99/2025/TT-BTC, dùng để đổi bữa ăn tại MOVA FRESH nhận chiết khấu khoảng 10%. Fresh Credit không phải là ví điện tử trung gian thanh toán (tuân thủ Nghị định 52/2024/NĐ-CP). Khi dừng gói giữa chừng, MOVA hoàn trả 100% tiền ăn các bữa chưa giao về tài khoản ngân hàng của bạn trong 7 ngày làm việc.</p>'
   },
   {
     id: 'p3',
@@ -204,7 +204,7 @@ const RAW_FAQS = [
     id: 'd2',
     groupId: 'delivery',
     q: 'Quy trình hoàn tiền các bữa chưa giao diễn ra trong bao lâu?',
-    a: '<p>MOVA FRESH cam kết hoàn tiền 100% tiền thật cho các bữa ăn chưa giao trong vòng <b>7 ngày làm việc</b> kể từ khi bạn bấm Dừng gói hoặc liên hệ CSKH. Số tiền được chuyển khoản trực tiếp về tài khoản ngân hàng hoặc phương thức nguồn của bạn.</p>'
+    a: '<p>MOVA FRESH cam kết hoàn tiền 100% tiền ăn cho các bữa ăn chưa giao trong vòng <b>7 ngày làm việc</b> kể từ khi bạn bấm Dừng gói hoặc liên hệ CSKH. Số tiền được chuyển khoản trực tiếp về tài khoản ngân hàng hoặc phương thức nguồn của bạn.</p>'
   },
   {
     id: 'd3',
