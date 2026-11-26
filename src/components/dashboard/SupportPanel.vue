@@ -9,7 +9,7 @@
       <p v-if="account.alert" class="pl-error">Tuần {{ account.alert.week_index + 1 }} còn thiếu {{ fmt(account.alert.shortfall_vnd) }}; trừ lúc {{ account.alert.charge_label }}.</p>
     </template>
     <ul v-if="weeks.length">
-      <li v-for="w in weeks" :key="w.week_index">
+      <li v-for="w in weeks" :key="`${w.subscription_id || 'sub'}:${w.week_index}:${w.delivery_date}`">
         Tuần {{ w.number }}{{ w.order_code ? ` · ${w.order_code}` : '' }}: {{ w.status_label }} · hạn đổi {{ w.deadline_label }}
       </li>
     </ul>
@@ -71,13 +71,29 @@ async function load() {
   loading.value = true;
   loadError.value = '';
   try {
-    const [a, w, reqs] = await Promise.all([api.customer.getAccount(), api.customer.myWeeks(), api.customer.listSupportRequests()]);
-    if (a.status === 'error' || w.status === 'error') {
-      loadError.value = (a.status === 'error' ? a.error : w.error).message;
+    const [a, reqs] = await Promise.all([api.customer.getAccount(), api.customer.listSupportRequests()]);
+    if (a.status === 'error') {
+      loadError.value = a.error.message;
       return;
     }
     account.value = a.data;
-    weeks.value = w.data.weeks;
+    const activeSubs = (a.data.subscriptions || []).filter((s) => s.status === 'active');
+    const weekResponses = activeSubs.length > 0
+      ? await Promise.all(activeSubs.map((s) => api.customer.myWeeks(s.id)))
+      : [await api.customer.myWeeks()];
+    const firstErr = weekResponses.find((r) => r.status === 'error');
+    if (firstErr && weekResponses.every((r) => r.status === 'error')) {
+      loadError.value = firstErr.error.message;
+      return;
+    }
+    const merged = [];
+    for (const [idx, res] of weekResponses.entries()) {
+      if (res.status !== 'success') continue;
+      const subId = activeSubs[idx]?.id || null;
+      for (const w of res.data.weeks || []) merged.push({ ...w, subscription_id: w.subscription_id || subId });
+    }
+    merged.sort((x, y) => String(x.delivery_date || '').localeCompare(String(y.delivery_date || '')) || Number(x.number || 0) - Number(y.number || 0));
+    weeks.value = merged;
     if (reqs.status === 'success') requests.value = reqs.data.requests || [];
   } catch {
     loadError.value = 'Không tải được thông tin. Vui lòng thử lại.';

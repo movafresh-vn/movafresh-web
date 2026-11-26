@@ -281,7 +281,7 @@
               <button
                 type="button"
                 class="ps-btn"
-                :disabled="store.answers.meals >= 7"
+                :disabled="store.answers.meals >= 21"
                 aria-label="Thêm một bữa"
                 @click="store.setAnswer('meals', store.answers.meals + 1)"
               >+</button>
@@ -926,7 +926,15 @@ watch(
 );
 
 function go(n) {
-  router.push({ path: '/plans', query: { step: '1', q: String(Math.max(0, n)) } });
+  router.push({
+    path: '/plans',
+    query: {
+      step: '1',
+      q: String(Math.max(0, n)),
+      ...(route.query.edit ? { edit: route.query.edit } : {}),
+      ...(route.query.reset ? { reset: route.query.reset } : {})
+    }
+  });
 }
 
 async function saveContact() {

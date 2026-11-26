@@ -25,8 +25,10 @@
           <strong>{{ fmt(r.amountVnd) }}</strong> · yêu cầu <span class="mono">{{ r.id }}</span> · hạn {{ r.dueBy }}
           <div class="ops-muted">Khách: {{ r.customerId }} · gói: {{ r.subscriptionId }}</div>
           <ul v-if="r.sources.length">
-            <li v-for="s in r.sources" :key="`${s.weekId}:${s.type}`">
+            <li v-for="s in r.sources" :key="`${s.weekId}:${s.type}:${s.sourceLotId || ''}:${s.prepaidPackId || ''}`">
               {{ s.type }} · {{ fmt(s.amountVnd) }} · tuần {{ s.weekId }}
+              <span v-if="s.sourceLotId"> · lô nguồn #{{ s.sourceLotId }}</span>
+              <span v-if="s.prepaidPackId"> · gói trả trước {{ s.prepaidPackId }}</span>
               <span v-if="s.bankTransactionId"> · giao dịch ngân hàng {{ s.bankTransactionId }}</span>
               <span v-if="s.cardProviderRef"> · mã thẻ {{ s.cardProviderRef }}</span>
               <strong v-if="s.reconciliationRequired"> · cần đối soát thủ công</strong>

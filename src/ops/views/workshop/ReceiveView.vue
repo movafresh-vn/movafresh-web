@@ -31,7 +31,7 @@
       <div class="field-row">
         <div>
           <label for="r-kg">Khối lượng nhận (kg)</label>
-          <input id="r-kg" v-model="weight" class="ops-input" type="number" inputmode="decimal" min="0" step="0.1" data-testid="r-weight" />
+          <input id="r-kg" v-model="weight" class="ops-input" type="number" inputmode="decimal" min="0.01" step="0.1" data-testid="r-weight" @keydown="blockInvalidNumberKeys" @focus="selectInputOnFocus" />
         </div>
         <div>
           <label for="r-temp">Nhiệt độ lúc nhận (°C)</label>
@@ -101,6 +101,7 @@ import { sourcesForSku } from '../../../shared/data/sources';
 import { checkLotCodeMatch, isTempOk, lotUsedKg, nextLotCode, referencePhotoPath } from '../../../shared/domain/factory';
 import { BUSINESS } from '../../../shared/config/business';
 import { apply, clientNow, hasUnsent } from '../../queue';
+import { blockInvalidNumberKeys, selectInputOnFocus } from '../../numericInput';
 import { catalog, factory, snapshot } from '../../factoryStore';
 import { photoSrc } from '../../../shared/api/uploads';
 import { sourceKindLabel as kindLabel } from '../../format';

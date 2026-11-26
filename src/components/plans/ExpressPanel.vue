@@ -60,13 +60,22 @@ const unavailableText = computed(() => REASON[offer.value.reason] || 'Giao nhanh
 const dayText = (iso) => new Date(iso).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' });
 const timeText = (iso) => new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' });
 
-onMounted(() => store.loadExpress());
+const canCheckExpress = () => Boolean(String(store.checkout.street || '').trim()) && !store.options?.earliest_delivery_date;
+
+onMounted(() => {
+  if (canCheckExpress()) void store.loadExpress();
+  else store.express.offer = null;
+});
 // Đổi lịch hoặc địa chỉ thì chỗ giữ cũ không còn đúng: nhả và tính lại.
 watch(
-  () => [store.checkout.slotId, store.checkout.optionIndex, store.checkout.district, store.checkout.street, store.checkout.ward],
+  () => [store.checkout.slotId, store.checkout.optionIndex, store.checkout.district, store.checkout.street, store.checkout.ward, store.options?.earliest_delivery_date],
   async () => {
     if (store.express.hold) await store.dropExpress();
-    else await store.loadExpress();
+    else if (canCheckExpress()) await store.loadExpress();
+    else {
+      store.express.offer = null;
+      store.express.error = '';
+    }
   }
 );
 </script>

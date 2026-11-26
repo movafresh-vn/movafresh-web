@@ -2,13 +2,27 @@
 export const toGrams = (kg) => Math.round(Number(kg) * 1000);
 
 /** Kiểm đầu vào trước khi gửi. Trả chuỗi lỗi hoặc ''. */
-export function checkYieldInput({ skuId, rawKg, netKg }) {
+export function checkYieldInput({ skuId, rawKg, netKg, maxRawG = null, maxNetG = null }) {
   if (!skuId) return 'Chọn nguyên liệu.';
-  const raw = toGrams(rawKg);
-  const net = toGrams(netKg);
+  const rawNum = Number(rawKg);
+  const netNum = Number(netKg);
+  if (!Number.isFinite(rawNum) || rawKg === '' || rawKg === null || rawKg === undefined) {
+    return 'Khối lượng nguyên liệu thô nhận vào phải lớn hơn 0 kg.';
+  }
+  if (!Number.isFinite(netNum) || netKg === '' || netKg === null || netKg === undefined) {
+    return 'Khối lượng thành phẩm sau sơ chế phải lớn hơn 0 kg.';
+  }
+  const raw = toGrams(rawNum);
+  const net = toGrams(netNum);
   if (!(raw > 0)) return 'Khối lượng nguyên liệu thô nhận vào phải lớn hơn 0 kg.';
   if (!(net > 0)) return 'Khối lượng thành phẩm sau sơ chế phải lớn hơn 0 kg.';
   if (net > raw) return 'Thành phẩm không thể nặng hơn nguyên liệu thô.';
+  if (Number.isFinite(maxRawG) && maxRawG > 0 && raw > maxRawG) {
+    return `Khối lượng thô vượt ngưỡng tối đa 150% định mức lô (${(maxRawG / 1000).toFixed(2).replace(/\.?0+$/, '')} kg).`;
+  }
+  if (Number.isFinite(maxNetG) && maxNetG > 0 && net > maxNetG) {
+    return `Khối lượng thành phẩm vượt ngưỡng tối đa 150% định mức lô (${(maxNetG / 1000).toFixed(2).replace(/\.?0+$/, '')} kg).`;
+  }
   return '';
 }
 

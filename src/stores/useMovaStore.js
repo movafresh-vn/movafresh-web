@@ -7,6 +7,7 @@ import { getAccessToken, requestOtp, signOut, verifyOtp } from '../services/supa
 // Danh tính khách là phiên Supabase (đăng nhập bằng mã OTP gửi về số điện thoại). Mọi dữ liệu tài khoản đến từ backend thật qua
 // api.customer; web không giữ dữ liệu tài khoản nào ngoài bản sao để hiển thị. Mỗi lần gọi đều chờ (await) kết quả.
 const POLL_MS = 20000;
+let activeRefreshPromise = null;
 
 export const useMovaStore = defineStore('mova', {
   state: () => ({
@@ -67,35 +68,39 @@ export const useMovaStore = defineStore('mova', {
 
     /** Tải lại tổng quan và thông báo. Trả false nếu chưa đăng nhập hoặc phiên đã hết hạn. */
     async refresh() {
-      if (this.refreshing) return Boolean(this.account);
+      if (activeRefreshPromise) return activeRefreshPromise;
       this.refreshing = true;
-      try {
-        const token = await getAccessToken().catch(() => null);
-        if (!token) {
-          this.account = null;
-          this.notifications = [];
-          this.loaded = true;
-          return false;
-        }
-        const res = await api.customer.getAccount();
-        if (res.status === 'error') {
-          // Chỉ đăng xuất khi phiên hết hạn/không hợp lệ (401). Khi 404 (chưa có hồ sơ), giữ nguyên phiên đăng nhập Supabase.
-          if (res.error.status === 401 || ['UNAUTHORIZED', 'AUTH_REQUIRED'].includes(res.error.code)) {
-            await this.logout(true);
+      activeRefreshPromise = (async () => {
+        try {
+          const token = await getAccessToken().catch(() => null);
+          if (!token) {
+            this.account = null;
+            this.notifications = [];
+            this.loaded = true;
+            return false;
           }
-          this.account = null;
-          this.notifications = [];
+          const res = await api.customer.getAccount();
+          if (res.status === 'error') {
+            // Chỉ đăng xuất khi phiên hết hạn/không hợp lệ (401). Khi 404 (chưa có hồ sơ), giữ nguyên phiên đăng nhập Supabase.
+            if (res.error.status === 401 || ['UNAUTHORIZED', 'AUTH_REQUIRED'].includes(res.error.code)) {
+              await this.logout(true);
+            }
+            this.account = null;
+            this.notifications = [];
+            this.loaded = true;
+            return false;
+          }
+          this.account = res.data;
+          this.notifications = await api.customer.notifications();
           this.loaded = true;
-          return false;
+          this.version += 1;
+          return true;
+        } finally {
+          this.refreshing = false;
+          activeRefreshPromise = null;
         }
-        this.account = res.data;
-        this.notifications = await api.customer.notifications();
-        this.loaded = true;
-        this.version += 1;
-        return true;
-      } finally {
-        this.refreshing = false;
-      }
+      })();
+      return activeRefreshPromise;
     },
 
     startPolling() {

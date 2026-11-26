@@ -273,6 +273,15 @@ export function createPlanDrafts({ cfg = BUSINESS, storage = localDraftStorage()
         }
         profile.householdSize = size;
       }
+      if (req.meals_per_week != null) {
+        const meals = Number(req.meals_per_week);
+        if (!Number.isInteger(meals) || meals < cfg.plan.mealsPerWeekMin || meals > cfg.plan.mealsPerWeekMax) {
+          return { error: { code: 'MEALS_PER_WEEK_INVALID', message: `Số bữa mỗi tuần từ ${cfg.plan.mealsPerWeekMin} đến ${cfg.plan.mealsPerWeekMax}` } };
+        }
+        profile.mealsPerWeek = meals;
+        plan.baseMeals = undefined;
+        plan.chefWestern = undefined;
+      }
       if (req.upsells) {
         plan.upsells = { ...(plan.upsells || {}) };
         for (const [id, v] of Object.entries(req.upsells)) {

@@ -17,7 +17,7 @@ export function budgetExplain(weeklyVnd, { mealsPerWeek = BUSINESS.plan.mealsPer
     mealsPerWeek,
     packageValueVnd: q.packageValueVnd,
     perMealVnd: q.perMealListVnd,
-    text: `Mức ${fmt(weekly)}/tuần tương ứng khoảng ${fmt(q.packageValueVnd)} cho gói ${weeks} tuần (~${fmt(q.perMealListVnd)}/bữa, ${mealsPerWeek} bữa mỗi tuần). Đây là ước tính; số tiền thật do hệ thống tính khi bạn xem thực đơn.`
+    text: `Mức ${fmt(weekly)}/tuần tương ứng khoảng ${fmt(q.packageValueVnd)} cho gói ${weeks} tuần (~${fmt(q.perMealListVnd)}/bữa, ${mealsPerWeek} bữa mỗi tuần). Đây là ước tính; số tiền thực tế do hệ thống tính khi bạn xem thực đơn.`
   };
 }
 

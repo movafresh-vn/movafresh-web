@@ -4,6 +4,7 @@ import { errorKind, withGiftCard } from '../shared/api/requests';
 import { DEFAULT_INSTRUCTION, normalizeInstruction } from '../shared/api/adapters/checkout';
 import { BUSINESS } from '../shared/config/business';
 import { normalizeContact } from '../shared/domain/leads';
+import { surveyAnswersFromProfile } from '../shared/domain/profilePreferences';
 import { checkoutErrorMessage, clearPersistedPaymentChoice, PAYMENT_TOKEN_REQUIRED, PLAN_FLOW_KEY, recoverFromTokenRequired } from '../shared/domain/checkoutError';
 
 // Trạng thái phễu /plans. Lưu vào localStorage để khách tải lại trang hoặc bấm quay lại không mất dữ liệu.
@@ -94,6 +95,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
     busy: false,
     error: '',
     errorCode: '',
+    errorDetails: null,
     cardLinkNeeded: false, // máy chủ báo chưa liên kết thẻ/ví (PAYMENT_TOKEN_REQUIRED): hiện nút liên kết
     // Giao nhanh 24-36 giờ (ĐỀ XUẤT 2.4.0, mặc định tắt ở máy chủ). offer = phản hồi options; hold = chỗ đã giữ cho tuần 1.
     express: { offer: null, hold: null, busy: false, error: '' }
@@ -119,11 +121,12 @@ export const usePlanFlowStore = defineStore('planFlow', {
     fail(res) {
       this.error = res && res.error ? res.error.message : '';
       this.errorCode = res && res.error ? res.error.code : '';
+      this.errorDetails = res && res.error ? res.error.details || null : null;
     },
 
     reset() {
       const refCode = this.refCode; // mã mời giữ lại khi khách làm lại từ đầu
-      Object.assign(this, freshState(), { refCode, plan: null, options: null, preview: null, capacity: null, busy: false, error: '', errorCode: '', cardLinkNeeded: false, express: { offer: null, hold: null, busy: false, error: '' } });
+      Object.assign(this, freshState(), { refCode, plan: null, options: null, preview: null, capacity: null, busy: false, error: '', errorCode: '', errorDetails: null, cardLinkNeeded: false, express: { offer: null, hold: null, busy: false, error: '' } });
       api.customer.reset();
       this.persist();
     },
@@ -177,6 +180,15 @@ export const usePlanFlowStore = defineStore('planFlow', {
       this.persist();
     },
 
+    applyProfileFromAccount(customer) {
+      if (!customer) return;
+      this.answers = { ...freshAnswers(), ...surveyAnswersFromProfile(customer) };
+      if (!this.contact && (customer.phone || customer.email)) {
+        this.contact = customer.phone || customer.email;
+      }
+      this.persist();
+    },
+
     /** Gửi hồ sơ và dựng thực đơn tuần 1. Trả 'ok' | 'out_of_zone' | 'error'. */
     async submitProfile() {
       this.error = '';
@@ -191,8 +203,12 @@ export const usePlanFlowStore = defineStore('planFlow', {
           survey_answers: {
             living_area: a.district,
             household_size: a.size,
+            adults_count: a.adults,
+            children_count: a.children,
             household_needs: a.needs,
             cuisine: a.cuisine,
+            cuisine_preferences: a.cuisines,
+            protein_prefs: a.proteinPrefs || {},
             allergies_and_restrictions: restrictions,
             weekly_home_meals_count: a.meals,
             weekly_grocery_budget_vnd: a.budget || undefined
@@ -257,6 +273,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
       this.error = '';
       this.plan = res.data;
       if (change.household_size) this.answers.size = res.data.household_size;
+      if (change.meals_per_week) this.answers.meals = res.data.meals_per_week;
       this.preview = null;
       this.persist();
       return true;
@@ -310,6 +327,9 @@ export const usePlanFlowStore = defineStore('planFlow', {
         }
         this.options = res.data;
         const c = this.checkout;
+        if (res.data.earliest_delivery_date && !c.startDate) {
+          c.startDate = res.data.suggested_start_date || res.data.earliest_delivery_date;
+        }
         const opt = res.data.options[c.optionIndex] || res.data.options[0];
         c.optionIndex = Math.max(0, res.data.options.indexOf(opt));
         // Khung đã chọn mà hết chỗ thì bỏ chọn
@@ -403,6 +423,7 @@ export const usePlanFlowStore = defineStore('planFlow', {
         }
         this.error = '';
         this.errorCode = '';
+        this.errorDetails = null;
         this.preview = res.data;
         if (this.checkout.method === 'card') this.cardLinkNeeded = false; // xem trước bằng thẻ không báo thiếu token: đã liên kết
       } catch (e) {
@@ -482,8 +503,11 @@ export const usePlanFlowStore = defineStore('planFlow', {
     async loadExpress() {
       const schedule = this.scheduleRequest();
       const x = this.express;
-      if (!schedule) {
+      const street = String(schedule?.shipping_address?.street || '').trim();
+      const earliestCycle = this.options?.earliest_delivery_date;
+      if (!schedule || !street || earliestCycle) {
         x.offer = null;
+        x.error = '';
         return;
       }
       x.busy = true;

@@ -16,7 +16,7 @@
       </div>
 
       <label class="pl-label" for="first-date">Ngày bắt đầu sớm nhất (không bắt buộc)</label>
-      <input id="first-date" v-model="c.startDate" class="pl-input" type="date" :disabled="loadingDates" @change="changeStartDate" />
+      <input id="first-date" v-model="c.startDate" class="pl-input" type="date" :min="earliestCycleDate || undefined" :disabled="loadingDates" @change="changeStartDate" />
       <p class="pl-note">MOVA sẽ tìm ngày giao phù hợp từ ngày bạn chọn<template v-if="availDatesMeta.min_lead_hours"> (đặt trước tối thiểu {{ availDatesMeta.min_lead_hours }} giờ theo khu vực)</template>.</p>
 
       <!-- Bảng ngày giao khả dụng theo giờ máy chủ kèm khung giờ & trạng thái khóa lô -->
@@ -28,6 +28,7 @@
               <b>{{ fmtDay(d.delivery_date) }}</b>
               <span v-if="d.is_holiday" class="pl-pill">Ngày lễ</span>
               <span v-else-if="d.batch_locked" class="pl-pill">Lô đã chốt</span>
+              <span v-else-if="isCycleBlockedDate(d.delivery_date)" class="pl-pill" title="Đã có gói trong chu kỳ này">Đã có gói trong chu kỳ này</span>
             </div>
             <div class="avail-slots">
               <button
@@ -36,11 +37,13 @@
                 type="button"
                 class="pl-chip sm"
                 :class="{ on: c.startDate === d.delivery_date && c.slotId === s.slot_id }"
-                :disabled="!s.available || loadingDates"
+                :disabled="!s.available || loadingDates || isCycleBlockedDate(d.delivery_date)"
+                :title="isCycleBlockedDate(d.delivery_date) ? 'Đã có gói trong chu kỳ này' : undefined"
                 @click="pickAvailableDate(d, s)"
               >
                 <span>{{ s.label }}</span>
-                <small v-if="s.available" class="num">Còn {{ s.remaining }}</small>
+                <small v-if="isCycleBlockedDate(d.delivery_date)">Đã có gói trong chu kỳ này</small>
+                <small v-else-if="s.available" class="num">Còn {{ s.remaining }}</small>
                 <small v-else>{{ reasonLabel(s.reason) }}</small>
               </button>
             </div>
@@ -318,8 +321,8 @@
       </p>
     </section>
 
-    <!-- 4. Cam kết & Điều khoản giao dịch từ xa -->
-    <section v-if="preview" class="pl-card sec terms">
+    <!-- 4. Cam kết & Điều khoản giao dịch từ xa (luôn hiển thị checkbox đồng ý kể cả khi preview chưa sẵn sàng) -->
+    <section class="pl-card sec terms" data-testid="checkout-terms">
       <div class="terms-toggle-bar" @click="showTerms = !showTerms">
         <h2 class="pl-h2" style="margin: 0;">Điều khoản giao dịch từ xa &amp; Chính sách đổi trả</h2>
         <button type="button" class="terms-toggle-btn" :aria-expanded="showTerms">
@@ -340,7 +343,7 @@
         </ul>
       </div>
 
-      <ul class="rules" style="margin-top: 14px;">
+      <ul v-if="preview" class="rules" style="margin-top: 14px;">
         <li>Gói cam kết <b>{{ preview.cycle_weeks.length }} tuần</b> liên tục để nhà máy lên kế hoạch thu mua nông sản tận vườn.</li>
         <li>Bạn được <b>tạm hoãn tối đa {{ maxSkip }} tuần</b> trong chu kỳ, báo trước hạn đổi món của tuần đó.</li>
         <li>
@@ -389,6 +392,15 @@
           <div v-show="openFaqId === faq.id" class="faq-acc-body" v-html="faq.a"></div>
         </div>
       </div>
+    </section>
+
+    <!-- Cảnh báo trùng chu kỳ D + 28 + nút chuyển nhanh -->
+    <section v-if="cycleConflictDate" class="pl-card pl-panel warn cycle-conflict" role="alert" data-testid="cycle-conflict-banner">
+      <b>Bạn đã có gói giao trong chu kỳ này.</b>
+      <p class="pl-note">Vui lòng chọn ngày bắt đầu từ <b>{{ formatDdMmYyyy(cycleConflictDate) }}</b> ({{ fmtDay(cycleConflictDate) }}) trở đi.</p>
+      <button type="button" class="pl-btn primary sm-btn" :disabled="loadingDates" data-testid="jump-next-cycle" @click="jumpToEarliestDate">
+        Chuyển sang ngày khả dụng gần nhất ({{ formatDdMm(cycleConflictDate) }})
+      </button>
     </section>
 
     <!-- Nút trả tiền -->
@@ -574,6 +586,7 @@ const phoneValue = computed(() => {
 
 const problems = computed(() => {
   const list = [];
+  if (cycleConflictDate.value) list.push(`ngày bắt đầu từ ${formatDdMmYyyy(cycleConflictDate.value)} trở đi`);
   if (!c.slotId) list.push('ngày và khung giờ giao');
   if (hasFullDate.value) list.push('ngày giao còn chỗ');
   if (c.name.trim().length < 2) list.push('tên người nhận');
@@ -586,6 +599,25 @@ const problems = computed(() => {
   if (!c.agree) list.push('đồng ý với điều khoản dịch vụ');
   return list;
 });
+
+const earliestCycleDate = computed(() => options.value?.earliest_delivery_date || store.errorDetails?.earliest_delivery_date || null);
+const isCycleBlockedDate = (d) => Boolean(earliestCycleDate.value && d && d < earliestCycleDate.value);
+const selectedFirstDate = computed(() => options.value?.options?.[c.optionIndex]?.first_delivery_date || c.startDate || '');
+const cycleConflictDate = computed(() =>
+  options.value?.cycle_blocked ||
+  store.errorDetails?.earliest_delivery_date ||
+  (earliestCycleDate.value && selectedFirstDate.value && selectedFirstDate.value < earliestCycleDate.value)
+    ? earliestCycleDate.value
+    : null
+);
+const formatDdMm = (iso) => (iso ? iso.split('-').slice(1).reverse().join('/') : '');
+const formatDdMmYyyy = (iso) => (iso ? iso.split('-').reverse().join('/') : '');
+
+async function jumpToEarliestDate() {
+  if (!cycleConflictDate.value) return;
+  c.startDate = cycleConflictDate.value;
+  await changeStartDate();
+}
 
 function onPhoneChange() {
   c.phoneVerified = false;

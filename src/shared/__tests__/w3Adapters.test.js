@@ -118,6 +118,11 @@ describe('W3-03: bộ chuyển đổi phản hồi backend sang hình dạng mà
     expect(two).toHaveLength(1);
     expect(two[0]).toMatchObject({ preferred_days: ['tuesday', 'friday'], first_delivery_date: '2026-12-01', first_dates: { tuesday: '2026-12-01', friday: '2026-12-04' } });
     expect(adaptDeliveryOptions({ ...raw, options: [raw.options[0]] }, { perWeek: 2 }).options).toEqual([]);
+    expect(adaptDeliveryOptions({ ...raw, earliest_delivery_date: '2026-12-28', suggested_start_date: '2026-12-28', cycle_blocked: true }, { perWeek: 1 })).toMatchObject({
+      earliest_delivery_date: '2026-12-28',
+      suggested_start_date: '2026-12-28',
+      cycle_blocked: true
+    });
     expect(deliveryDatesFor({ preferredDays: ['tuesday', 'friday'], firstDates: two[0].first_dates, deliveries: 4 })).toEqual(['2026-12-01', '2026-12-04', '2026-12-08', '2026-12-11']);
     expect(deliveryDatesFor({ preferredDays: ['monday'], firstDates: {}, deliveries: 4 })).toBeNull();
     expect(splitMeals([1, 2, 3, 4, 5], 2)).toEqual([[1, 2, 3], [4, 5]]);

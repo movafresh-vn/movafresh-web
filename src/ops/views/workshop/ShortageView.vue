@@ -14,7 +14,7 @@
       <div class="field-row">
         <div>
           <label for="s-qty">Số lượng</label>
-          <input id="s-qty" v-model="qty" class="ops-input" type="number" inputmode="decimal" min="0" step="any" data-testid="s-qty" />
+          <input id="s-qty" v-model="qty" class="ops-input" type="number" inputmode="decimal" :min="unit === 'bag' ? 1 : 0.01" :step="unit === 'bag' ? 1 : 'any'" data-testid="s-qty" @keydown="blockInvalidNumberKeys" @focus="selectInputOnFocus" />
         </div>
         <div>
           <label for="s-unit">Đơn vị</label>
@@ -138,6 +138,7 @@ import { fmt } from '../../../shared/utils/formatters';
 import { fmtDay, fmtDeadline } from '../../../shared/utils/time';
 import { DAMAGE_LEVEL_STEPS, damageLevelLabel, nextDailyId } from '../../../shared/domain/factory';
 import { can, ctx } from '../../session';
+import { blockInvalidNumberKeys, selectInputOnFocus } from '../../numericInput';
 import { confirmOutcome, previewSummary, shortageGramsOf } from '../../shortPickFlow';
 import { photoSrc } from '../../../shared/api/uploads';
 import { apply, clientNow, hasUnsent, onQueueChange, online, submit as submitCall } from '../../queue';

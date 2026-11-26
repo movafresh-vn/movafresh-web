@@ -18,13 +18,14 @@
       <div class="field-row">
         <div>
           <label for="y-raw">Thô nhận vào (kg)</label>
-          <input id="y-raw" v-model="rawKg" class="ops-input" type="number" inputmode="decimal" min="0" step="any" data-testid="y-raw" />
+          <input id="y-raw" v-model="rawKg" class="ops-input" type="number" inputmode="decimal" min="0.01" :max="maxRawKg || undefined" step="any" data-testid="y-raw" @keydown="blockInvalidNumberKeys" @focus="selectInputOnFocus" />
         </div>
         <div>
           <label for="y-net">Thành phẩm (kg)</label>
-          <input id="y-net" v-model="netKg" class="ops-input" type="number" inputmode="decimal" min="0" step="any" data-testid="y-net" />
+          <input id="y-net" v-model="netKg" class="ops-input" type="number" inputmode="decimal" min="0.01" :max="maxNetKg || undefined" step="any" data-testid="y-net" @keydown="blockInvalidNumberKeys" @focus="selectInputOnFocus" />
         </div>
       </div>
+      <p v-if="bomHint" class="ops-muted" data-testid="y-bom-hint">{{ bomHint }}</p>
       <label for="y-lot">Mã lô (nếu có)</label>
       <input id="y-lot" v-model="lot" class="ops-input" autocomplete="off" placeholder="MOVA-TRACE-BO-202611-0001" data-testid="y-lot" />
       <label for="y-note">Ghi chú</label>
@@ -66,7 +67,8 @@ import { api } from '../../../shared/api';
 import { fmtDay } from '../../../shared/utils/time';
 import { ctx } from '../../session';
 import { useLive } from '../../useLive';
-import { catalog, selDay } from '../../factoryStore';
+import { catalog, selDay, snapshot } from '../../factoryStore';
+import { blockInvalidNumberKeys, selectInputOnFocus } from '../../numericInput';
 import { checkYieldInput, describeYield, toGrams } from '../../yieldRules';
 
 const LIMIT = 5;
@@ -85,6 +87,16 @@ const nameOf = (id) => (catalog.value && catalog.value.items[id] ? catalog.value
 const rows = computed(() => list.value.map(describeYield));
 const signed = (n) => (n > 0 ? `+${n}` : String(n));
 
+const skuBomEstimate = computed(() => (skuId.value && snapshot.value?.bomEstimates?.[skuId.value]) || null);
+const maxRawG = computed(() => (skuBomEstimate.value ? Math.ceil(skuBomEstimate.value.rawG * 1.5) : null));
+const maxNetG = computed(() => (skuBomEstimate.value ? Math.ceil(skuBomEstimate.value.netG * 1.5) : null));
+const maxRawKg = computed(() => (maxRawG.value ? maxRawG.value / 1000 : null));
+const maxNetKg = computed(() => (maxNetG.value ? maxNetG.value / 1000 : null));
+const bomHint = computed(() => {
+  if (!skuBomEstimate.value) return '';
+  return `Định mức lô: thô ~${skuBomEstimate.value.rawG / 1000} kg (tối đa ${maxRawKg.value} kg) · thành phẩm ~${skuBomEstimate.value.netG / 1000} kg (tối đa ${maxNetKg.value} kg).`;
+});
+
 async function load() {
   if (!selDay.value) return;
   try {
@@ -97,7 +109,7 @@ async function load() {
 async function submit() {
   error.value = '';
   last.value = null;
-  const bad = checkYieldInput({ skuId: skuId.value, rawKg: rawKg.value, netKg: netKg.value });
+  const bad = checkYieldInput({ skuId: skuId.value, rawKg: rawKg.value, netKg: netKg.value, maxRawG: maxRawG.value, maxNetG: maxNetG.value });
   if (bad) return (error.value = bad);
   if (!selDay.value) return (error.value = 'Chưa có ngày giao đã chốt.');
   busy.value = true;

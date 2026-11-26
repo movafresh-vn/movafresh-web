@@ -34,8 +34,66 @@
     </section>
 
     <section class="pl-card box">
-      <h2 class="pl-h2">Khẩu vị &amp; Dị ứng</h2>
+      <h2 class="pl-h2">Khẩu vị, Khu vực &amp; Dị ứng</h2>
       <p class="pl-note">Đầu bếp MOVA kiểm tra dị ứng và kiêng cữ trực tiếp ở máy chủ khi đề xuất thực đơn hoặc thêm bữa.</p>
+      <div class="field-grid">
+        <div class="field">
+          <label class="pl-label" for="pf-living-area">Khu vực giao hàng</label>
+          <select id="pf-living-area" v-model="safety.living_area" class="pl-input">
+            <option value="">Chọn quận / huyện</option>
+            <option v-for="d in districts" :key="d" :value="d">{{ d }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="pl-label" for="pf-budget">Ngân sách tuần dự kiến (VNĐ)</label>
+          <input id="pf-budget" v-model.number="safety.weekly_grocery_budget_vnd" class="pl-input num" type="number" min="0" step="50000" placeholder="Ví dụ 1000000" />
+        </div>
+      </div>
+      <div class="field-grid three">
+        <div class="field">
+          <label class="pl-label" for="pf-adults">Người lớn (1–10)</label>
+          <input id="pf-adults" v-model.number="safety.adults_count" class="pl-input num" type="number" min="1" max="10" />
+        </div>
+        <div class="field">
+          <label class="pl-label" for="pf-children">Trẻ em (0–10)</label>
+          <input id="pf-children" v-model.number="safety.children_count" class="pl-input num" type="number" min="0" max="10" />
+        </div>
+        <div class="field">
+          <label class="pl-label" for="pf-meals">Số bữa / tuần (3–21)</label>
+          <input id="pf-meals" v-model.number="safety.weekly_home_meals_count" class="pl-input num" type="number" min="3" max="21" />
+        </div>
+      </div>
+      <div class="field">
+        <span class="pl-label">Phong cách ẩm thực</span>
+        <div class="chips">
+          <label v-for="cs in CUISINE_STYLES" :key="cs.id" class="chip">
+            <input type="checkbox" :value="cs.id" v-model="safety.cuisines" />
+            <span>{{ cs.name }}</span>
+          </label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="pl-label">Ưu tiên 6 nguồn đạm</span>
+        <div class="protein-grid">
+          <div v-for="p in PROTEIN_SOURCES" :key="p.id" class="protein-row">
+            <span>{{ p.name }}</span>
+            <select v-model="safety.protein_prefs[p.id]" class="pl-input sm-select" :aria-label="`Sở thích ${p.name}`">
+              <option value="neutral">Bình thường</option>
+              <option value="like">Thích ăn nhiều</option>
+              <option value="dislike">Không thích</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <span class="pl-label">Mục tiêu thể trạng gia đình</span>
+        <div class="chips">
+          <label v-for="n in PROFILE_HEALTH_NEEDS" :key="n.id" class="chip">
+            <input type="checkbox" :value="n.id" v-model="safety.household_needs" />
+            <span>{{ n.label }}</span>
+          </label>
+        </div>
+      </div>
       <div class="field">
         <span class="pl-label">Dị ứng (loại bỏ hoàn toàn)</span>
         <div class="chips">
@@ -81,6 +139,7 @@ import { computed, ref } from 'vue';
 import { api } from '../../shared/api';
 import { BUSINESS } from '../../shared/config/business';
 import { profileCompleteness } from '../../shared/domain/rewards';
+import { ALLERGENS, AVOIDS, CUISINE_STYLES, PROFILE_HEALTH_NEEDS, PROTEIN_SOURCES } from '../../shared/domain/profilePreferences';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
 
@@ -91,21 +150,22 @@ const claimed = ref(false);
 const error = ref('');
 const safetyError = ref('');
 const savingSafety = ref(false);
-const ALLERGENS = [
-  { code: 'seafood', label: 'Hải sản' },
-  { code: 'shellfish', label: 'Động vật có vỏ (tôm, cua)' },
-  { code: 'peanut', label: 'Đậu phộng' },
-  { code: 'egg', label: 'Trứng' },
-  { code: 'dairy', label: 'Sữa' },
-  { code: 'soy', label: 'Đậu nành' },
-  { code: 'gluten', label: 'Gluten' }
-];
-const AVOIDS = [
-  { code: 'beef', label: 'Không ăn bò' },
-  { code: 'pork', label: 'Không ăn heo' },
-  { code: 'spicy', label: 'Không ăn cay' }
-];
-const safety = ref({ allergen_codes: [], avoid_tags: [], require_vegetarian: false, household_needs: [], cuisines: [], servings_default: 2 });
+const districts = BUSINESS.zones.flatMap((z) => z.districts).filter((d) => d !== 'TP. Thủ Đức');
+const defaultProteinPrefs = () => Object.fromEntries(PROTEIN_SOURCES.map((p) => [p.id, 'neutral']));
+const safety = ref({
+  living_area: '',
+  adults_count: 2,
+  children_count: 0,
+  weekly_home_meals_count: 5,
+  weekly_grocery_budget_vnd: null,
+  allergen_codes: [],
+  avoid_tags: [],
+  require_vegetarian: false,
+  household_needs: [],
+  cuisines: [],
+  protein_prefs: defaultProteinPrefs(),
+  servings_default: 2
+});
 
 async function load() {
   const r = await api.customer.findCustomer();
@@ -114,13 +174,22 @@ async function load() {
   claimed.value = c.profile_reward_claimed;
   form.value = { name: c.name || '', phone: c.phone || '', email: c.email || '', address: c.address || '', members: (c.members || []).map((m) => ({ ...m })) };
   if (c.safety_profile) {
+    const sp = c.safety_profile;
+    const adults = Math.max(1, Math.min(10, Number(sp.adults_count ?? sp.servings_default ?? 2)));
+    const children = Math.max(0, Math.min(10, Number(sp.children_count ?? 0)));
     safety.value = {
-      allergen_codes: [...(c.safety_profile.allergen_codes || [])],
-      avoid_tags: [...(c.safety_profile.avoid_tags || [])],
-      require_vegetarian: Boolean(c.safety_profile.require_vegetarian),
-      household_needs: [...(c.safety_profile.household_needs || [])],
-      cuisines: [...(c.safety_profile.cuisines || [])],
-      servings_default: c.safety_profile.servings_default || 2
+      living_area: sp.living_area || c.district || '',
+      adults_count: adults,
+      children_count: children,
+      weekly_home_meals_count: Math.max(3, Math.min(21, Number(sp.weekly_home_meals_count ?? 5))),
+      weekly_grocery_budget_vnd: sp.weekly_grocery_budget_vnd || null,
+      allergen_codes: [...(sp.allergen_codes || [])],
+      avoid_tags: [...(sp.avoid_tags || [])],
+      require_vegetarian: Boolean(sp.require_vegetarian),
+      household_needs: [...(sp.household_needs || [])],
+      cuisines: [...(sp.cuisines || [])],
+      protein_prefs: { ...defaultProteinPrefs(), ...(sp.protein_prefs || {}) },
+      servings_default: sp.servings_default || Math.min(10, Math.max(1, adults + children))
     };
   }
 }
@@ -130,13 +199,25 @@ async function saveSafety() {
   savingSafety.value = true;
   safetyError.value = '';
   try {
+    const adults = Math.max(1, Math.min(10, Math.round(Number(safety.value.adults_count) || 2)));
+    const children = Math.max(0, Math.min(10, Math.round(Number(safety.value.children_count) || 0)));
+    const householdSize = Math.max(1, Math.min(10, adults + children));
+    const meals = Math.max(3, Math.min(21, Math.round(Number(safety.value.weekly_home_meals_count) || 5)));
+    const budget = safety.value.weekly_grocery_budget_vnd > 0 ? Math.round(Number(safety.value.weekly_grocery_budget_vnd)) : null;
     const r = await api.customer.saveSafetyProfile({
+      living_area: safety.value.living_area || null,
+      adults_count: adults,
+      children_count: children,
+      household_size: householdSize,
+      servings_default: householdSize,
+      weekly_home_meals_count: meals,
+      weekly_grocery_budget_vnd: budget,
       allergen_codes: safety.value.allergen_codes,
       avoid_tags: safety.value.avoid_tags,
       require_vegetarian: safety.value.require_vegetarian,
       household_needs: safety.value.household_needs,
-      cuisines: safety.value.cuisines,
-      servings_default: safety.value.servings_default
+      cuisine_preferences: safety.value.cuisines,
+      protein_prefs: safety.value.protein_prefs
     });
     if (r.status === 'error') {
       safetyError.value = r.error.message;
@@ -170,5 +251,12 @@ async function save() {
 .field { display: grid; gap: 6px; }
 .member { display: grid; gap: 8px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
 .member .pl-btn { justify-self: start; }
-@media (min-width: 641px) { .member { grid-template-columns: 1fr 1fr 2fr auto; align-items: center; } }
+@media (min-width: 641px) {
+  .member { grid-template-columns: 1fr 1fr 2fr auto; align-items: center; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+}
+.protein-grid { display: grid; gap: 8px; }
+.protein-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; }
+.sm-select { width: auto; min-width: 140px; padding: 6px 10px; }
 </style>

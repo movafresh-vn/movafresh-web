@@ -1,5 +1,9 @@
 <template>
   <div class="menu">
+    <div v-if="savedProfileBanner" class="pl-card saved-profile-bar" data-testid="saved-profile-bar">
+      <span>Đang gợi ý theo hồ sơ của bạn · <router-link to="/plans?step=1&edit=1&q=1" class="edit-pref-link">Chỉnh sửa khẩu vị</router-link></span>
+    </div>
+
     <header class="m-head">
       <h1 class="pl-h1">Bếp trưởng lên thực đơn trước</h1>
       <p class="pl-lead">
@@ -39,6 +43,13 @@
               </p>
             </div>
             <PeopleStepper :model-value="plan.household_size" @update:model-value="(v) => store.configure({ household_size: v })" />
+          </div>
+          <div class="people-in meals-row">
+            <div>
+              <b class="p-t">Số bữa mỗi tuần</b>
+              <p class="pl-note">Linh hoạt từ 3 đến 21 bữa/tuần (tối đa 3 bữa/ngày).</p>
+            </div>
+            <PeopleStepper :model-value="plan.meals_per_week" :min="3" :max="21" label="bữa / tuần" @update:model-value="(v) => store.configure({ meals_per_week: v })" />
           </div>
         </section>
 
@@ -121,6 +132,7 @@ import { campaignActive, seasonalDishes, tetAddons, toggleAddon } from '../../sh
 defineEmits(['next']);
 const store = usePlanFlowStore();
 const accountStore = useMovaStore();
+const savedProfileBanner = computed(() => Boolean(accountStore.isLoggedIn && accountStore.account?.customer?.onboarding_completed));
 const plan = computed(() => store.plan);
 const assistant = ref(null);
 const hasAiConfig = Boolean(import.meta.env.VITE_API_BASE_URL);
@@ -251,6 +263,9 @@ const staples = computed(() => {
 </script>
 
 <style scoped>
+.saved-profile-bar { margin-bottom: 12px; padding: 10px 14px; background: var(--green-soft); color: var(--green-d); font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.edit-pref-link { color: var(--green-d); text-decoration: underline; font-weight: 700; }
+.meals-row { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
 .m-head { margin-bottom: 14px; }
 .addons { display: grid; gap: 10px; margin-top: 16px; }
 .addon-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }

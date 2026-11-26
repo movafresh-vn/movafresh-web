@@ -55,7 +55,17 @@ export function adaptDeliveryOptions(raw, { perWeek = 1, leadHours = BUSINESS.ti
     first_dish_change_deadline: s.deadline,
     slots: s.slots.map((x) => ({ slot_id: x.slot_id, label: x.label || slotLabelOf(x.slot_id) || x.slot_id }))
   }));
-  return { zone_id: raw.zone_id, zone_name: raw.zone_name, province: raw.province, districts: raw.districts, lead_time_notice_hours: leadHours, options };
+  return {
+    zone_id: raw.zone_id,
+    zone_name: raw.zone_name,
+    province: raw.province,
+    districts: raw.districts,
+    lead_time_notice_hours: leadHours,
+    earliest_delivery_date: raw.earliest_delivery_date || null,
+    suggested_start_date: raw.suggested_start_date || null,
+    cycle_blocked: Boolean(raw.cycle_blocked),
+    options
+  };
 }
 
 /** Các ngày giao của cả gói: mỗi thứ giao bắt đầu từ ngày đầu tiên của nó, cách nhau 7 ngày; gộp và sắp tăng dần. */

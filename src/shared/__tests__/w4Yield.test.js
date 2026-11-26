@@ -18,8 +18,25 @@ describe('W4-06: nhập sản lượng thực tế và cờ lệch hệ số', (
     expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: -5, netKg: 9 })).toMatch(/lớn hơn 0/);
     expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 10, netKg: -5 })).toMatch(/lớn hơn 0/);
     expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 10, netKg: 10.5 })).toMatch(/không thể nặng hơn/);
+    expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 16, netKg: 10, maxRawG: 15000 })).toMatch(/150% định mức/);
+    expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 15, netKg: 8, maxRawG: 15000, maxNetG: 7500 })).toMatch(/150% định mức/);
     expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 10, netKg: 9.5 })).toBe('');
     expect(checkYieldInput({ skuId: 'NL-BO-01', rawKg: 10, netKg: 10 })).toBe('');
+  });
+
+  it('W4-06: numericInput chặn dấu trừ/cộng/ký hiệu khoa học và chọn sẵn text khi focus', async () => {
+    const { blockInvalidNumberKeys, selectInputOnFocus } = await import('../../ops/numericInput');
+    for (const key of ['-', '+', 'e', 'E']) {
+      let prevented = false;
+      expect(blockInvalidNumberKeys({ key, preventDefault: () => { prevented = true; } })).toBe(true);
+      expect(prevented).toBe(true);
+    }
+    let okPrevented = false;
+    expect(blockInvalidNumberKeys({ key: '9', preventDefault: () => { okPrevented = true; } })).toBe(false);
+    expect(okPrevented).toBe(false);
+    let selected = false;
+    selectInputOnFocus({ target: { select: () => { selected = true; } } });
+    expect(selected).toBe(true);
   });
 
   it('W4-06: dòng nhật ký thành phần trăm dễ đọc và giữ cờ của máy chủ (web không tự tính cờ)', () => {
