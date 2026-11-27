@@ -132,7 +132,7 @@
               <span class="c-ico">📞</span>
               <div>
                 <b>Hotline hỗ trợ bếp:</b>
-                <a href="tel:19008899" class="hotline-link">1900 8899</a>
+                <a href="tel:19008899" class="hotline-link" @click="openHotline">1900 8899</a>
                 <small>(06:00 – 21:00 hàng ngày)</small>
               </div>
             </div>
@@ -174,10 +174,18 @@ import { ref } from 'vue';
 import { useMovaStore } from '../../stores/useMovaStore';
 import BrandLogo from './BrandLogo.vue';
 import { BRAND_TAGLINE } from '../../shared/config/brandLogo';
+import { isZaloMiniApp, openExternalUrl } from '../../services/zaloMiniApp';
 
 const store = useMovaStore();
+const inMiniApp = isZaloMiniApp();
 const emailInput = ref('');
 const subscribed = ref(false);
+
+function openHotline(event) {
+  if (!inMiniApp) return;
+  event.preventDefault();
+  void openExternalUrl('tel:19008899');
+}
 
 function submitNewsletter() {
   if (!emailInput.value || !emailInput.value.includes('@')) return;

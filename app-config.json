@@ -1,0 +1,24 @@
+{
+  "app": {
+    "title": "Mova Fresh",
+    "headerTitle": "Mova Fresh",
+    "headerColor": "#0B9C63",
+    "textColor": "white",
+    "textAlign": "left",
+    "statusBarColor": "#0B9C63",
+    "leftButton": "none",
+    "statusBar": "normal",
+    "actionBarHidden": true,
+    "hideAndroidBottomNavigationBar": false,
+    "hideIOSSafeAreaBottom": false
+  },
+  "debug": false,
+  "listCSS": [
+    "assets/style-BI4JNhRy.css"
+  ],
+  "listSyncJS": [
+    "inline.js",
+    "assets/main-3oGUMaOW.module.js"
+  ],
+  "listAsyncJS": []
+}

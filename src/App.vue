@@ -1,10 +1,12 @@
 <template>
-  <div id="mova-app">
-    <!-- Thanh ưu đãi thẻ quà tặng (trang chủ) -->
-    <PromoBar v-if="route.path === '/'" />
+  <div id="mova-app" :class="{ 'zmp-env': inMiniApp }">
+    <!-- Thanh ưu đãi thẻ quà tặng (trang chủ; trên Mini App đặt dưới header để không bị capsule Zalo che) -->
+    <PromoBar v-if="route.path === '/' && !inMiniApp" />
 
     <!-- Header dính đỉnh -->
     <AppHeader />
+
+    <PromoBar v-if="route.path === '/' && inMiniApp" />
 
     <!-- Nội dung theo View -->
     <main id="top">
@@ -44,9 +46,11 @@ import LoginModal from './components/modals/LoginModal.vue';
 import TopupModal from './components/modals/TopupModal.vue';
 
 import { useMovaStore } from './stores/useMovaStore';
+import { isZaloMiniApp } from './services/zaloMiniApp';
 
 const store = useMovaStore();
 const route = useRoute();
+const inMiniApp = isZaloMiniApp();
 
 const handleKeydown = (e) => {
   if (e.key === 'Escape') {

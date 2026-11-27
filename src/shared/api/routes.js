@@ -15,6 +15,7 @@ export const CUSTOMER_ROUTES = {
   traceLot: ['GET', '/lots/:code', { auth: false }],
   sampleLotCodes: ['GET', '/lots', { auth: false }],
   zaloCallback: ['POST', '/auth/zalo/callback', { auth: false }],
+  zaloMiniApp: ['POST', '/auth/zalo-miniapp', { auth: false }],
 
   // Cần đăng nhập
   mergePhoneAccount: ['POST', '/auth/merge-phone-account'],

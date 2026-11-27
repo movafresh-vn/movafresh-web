@@ -8,9 +8,11 @@ import {
   requestOtp,
   requestPhoneLinkOtp,
   signOut,
+  verifyMagicLinkToken,
   verifyOtp,
   verifyPhoneLinkOtp
 } from '../services/supabase';
+import { getMiniAppAccessToken, getMiniAppPhoneToken } from '../services/zaloMiniApp';
 
 // Store của phần tài khoản (/account) và các thành phần dùng chung toàn app (toast, modal, ngăn thông báo).
 // Danh tính khách là phiên Supabase (đăng nhập bằng mã OTP gửi về số điện thoại). Mọi dữ liệu tài khoản đến từ backend thật qua
@@ -203,6 +205,49 @@ export const useMovaStore = defineStore('mova', {
         this.toast('Đã liên kết và xác thực số điện thoại thành công.');
       }
       return '';
+    },
+
+    /** Đăng nhập / hợp nhất tài khoản từ Zalo Mini App (zmp-sdk). Chỉ gửi phone_token khi người dùng bấm xác nhận chia sẻ SĐT. */
+    async loginWithZaloMiniApp(opts = {}) {
+      try {
+        const accessToken = opts.accessToken || (await getMiniAppAccessToken());
+        const phoneToken = opts.phoneToken || undefined;
+        const res = await api.customer.zaloMiniApp({
+          access_token: accessToken,
+          ...(phoneToken ? { phone_token: phoneToken } : {})
+        });
+        if (res.status === 'error') {
+          return { ok: false, message: res.error?.message || 'Chưa đăng nhập được bằng Zalo Mini App.' };
+        }
+        const user = await verifyMagicLinkToken(res.data.token_hash);
+        this.setAuthUser(user);
+        await this.refresh();
+
+        const transferred = Number(res.data?.transferred_real_vnd || 0) + Number(res.data?.transferred_promo_vnd || 0);
+        if (res.data?.merged && transferred > 0) {
+          this.toast(`Đã liên kết SĐT và gộp ${fmt(transferred)} Fresh Credit từ tài khoản cũ.`);
+        } else if (res.data?.merged) {
+          this.toast('Đã liên kết SĐT và đồng bộ lịch sử từ tài khoản cũ.');
+        } else if (phoneToken) {
+          this.toast('Đã xác thực số điện thoại và đồng bộ tài khoản Zalo.');
+        } else {
+          this.toast(this.userName ? `Đã vào tài khoản ${this.userName}` : 'Đăng nhập Zalo thành công.');
+        }
+        return { ok: true, data: res.data };
+      } catch (e) {
+        return { ok: false, message: e instanceof Error ? e.message : 'Chưa đăng nhập được bằng Zalo Mini App.' };
+      }
+    },
+
+    /** Chỉ gọi khi người dùng bấm nút xác nhận liên kết SĐT / đặt gói (xin getPhoneNumber từ zmp-sdk). */
+    async linkPhoneViaZaloMiniApp() {
+      try {
+        const accessToken = await getMiniAppAccessToken();
+        const phoneToken = await getMiniAppPhoneToken();
+        return await this.loginWithZaloMiniApp({ accessToken, phoneToken });
+      } catch (e) {
+        return { ok: false, message: e instanceof Error ? e.message : 'Chưa xác thực được số điện thoại từ Zalo.' };
+      }
     },
 
     async logout(silent = false) {

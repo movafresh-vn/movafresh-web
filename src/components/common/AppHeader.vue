@@ -1,5 +1,5 @@
 <template>
-  <header class="hdr">
+  <header class="hdr" :class="{ 'zmp-hdr': inMiniApp }" :data-zmp="inMiniApp ? 'true' : undefined">
     <div class="wrap">
       <!-- Logo + Nhãn TP.HCM tích hợp gọn -->
       <router-link to="/" class="logo" aria-label="MOVA FRESH, về đầu trang">
@@ -112,11 +112,13 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMovaStore } from '../../stores/useMovaStore';
+import { isZaloMiniApp } from '../../services/zaloMiniApp';
 import BrandLogo from './BrandLogo.vue';
 
 const store = useMovaStore();
 const route = useRoute();
 const router = useRouter();
+const inMiniApp = isZaloMiniApp();
 
 // Trên mobile: chưa đăng nhập thì mở đăng nhập, rồi vào tài khoản
 const openAccount = () => {
@@ -368,5 +370,28 @@ const userLineText = computed(() => {
   .city-tag {
     display: none;
   }
+}
+
+/* Zalo Mini App safe-area + capsule (... | X) clearance trên iOS & Android */
+.hdr.zmp-hdr {
+  padding-top: var(--zaui-safe-area-inset-top, var(--zaui-safe-area-top, env(safe-area-inset-top, 12px)));
+}
+
+.hdr.zmp-hdr .wrap {
+  height: auto;
+  min-height: 60px;
+  align-items: flex-start;
+  padding-top: 8px;
+  padding-bottom: 10px;
+}
+
+.hdr.zmp-hdr .logo {
+  min-height: 36px;
+  max-width: calc(100% - 110px);
+}
+
+.hdr.zmp-hdr .nav-views,
+.hdr.zmp-hdr .hdr-r {
+  margin-top: 44px;
 }
 </style>

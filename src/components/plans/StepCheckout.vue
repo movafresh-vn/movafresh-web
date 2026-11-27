@@ -164,7 +164,19 @@
             >
               Xác thực SĐT (OTP)
             </button>
-            <span v-else class="verified-pill">✓ Đã xác thực OTP</span>
+            <span v-else class="verified-pill">✓ Đã xác thực</span>
+          </div>
+          <div v-if="inMiniApp && !c.phoneVerified" class="pl-panel zalo-phone-consent" data-testid="zalo-phone-consent-box">
+            <p class="pl-note">Dùng số điện thoại để định danh đơn hàng và bảo toàn số dư Fresh Credit của bạn.</p>
+            <button
+              type="button"
+              class="pl-btn zalo-btn sm-btn"
+              data-testid="zalo-phone-btn"
+              :disabled="zaloPhoneBusy || otpBusy"
+              @click="linkZaloPhone"
+            >
+              {{ zaloPhoneBusy ? 'Đang xác nhận SĐT…' : 'Xác nhận liên kết SĐT với Zalo' }}
+            </button>
           </div>
           <p v-if="phoneErr" class="pl-error phone-err" role="alert">{{ phoneErr }}</p>
         </div>
@@ -194,9 +206,25 @@
         <button class="pl-btn primary sm-btn" type="button" @click="linkOpen = true">Liên kết thẻ/ví đối tác</button>
       </div>
       <p v-if="phoneNotVerified" class="pl-panel warn" role="alert" data-testid="phone-not-verified">{{ phoneNotVerifiedMsg }}</p>
-      <p v-if="needsAuth" class="pl-panel warn" role="status" data-testid="needs-auth">
-        Xác thực số điện thoại ở mục 2 để MOVA tính số tiền chính xác cho bạn (giá, ưu đãi và lịch trừ tiền do hệ thống tính, không ước lượng).
-      </p>
+      <div v-if="needsAuth" class="pl-panel warn needs-auth-box" role="status" data-testid="needs-auth">
+        <p>
+          {{
+            inMiniApp
+              ? 'Đăng nhập Zalo hoặc xác nhận số điện thoại ở mục 2 để MOVA tính số tiền chính xác và bảo toàn số dư Fresh Credit của bạn.'
+              : 'Xác thực số điện thoại ở mục 2 để MOVA tính số tiền chính xác cho bạn (giá, ưu đãi và lịch trừ tiền do hệ thống tính, không ước lượng).'
+          }}
+        </p>
+        <button
+          v-if="inMiniApp"
+          type="button"
+          class="pl-btn zalo-btn sm-btn"
+          data-testid="checkout-zalo-signin"
+          :disabled="zaloAuthBusy"
+          @click="loginZaloInCheckout"
+        >
+          {{ zaloAuthBusy ? 'Đang đăng nhập Zalo…' : 'Tiếp tục với Zalo' }}
+        </button>
+      </div>
       <p v-else-if="!preview && store.error" class="pl-error" role="alert">{{ store.error }}</p>
       <p v-else-if="!preview" class="pl-note">Chọn ngày và khung giờ giao để xem số tiền chi tiết.</p>
 
@@ -365,9 +393,9 @@
           <input v-model="c.agree" type="checkbox" @change="save" />
           <span>
             Tôi đã đọc và đồng ý với
-            <router-link to="/terms" target="_blank" class="legal-link" @click.stop>Điều khoản giao dịch từ xa</router-link>,
-            <router-link to="/refund-policy" target="_blank" class="legal-link" @click.stop>Chính sách hoàn tiền 7 ngày</router-link> và
-            <router-link to="/privacy" target="_blank" class="legal-link" @click.stop>Chính sách bảo mật</router-link>
+            <router-link to="/terms" :target="inMiniApp ? undefined : '_blank'" class="legal-link" @click.stop>Điều khoản giao dịch từ xa</router-link>,
+            <router-link to="/refund-policy" :target="inMiniApp ? undefined : '_blank'" class="legal-link" @click.stop>Chính sách hoàn tiền 7 ngày</router-link> và
+            <router-link to="/privacy" :target="inMiniApp ? undefined : '_blank'" class="legal-link" @click.stop>Chính sách bảo mật</router-link>
             của MOVA Fresh.
           </span>
         </label>
@@ -463,6 +491,7 @@ import DialSelect from '../modals/DialSelect.vue';
 import LinkCardSheet from '../dashboard/LinkCardSheet.vue';
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
 import { useMovaStore } from '../../stores/useMovaStore';
+import { isZaloMiniApp } from '../../services/zaloMiniApp';
 import { BUSINESS } from '../../shared/config/business';
 import { INSTRUCTION_MODES, payTodayInfo } from '../../shared/api/adapters/checkout';
 import { checkoutErrorMessage } from '../../shared/domain/checkoutError';
@@ -473,6 +502,7 @@ import { normalizeContact, splitPhone } from '../../shared/domain/leads';
 const emit = defineEmits(['done']);
 const store = usePlanFlowStore();
 const account = useMovaStore();
+const inMiniApp = isZaloMiniApp();
 const c = store.checkout;
 const options = computed(() => store.options);
 const preview = computed(() => store.preview);
@@ -485,13 +515,19 @@ const showOtpModal = ref(false);
 const otpInput = ref('');
 const otpError = ref('');
 const otpBusy = ref(false);
+const zaloAuthBusy = ref(false);
+const zaloPhoneBusy = ref(false);
 const packOrder = ref(null);
 const phoneErr = ref('');
 const showTerms = ref(false);
 const linkOpen = ref(false);
 const phoneNotVerified = ref(false);
 const cardNotice = checkoutErrorMessage('PAYMENT_TOKEN_REQUIRED');
-const phoneNotVerifiedMsg = checkoutErrorMessage('PHONE_NOT_VERIFIED');
+const phoneNotVerifiedMsg = computed(() =>
+  inMiniApp
+    ? 'Số điện thoại của bạn chưa được xác thực. Vui lòng bấm xác nhận liên kết SĐT với Zalo hoặc xác thực mã OTP ở mục 2 (Nơi nhận hàng) trước khi thanh toán.'
+    : checkoutErrorMessage('PHONE_NOT_VERIFIED')
+);
 
 const voucherInput = ref('');
 const voucherMsg = ref('');
@@ -665,6 +701,75 @@ async function verifyOtp() {
   showOtpModal.value = false;
   save();
   await refresh();
+}
+
+function syncCustomerFieldsFromAccount() {
+  const cust = account.account?.customer;
+  if (cust) {
+    if (!c.name && cust.name) c.name = cust.name;
+    if (!c.street && cust.address) c.street = cust.address;
+    if (!c.district && cust.district) c.district = cust.district;
+    if (cust.phone) {
+      const norm = normalizeContact(cust.phone);
+      if (norm && norm.type === 'phone') {
+        const sp = splitPhone(norm.value);
+        c.phoneDial = sp.dial;
+        c.phone = sp.national;
+      }
+    }
+  }
+}
+
+async function loginZaloInCheckout() {
+  if (zaloAuthBusy.value) return;
+  zaloAuthBusy.value = true;
+  message.value = '';
+  try {
+    const res = await account.loginWithZaloMiniApp();
+    if (!res.ok) {
+      message.value = res.message || 'Chưa đăng nhập được bằng Zalo.';
+      return;
+    }
+    syncCustomerFieldsFromAccount();
+    if (res.data?.user?.phone_verified) {
+      c.phoneVerified = true;
+      phoneNotVerified.value = false;
+    }
+    save();
+    await refresh();
+  } finally {
+    zaloAuthBusy.value = false;
+  }
+}
+
+async function linkZaloPhone() {
+  if (zaloPhoneBusy.value) return;
+  zaloPhoneBusy.value = true;
+  phoneErr.value = '';
+  message.value = '';
+  try {
+    const res = await account.linkPhoneViaZaloMiniApp();
+    if (!res.ok) {
+      phoneErr.value = res.message || 'Chưa liên kết được số điện thoại Zalo.';
+      return;
+    }
+    const rawPhone = res.data?.user?.phone_local || res.data?.user?.phone || account.account?.customer?.phone || '';
+    if (rawPhone) {
+      const norm = normalizeContact(rawPhone);
+      if (norm && norm.type === 'phone') {
+        const sp = splitPhone(norm.value);
+        c.phoneDial = sp.dial;
+        c.phone = sp.national;
+      }
+    }
+    syncCustomerFieldsFromAccount();
+    c.phoneVerified = true;
+    phoneNotVerified.value = false;
+    save();
+    await refresh();
+  } finally {
+    zaloPhoneBusy.value = false;
+  }
 }
 
 function setInstruction(m) {
@@ -868,10 +973,10 @@ onMounted(async () => {
     c.phoneDial = sp.dial;
     c.phone = sp.national;
   }
-  // Đã đăng nhập (OTP) bằng số này rồi thì không bắt xác thực lại (so sánh dạng chuẩn hóa, mã vùng nào cũng được)
-  const rawAuthPhone = account.authUser && account.authUser.phone ? String(account.authUser.phone) : '';
+  // Đã xác thực SĐT ở tài khoản (OTP hoặc Zalo Mini App) với đúng số này thì không bắt xác thực lại
+  const rawAuthPhone = account.authUser?.phone || (cust?.phone_verified ? cust.phone : '') || '';
   const authNorm = rawAuthPhone ? normalizeContact(rawAuthPhone.startsWith('+') || rawAuthPhone.startsWith('0') ? rawAuthPhone : `+${rawAuthPhone}`) : null;
-  if (authNorm && phoneValue.value && authNorm.value === phoneValue.value) {
+  if (authNorm && phoneValue.value && authNorm.value === phoneValue.value && (account.authUser?.phone_confirmed_at || cust?.phone_verified)) {
     c.phoneVerified = true;
   }
   if (c.voucherCode) {
@@ -937,6 +1042,10 @@ watch(() => c.packId, save);
 .phone-row { display: flex; gap: 8px; align-items: center; }
 .phone-row .pl-input { flex: 1; }
 .sm-btn { padding: 8px 12px; font-size: 14px; white-space: nowrap; }
+.zalo-btn { background: #0068FF; border-color: #0068FF; color: #fff; }
+.zalo-btn:hover:not(:disabled) { background: #0055d4; border-color: #0055d4; }
+.zalo-phone-consent { margin-top: 8px; display: grid; gap: 8px; justify-items: start; background: #EFF6FF; border-color: #BFDBFE; }
+.needs-auth-box { display: grid; gap: 8px; justify-items: start; }
 .verified-pill { font-size: 14px; font-weight: 700; color: var(--green-d); background: var(--green-soft); padding: 6px 12px; border-radius: 8px; white-space: nowrap; }
 .phone-err { margin-top: 4px; font-size: 14px; }
 
@@ -1041,7 +1150,7 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
 .agree { display: flex; gap: 12px; align-items: flex-start; min-height: 44px; font-size: 15px; font-weight: 600; cursor: pointer; }
 .agree input { width: 22px; height: 22px; accent-color: var(--green); flex-shrink: 0; margin-top: 2px; }
 
-.pay-bar { position: sticky; bottom: 0; background: rgba(250, 249, 245, .97); border-top: 1px solid var(--line); margin: 0 -20px; padding: 12px 20px; display: grid; gap: 8px; z-index: 10; }
+.pay-bar { position: sticky; bottom: 0; background: rgba(250, 249, 245, .97); border-top: 1px solid var(--line); margin: 0 -20px; padding: 12px 20px max(12px, var(--zmp-safe-bottom, env(safe-area-inset-bottom, 0px))); display: grid; gap: 8px; z-index: 10; }
 .pay-breakdown { display: grid; gap: 4px; }
 .pay-line { display: flex; justify-content: space-between; font-size: 14px; }
 .pay-line.green { color: var(--green-d); font-weight: 600; }

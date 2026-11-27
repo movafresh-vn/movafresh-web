@@ -55,12 +55,15 @@
           </button>
           <button v-if="otpSent" class="pl-btn" type="button" :disabled="busy" @click="reset">Đổi số điện thoại</button>
         </form>
-        <!-- Đăng nhập bằng Google / Zalo: khách chưa có số điện thoại đã xác thực vẫn vào được, đến lúc thanh toán sẽ được hướng dẫn xác thực số -->
+        <!-- Đăng nhập nhanh: trên Zalo Mini App ẩn Google & OAuth Web redirect, chỉ dùng Zalo SDK -->
         <div v-if="supabase" class="google-block">
           <p class="pl-note or">hoặc</p>
-          <button class="pl-btn" type="button" data-testid="google-signin" :disabled="busy" @click="google">Tiếp tục với Google</button>
+          <button v-if="!inMiniApp" class="pl-btn" type="button" data-testid="google-signin" :disabled="busy" @click="google">Tiếp tục với Google</button>
           <button class="pl-btn zalo-btn" type="button" data-testid="zalo-signin" :disabled="busy" @click="zalo">Tiếp tục với Zalo</button>
-          <p class="pl-note">Dùng Google hoặc Zalo thì bạn vẫn cần xác thực số điện thoại bằng mã OTP khi thanh toán gói.</p>
+          <p v-if="inMiniApp" class="pl-note">
+            Đăng nhập bằng tài khoản Zalo. Số điện thoại chỉ được xác nhận khi bạn bấm liên kết hoặc đặt gói để bảo toàn số dư Fresh Credit.
+          </p>
+          <p v-else class="pl-note">Dùng Google hoặc Zalo thì bạn vẫn cần xác thực số điện thoại bằng mã OTP khi thanh toán gói.</p>
         </div>
         <p v-else class="pl-note" role="alert">Chưa cấu hình đăng nhập (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY).</p>
         <router-link to="/plans" class="pl-btn ghost" @click="store.closeModal">Chưa có gói? Thiết kế thực đơn</router-link>
@@ -75,9 +78,11 @@ import DialSelect from './DialSelect.vue';
 import BrandLogo from '../common/BrandLogo.vue';
 import { signInWithGoogle, supabase } from '../../services/supabase';
 import { signInWithZalo } from '../../services/zaloAuth';
+import { isZaloMiniApp } from '../../services/zaloMiniApp';
 import { useMovaStore } from '../../stores/useMovaStore';
 
 const store = useMovaStore();
+const inMiniApp = isZaloMiniApp();
 const contact = ref('');
 const dial = ref('84');
 const isEmail = computed(() => contact.value.includes('@'));
@@ -109,7 +114,7 @@ function reset() {
 }
 
 async function google() {
-  if (busy.value) return;
+  if (inMiniApp || busy.value) return;
   busy.value = true;
   error.value = '';
   try {
@@ -125,6 +130,17 @@ async function zalo() {
   busy.value = true;
   error.value = '';
   try {
+    if (inMiniApp) {
+      const res = await store.loginWithZaloMiniApp();
+      if (!res.ok) {
+        error.value = res.message || 'Chưa đăng nhập được bằng Zalo Mini App.';
+        busy.value = false;
+        return;
+      }
+      store.closeModal();
+      busy.value = false;
+      return;
+    }
     await signInWithZalo();
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Chưa đăng nhập được bằng Zalo.';

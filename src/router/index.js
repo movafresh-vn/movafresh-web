@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router';
+import { createRouter, createWebHistory, createWebHashHistory, createMemoryHistory } from 'vue-router';
+import { isZaloMiniApp } from '../services/zaloMiniApp';
 import HomeView from '../views/HomeView.vue';
 import DashboardView from '../views/DashboardView.vue';
 import PlansView from '../views/PlansView.vue';
@@ -82,9 +83,11 @@ if (import.meta.env?.VITE_DEV_TOOLS === 'true') {
 }
 
 const router = createRouter({
-  history: typeof window !== 'undefined'
-    ? createWebHistory(import.meta.env?.BASE_URL || '/')
-    : createMemoryHistory(import.meta.env?.BASE_URL || '/'),
+  history: typeof window === 'undefined'
+    ? createMemoryHistory(import.meta.env?.BASE_URL || '/')
+    : isZaloMiniApp()
+      ? createWebHashHistory()
+      : createWebHistory(import.meta.env?.BASE_URL || '/'),
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {

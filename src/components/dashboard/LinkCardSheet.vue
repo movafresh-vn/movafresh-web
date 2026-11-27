@@ -33,6 +33,7 @@
 <script setup>
 import { ref } from 'vue';
 import { api } from '../../shared/api';
+import { isZaloMiniApp, openExternalUrl } from '../../services/zaloMiniApp';
 
 // Sheet liên kết thẻ/ví đối tác. `linked` do nơi mở truyền vào (backend chưa có đường riêng đọc trạng thái liên kết:
 // gói đang trả bằng thẻ, hoặc xem trước giá bằng thẻ không báo PAYMENT_TOKEN_REQUIRED, nghĩa là đã liên kết).
@@ -48,14 +49,16 @@ async function start() {
   busy.value = true;
   error.value = '';
   try {
-    const res = await api.customer.linkCard(`${location.origin}${location.pathname}`);
+    const inMiniApp = isZaloMiniApp();
+    const returnOrigin = inMiniApp && location.origin.startsWith('zbrowser://') ? 'https://h5.zdn.vn' : location.origin;
+    const res = await api.customer.linkCard(`${returnOrigin}${location.pathname}`);
     if (res.status === 'error') {
       error.value = res.error?.message || 'Chưa mở được trang liên kết. Bạn thử lại sau nhé.';
       return;
     }
     opened.value = true;
-    // Trạng thái phễu /plans đã lưu ở trình duyệt nên chuyển trang rồi quay lại không mất dữ liệu.
-    location.assign(res.data.url);
+    // Trong WebView Zalo Mini App mở qua zmp-sdk openWebview; trên Web thường giữ redirect cùng tab.
+    await openExternalUrl(res.data.url, { sameTab: true, style: 'normal', leftButton: 'back' });
   } catch (e) {
     error.value = e && e.message ? e.message : 'Không kết nối được máy chủ MOVA.';
   } finally {

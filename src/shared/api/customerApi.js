@@ -289,6 +289,9 @@ export function createCustomerApi(deps = {}) {
     zaloCallback(req = {}) {
       return envelope(() => call('zaloCallback', { body: req }));
     },
+    zaloMiniApp(req = {}) {
+      return envelope(() => call('zaloMiniApp', { body: req }));
+    },
     supportRequest(req) {
       return envelope(() => call('supportRequest', { body: { category: req.category, message: req.message }, key: req.key }));
     },

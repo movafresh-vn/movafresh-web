@@ -290,7 +290,7 @@ const staples = computed(() => {
 .meals { display: grid; gap: 12px; }
 .staples { font-size: 15px; background: var(--green-soft); color: var(--green-d); border-radius: 12px; padding: 10px 14px; }
 .cta {
-  position: sticky; bottom: 0; z-index: 10; margin: 18px -20px 0; padding: 12px 20px;
+  position: sticky; bottom: 0; z-index: 10; margin: 18px -20px 0; padding: 12px 20px max(12px, var(--zmp-safe-bottom, env(safe-area-inset-bottom, 0px)));
   background: rgba(250, 249, 245, .96); border-top: 1px solid var(--line);
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
 }

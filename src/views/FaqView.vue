@@ -95,8 +95,14 @@
           </div>
         </div>
         <div class="support-actions">
-          <a href="tel:19008899" class="pl-btn outline tel-btn">📞 Gọi 1900 8899</a>
-          <a href="https://zalo.me" target="_blank" rel="noopener noreferrer" class="pl-btn primary zalo-btn">
+          <a href="tel:19008899" class="pl-btn outline tel-btn" @click="openLink($event, 'tel:19008899')">📞 Gọi 1900 8899</a>
+          <a
+            href="https://zalo.me"
+            :target="inMiniApp ? undefined : '_blank'"
+            :rel="inMiniApp ? undefined : 'noopener noreferrer'"
+            class="pl-btn primary zalo-btn"
+            @click="openLink($event, 'https://zalo.me')"
+          >
             Chat Zalo Official
           </a>
         </div>
@@ -107,6 +113,14 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { isZaloMiniApp, openExternalUrl } from '../services/zaloMiniApp';
+
+const inMiniApp = isZaloMiniApp();
+function openLink(event, url) {
+  if (!inMiniApp) return;
+  event.preventDefault();
+  void openExternalUrl(url);
+}
 
 const searchQuery = ref('');
 const activeGroup = ref('all');

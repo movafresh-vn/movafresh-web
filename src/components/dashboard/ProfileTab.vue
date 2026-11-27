@@ -1,11 +1,20 @@
 <template>
   <form v-if="form" class="profile" @submit.prevent="save">
-    <!-- Gắn SĐT xác thực OTP cho tài khoản OAuth (Google/Zalo) chưa có SĐT -->
+    <!-- Gắn SĐT xác thực cho tài khoản OAuth (Google/Zalo) chưa có SĐT -->
     <section v-if="store.needsPhoneLink" class="pl-card box phone-link-card" data-testid="profile-phone-link">
-      <h2 class="pl-h2">Liên kết số điện thoại (OTP)</h2>
+      <h2 class="pl-h2">{{ inMiniApp ? 'Liên kết số điện thoại Zalo' : 'Liên kết số điện thoại (OTP)' }}</h2>
       <p class="pl-note">
-        Xác thực số điện thoại để thanh toán gói, nhận thông báo giao hàng và tự động gộp số dư Fresh Credit nếu số này từng đặt hàng tại MOVA.
+        {{
+          inMiniApp
+            ? 'Dùng số điện thoại để định danh đơn hàng và bảo toàn số dư Fresh Credit của bạn.'
+            : 'Xác thực số điện thoại để thanh toán gói, nhận thông báo giao hàng và tự động gộp số dư Fresh Credit nếu số này từng đặt hàng tại MOVA.'
+        }}
       </p>
+      <div v-if="inMiniApp" class="link-row">
+        <button type="button" class="pl-btn zalo-btn sm" data-testid="profile-zalo-phone-btn" :disabled="zaloPhoneBusy" @click="linkPhoneWithZalo">
+          {{ zaloPhoneBusy ? 'Đang xác nhận…' : 'Xác nhận liên kết SĐT với Zalo' }}
+        </button>
+      </div>
       <div class="link-row">
         <DialSelect v-model="linkDial" :disabled="linkOtpSent || linkBusy" />
         <input
@@ -181,10 +190,13 @@ import { BUSINESS } from '../../shared/config/business';
 import { profileCompleteness } from '../../shared/domain/rewards';
 import { ALLERGENS, AVOIDS, CUISINE_STYLES, PROFILE_HEALTH_NEEDS, PROTEIN_SOURCES } from '../../shared/domain/profilePreferences';
 import { fmt } from '../../shared/utils/formatters';
+import { isZaloMiniApp } from '../../services/zaloMiniApp';
 import { useMovaStore } from '../../stores/useMovaStore';
 import DialSelect from '../modals/DialSelect.vue';
 
 const store = useMovaStore();
+const inMiniApp = isZaloMiniApp();
+const zaloPhoneBusy = ref(false);
 const reward = BUSINESS.incentives.rewards.profileComplete;
 const form = ref(null);
 const claimed = ref(false);
@@ -330,6 +342,22 @@ function resetPhoneLink() {
   linkOtp.value = '';
   linkError.value = '';
 }
+
+async function linkPhoneWithZalo() {
+  if (zaloPhoneBusy.value) return;
+  zaloPhoneBusy.value = true;
+  linkError.value = '';
+  try {
+    const res = await store.linkPhoneViaZaloMiniApp();
+    if (!res.ok) {
+      linkError.value = res.message || 'Chưa liên kết được số điện thoại Zalo.';
+      return;
+    }
+    await load();
+  } finally {
+    zaloPhoneBusy.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -347,6 +375,8 @@ function resetPhoneLink() {
 .protein-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; }
 .sm-select { width: auto; min-width: 140px; padding: 6px 10px; }
 .phone-link-card { border-color: var(--orange, #e67e22); }
+.zalo-btn { background: #0068FF; border-color: #0068FF; color: #fff; }
+.zalo-btn:hover:not(:disabled) { background: #0055d4; border-color: #0055d4; }
 .link-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .link-row .pl-input { flex: 1; min-width: 160px; }
 </style>

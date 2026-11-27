@@ -115,6 +115,10 @@ function run(action) {
   align-items: center;
 }
 
+.zmp-env .drawer-hdr {
+  padding-top: calc(var(--zmp-safe-top, 12px) + 48px);
+}
+
 .drawer-hdr h3 { font-size: 18px; font-weight: 800; }
 .sheet-x { display: inline-flex !important; width: 44px; height: 44px; font-size: 22px; }
 
@@ -154,6 +158,7 @@ function run(action) {
 .act { justify-self: start; margin-top: 4px; }
 
 .drawer-ftr { padding: 12px 16px; border-top: 1px solid var(--line); text-align: center; }
+.zmp-env .drawer-ftr { padding-bottom: max(12px, var(--zmp-safe-bottom, 0px)); }
 
 .scrim { display: none; }
 .scrim.open { display: block; position: fixed; inset: 0; background: rgba(84, 63, 24, .4); z-index: 64; }
