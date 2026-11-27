@@ -8,6 +8,7 @@ import TermsView from '../views/TermsView.vue';
 import RefundPolicyView from '../views/RefundPolicyView.vue';
 import PrivacyView from '../views/PrivacyView.vue';
 import FaqView from '../views/FaqView.vue';
+import ZaloCallbackView from '../views/ZaloCallbackView.vue';
 
 export const routes = [
   {
@@ -53,6 +54,11 @@ export const routes = [
   {
     path: '/dashboard',
     redirect: '/account'
+  },
+  {
+    path: '/auth/zalo/callback',
+    name: 'zalo-callback',
+    component: ZaloCallbackView
   },
   {
     // Trang mở khi quét QR trên hộp. Không cần đăng nhập.

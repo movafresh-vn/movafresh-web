@@ -1,5 +1,45 @@
 <template>
   <form v-if="form" class="profile" @submit.prevent="save">
+    <!-- Gắn SĐT xác thực OTP cho tài khoản OAuth (Google/Zalo) chưa có SĐT -->
+    <section v-if="store.needsPhoneLink" class="pl-card box phone-link-card" data-testid="profile-phone-link">
+      <h2 class="pl-h2">Liên kết số điện thoại (OTP)</h2>
+      <p class="pl-note">
+        Xác thực số điện thoại để thanh toán gói, nhận thông báo giao hàng và tự động gộp số dư Fresh Credit nếu số này từng đặt hàng tại MOVA.
+      </p>
+      <div class="link-row">
+        <DialSelect v-model="linkDial" :disabled="linkOtpSent || linkBusy" />
+        <input
+          v-model="linkPhone"
+          class="pl-input num"
+          type="tel"
+          inputmode="tel"
+          placeholder="0908 123 456"
+          :disabled="linkOtpSent || linkBusy"
+          aria-label="Số điện thoại cần liên kết"
+        />
+        <button v-if="!linkOtpSent" type="button" class="pl-btn primary sm" :disabled="linkBusy" @click="sendPhoneLinkOtp">
+          {{ linkBusy ? 'Đang gửi…' : 'Gửi mã OTP' }}
+        </button>
+      </div>
+      <div v-if="linkOtpSent" class="link-row">
+        <input
+          v-model="linkOtp"
+          class="pl-input num"
+          type="text"
+          inputmode="numeric"
+          maxlength="10"
+          placeholder="Nhập mã OTP"
+          :disabled="linkBusy"
+          aria-label="Mã OTP xác thực số điện thoại"
+        />
+        <button type="button" class="pl-btn primary sm" :disabled="linkBusy" @click="confirmPhoneLinkOtp">
+          {{ linkBusy ? 'Đang xác thực…' : 'Xác thực & liên kết' }}
+        </button>
+        <button type="button" class="pl-btn sm" :disabled="linkBusy" @click="resetPhoneLink">Đổi số</button>
+      </div>
+      <p v-if="linkError" class="pl-error" role="alert">{{ linkError }}</p>
+    </section>
+
     <section class="pl-card box">
       <h2 class="pl-h2">Thông tin người nhận</h2>
       <div class="field">
@@ -142,6 +182,7 @@ import { profileCompleteness } from '../../shared/domain/rewards';
 import { ALLERGENS, AVOIDS, CUISINE_STYLES, PROFILE_HEALTH_NEEDS, PROTEIN_SOURCES } from '../../shared/domain/profilePreferences';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
+import DialSelect from '../modals/DialSelect.vue';
 
 const store = useMovaStore();
 const reward = BUSINESS.incentives.rewards.profileComplete;
@@ -150,6 +191,12 @@ const claimed = ref(false);
 const error = ref('');
 const safetyError = ref('');
 const savingSafety = ref(false);
+const linkDial = ref('84');
+const linkPhone = ref('');
+const linkOtp = ref('');
+const linkOtpSent = ref(false);
+const linkBusy = ref(false);
+const linkError = ref('');
 const districts = BUSINESS.zones.flatMap((z) => z.districts).filter((d) => d !== 'TP. Thủ Đức');
 const defaultProteinPrefs = () => Object.fromEntries(PROTEIN_SOURCES.map((p) => [p.id, 'neutral']));
 const safety = ref({
@@ -243,6 +290,46 @@ async function save() {
   await store.refresh();
   store.toast(r.data.reward_vnd ? `Đã lưu hồ sơ. MOVA cộng ${fmt(r.data.reward_vnd)} vào Fresh Credit` : 'Đã lưu hồ sơ');
 }
+
+async function sendPhoneLinkOtp() {
+  if (linkBusy.value) return;
+  linkBusy.value = true;
+  linkError.value = '';
+  try {
+    const err = await store.requestPhoneLink(linkPhone.value, { dial: linkDial.value });
+    if (err) {
+      linkError.value = err;
+      return;
+    }
+    linkOtpSent.value = true;
+  } finally {
+    linkBusy.value = false;
+  }
+}
+
+async function confirmPhoneLinkOtp() {
+  if (linkBusy.value) return;
+  linkBusy.value = true;
+  linkError.value = '';
+  try {
+    const err = await store.verifyPhoneLink(linkPhone.value, linkOtp.value, { dial: linkDial.value });
+    if (err) {
+      linkError.value = err;
+      return;
+    }
+    linkOtpSent.value = false;
+    linkOtp.value = '';
+    await load();
+  } finally {
+    linkBusy.value = false;
+  }
+}
+
+function resetPhoneLink() {
+  linkOtpSent.value = false;
+  linkOtp.value = '';
+  linkError.value = '';
+}
 </script>
 
 <style scoped>
@@ -259,4 +346,7 @@ async function save() {
 .protein-grid { display: grid; gap: 8px; }
 .protein-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; }
 .sm-select { width: auto; min-width: 140px; padding: 6px 10px; }
+.phone-link-card { border-color: var(--orange, #e67e22); }
+.link-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.link-row .pl-input { flex: 1; min-width: 160px; }
 </style>

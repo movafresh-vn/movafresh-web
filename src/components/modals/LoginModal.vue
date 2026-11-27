@@ -55,11 +55,12 @@
           </button>
           <button v-if="otpSent" class="pl-btn" type="button" :disabled="busy" @click="reset">Đổi số điện thoại</button>
         </form>
-        <!-- Đăng nhập bằng Google: khách chưa có số điện thoại đã xác thực vẫn vào được, đến lúc thanh toán sẽ được hướng dẫn xác thực số -->
+        <!-- Đăng nhập bằng Google / Zalo: khách chưa có số điện thoại đã xác thực vẫn vào được, đến lúc thanh toán sẽ được hướng dẫn xác thực số -->
         <div v-if="supabase" class="google-block">
           <p class="pl-note or">hoặc</p>
           <button class="pl-btn" type="button" data-testid="google-signin" :disabled="busy" @click="google">Tiếp tục với Google</button>
-          <p class="pl-note">Dùng Google thì bạn vẫn cần xác thực số điện thoại bằng mã OTP khi thanh toán gói.</p>
+          <button class="pl-btn zalo-btn" type="button" data-testid="zalo-signin" :disabled="busy" @click="zalo">Tiếp tục với Zalo</button>
+          <p class="pl-note">Dùng Google hoặc Zalo thì bạn vẫn cần xác thực số điện thoại bằng mã OTP khi thanh toán gói.</p>
         </div>
         <p v-else class="pl-note" role="alert">Chưa cấu hình đăng nhập (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY).</p>
         <router-link to="/plans" class="pl-btn ghost" @click="store.closeModal">Chưa có gói? Thiết kế thực đơn</router-link>
@@ -73,6 +74,7 @@ import { computed, ref } from 'vue';
 import DialSelect from './DialSelect.vue';
 import BrandLogo from '../common/BrandLogo.vue';
 import { signInWithGoogle, supabase } from '../../services/supabase';
+import { signInWithZalo } from '../../services/zaloAuth';
 import { useMovaStore } from '../../stores/useMovaStore';
 
 const store = useMovaStore();
@@ -118,6 +120,18 @@ async function google() {
   }
 }
 
+async function zalo() {
+  if (busy.value) return;
+  busy.value = true;
+  error.value = '';
+  try {
+    await signInWithZalo();
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Chưa đăng nhập được bằng Zalo.';
+    busy.value = false;
+  }
+}
+
 async function logout() {
   busy.value = true;
   try {
@@ -135,5 +149,7 @@ async function logout() {
 .contact-row { display: flex; gap: 8px; align-items: center; }
 .contact-row .pl-input:last-child { flex: 1; min-width: 0; }
 .google-block { display: grid; gap: 8px; margin-top: 10px; }
+.zalo-btn { background: #0068FF; border-color: #0068FF; color: #fff; }
+.zalo-btn:hover:not(:disabled) { background: #0055d4; border-color: #0055d4; }
 .or { text-align: center; margin: 0; }
 </style>

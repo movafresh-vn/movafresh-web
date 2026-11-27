@@ -636,7 +636,9 @@ async function openOtpModal() {
   otpInput.value = '';
   otpError.value = '';
   otpBusy.value = true;
-  const err = await account.requestOtp(cleanPhone);
+  const err = account.authUser
+    ? await account.requestPhoneLink(cleanPhone)
+    : await account.requestOtp(cleanPhone);
   otpBusy.value = false;
   if (err) {
     phoneErr.value = err;
@@ -649,13 +651,17 @@ async function verifyOtp() {
   if (otpBusy.value) return;
   otpBusy.value = true;
   otpError.value = '';
-  const err = await account.verifyOtp(phoneValue.value || c.phone, otpInput.value);
+  const targetPhone = phoneValue.value || c.phone;
+  const err = account.authUser
+    ? await account.verifyPhoneLink(targetPhone, otpInput.value)
+    : await account.verifyOtp(targetPhone, otpInput.value);
   otpBusy.value = false;
   if (err) {
     otpError.value = err;
     return;
   }
   c.phoneVerified = true;
+  phoneNotVerified.value = false;
   showOtpModal.value = false;
   save();
   await refresh();

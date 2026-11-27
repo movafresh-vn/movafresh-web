@@ -25,6 +25,13 @@
       <template v-else-if="store.isLoggedIn">
         <DashHeader @tab="setTab" />
 
+        <!-- Nhắc liên kết SĐT gọn gàng cho tài khoản Google/Zalo chưa có SĐT xác thực -->
+        <section v-if="store.needsPhoneLink" class="pl-panel warn alert phone-link-banner" role="status" data-testid="phone-link-banner">
+          <b>Liên kết số điện thoại để thanh toán &amp; nhận giao hàng</b>
+          <p>Tài khoản của bạn chưa có số điện thoại xác thực OTP. Liên kết ngay để đặt gói và đồng bộ Fresh Credit nếu bạn từng đặt hàng trước đó.</p>
+          <button v-if="tab !== 'profile'" class="pl-btn primary sm" type="button" @click="setTab('profile')">Liên kết SĐT ngay</button>
+        </section>
+
         <!-- Cảnh báo cần xử lý, hiện ở mọi tab -->
         <section v-if="alert" class="pl-panel warn alert" role="alert">
           <b>Fresh Credit chưa đủ cho tuần {{ alert.week_index + 1 }}</b>

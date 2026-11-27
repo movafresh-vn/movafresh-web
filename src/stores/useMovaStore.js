@@ -1,7 +1,16 @@
 import { defineStore } from 'pinia';
 import { api } from '../shared/api';
 import { otpIdentity } from '../shared/domain/leads';
-import { getAccessToken, requestOtp, signOut, verifyOtp } from '../services/supabase';
+import { fmt } from '../shared/utils/formatters';
+import {
+  getAccessToken,
+  refreshAuthSession,
+  requestOtp,
+  requestPhoneLinkOtp,
+  signOut,
+  verifyOtp,
+  verifyPhoneLinkOtp
+} from '../services/supabase';
 
 // Store của phần tài khoản (/account) và các thành phần dùng chung toàn app (toast, modal, ngăn thông báo).
 // Danh tính khách là phiên Supabase (đăng nhập bằng mã OTP gửi về số điện thoại). Mọi dữ liệu tài khoản đến từ backend thật qua
@@ -25,12 +34,15 @@ export const useMovaStore = defineStore('mova', {
     toastTimer: null,
     notifDrawerOpen: false,
     activeModal: null, // 'login' | 'topup'
-    topupSuggest: null // { pay_vnd } gợi ý mức nạp khi mở từ cảnh báo
+    topupSuggest: null, // { pay_vnd } gợi ý mức nạp khi mở từ cảnh báo
+    pendingPhoneLink: null // { phone, mode, savedSession } cho luồng liên kết SĐT tài khoản OAuth
   }),
 
   getters: {
     isLoggedIn: (s) => Boolean(s.customerId && s.account),
     hasMovaSession: (s) => Boolean((s.customerId && s.account) || s.authUser),
+    hasVerifiedPhone: (s) => Boolean(s.account?.customer?.phone_verified || s.authUser?.phone_confirmed_at),
+    needsPhoneLink: (s) => Boolean(((s.customerId && s.account) || s.authUser) && !(s.account?.customer?.phone_verified || s.authUser?.phone_confirmed_at)),
     userName: (s) => (s.account ? s.account.customer.name : ''),
     unreadNotifsCount: (s) => s.notifications.filter((n) => !n.read).length,
     balance: (s) => (s.account ? s.account.credit : { real_vnd: 0, promo_vnd: 0, total_vnd: 0 }),
@@ -141,6 +153,55 @@ export const useMovaStore = defineStore('mova', {
       await this.refresh();
       this.toast(this.userName ? `Đã vào tài khoản ${this.userName}` : 'Đăng nhập MOVA thành công.');
       this.closeModal();
+      return '';
+    },
+
+    /** Gửi mã OTP để liên kết SĐT vào chính tài khoản Google/Zalo đang đăng nhập (không làm mất phiên OAuth). */
+    async requestPhoneLink(phone, opts) {
+      const id = otpIdentity(phone, opts);
+      if (!id || id.includes('@')) return 'Nhập số điện thoại hợp lệ (ví dụ 0908 123 456).';
+      try {
+        const state = await requestPhoneLinkOtp(id);
+        this.pendingPhoneLink = { phone: id, ...state };
+        return '';
+      } catch (e) {
+        return e instanceof Error ? e.message : 'Không gửi được mã OTP xác thực số điện thoại.';
+      }
+    },
+
+    /** Xác thực OTP gắn SĐT, đồng bộ user_profiles.phone và hợp nhất số dư Fresh Credit nếu SĐT đã từng có tài khoản cũ. */
+    async verifyPhoneLink(phone, code, opts) {
+      const id = otpIdentity(phone, opts);
+      if (!id || id.includes('@')) return 'Nhập số điện thoại hợp lệ.';
+      const pending = this.pendingPhoneLink || { phone: id, mode: 'phone_change', savedSession: null };
+      let verified;
+      try {
+        verified = await verifyPhoneLinkOtp(id, String(code || '').trim(), pending);
+      } catch (e) {
+        return e instanceof Error ? e.message : 'Mã OTP không đúng.';
+      }
+      if (verified.user) this.setAuthUser(verified.user);
+
+      const mergeBody = verified.mode === 'merge_existing'
+        ? { phone_access_token: verified.phoneAccessToken, phone: id }
+        : { phone: id };
+      const res = await api.customer.mergePhoneAccount(mergeBody);
+      if (res.status === 'error') {
+        return res.error.message || 'Không đồng bộ được số điện thoại vào tài khoản.';
+      }
+      this.pendingPhoneLink = null;
+      const refreshedUser = await refreshAuthSession();
+      if (refreshedUser) this.setAuthUser(refreshedUser);
+      await this.refresh();
+
+      const transferred = Number(res.data?.transferred_real_vnd || 0) + Number(res.data?.transferred_promo_vnd || 0);
+      if (res.data?.merged && transferred > 0) {
+        this.toast(`Đã liên kết SĐT và gộp ${fmt(transferred)} Fresh Credit từ tài khoản cũ.`);
+      } else if (res.data?.merged) {
+        this.toast('Đã liên kết SĐT và đồng bộ lịch sử từ tài khoản cũ.');
+      } else {
+        this.toast('Đã liên kết và xác thực số điện thoại thành công.');
+      }
       return '';
     },
 

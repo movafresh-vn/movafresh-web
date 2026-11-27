@@ -14,8 +14,10 @@ export const CUSTOMER_ROUTES = {
   creditPacks: ['GET', '/credit/packs', { auth: false }],
   traceLot: ['GET', '/lots/:code', { auth: false }],
   sampleLotCodes: ['GET', '/lots', { auth: false }],
+  zaloCallback: ['POST', '/auth/zalo/callback', { auth: false }],
 
   // Cần đăng nhập
+  mergePhoneAccount: ['POST', '/auth/merge-phone-account'],
   setConsents: ['PUT', '/account/consents'],
   saveSafetyProfile: ['PUT', '/account/profile'],
   previewSubscription: ['POST', '/subscription/preview'],

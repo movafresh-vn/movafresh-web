@@ -283,6 +283,12 @@ export function createCustomerApi(deps = {}) {
     getAccount() {
       return envelope(async () => adaptOverview(await call('getAccount')));
     },
+    mergePhoneAccount(req = {}) {
+      return envelope(() => call('mergePhoneAccount', { body: req }));
+    },
+    zaloCallback(req = {}) {
+      return envelope(() => call('zaloCallback', { body: req }));
+    },
     supportRequest(req) {
       return envelope(() => call('supportRequest', { body: { category: req.category, message: req.message }, key: req.key }));
     },
