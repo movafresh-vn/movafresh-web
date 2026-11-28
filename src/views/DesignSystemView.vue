@@ -72,7 +72,7 @@
 
     <section class="ds-sec" aria-labelledby="ds-logo">
       <h2 id="ds-logo" class="ds-h2">Logo (4 biến thể)</h2>
-      <p class="ds-note">Hình chữ là bản xấp xỉ theo kích thước Figma (126,43 x 50,32). Thay bằng SVG Figma khi có.</p>
+      <p class="ds-note">Logo chính thức trích xuất từ Figma DFL24-web.</p>
       <div class="ds-logos">
         <div v-for="v in variants" :key="v" class="ds-logo-cell" :style="{ background: LOGO_VARIANTS[v].bg }">
           <BrandLogo :variant="v" :width="160" />
@@ -101,17 +101,21 @@ const sheet = ref(false);
 
 const colors = [
   { name: '--green', note: 'xanh thương hiệu' },
-  { name: '--green-d', note: 'suy ra, chữ nhỏ' },
-  { name: '--orange', note: 'cam thương hiệu' },
+  { name: '--green-d', note: 'xanh đậm AA' },
+  { name: '--forest', note: 'rừng olive sâu (Figma)' },
+  { name: '--harvest-gold', note: 'vàng mùa gặt (Figma)' },
+  { name: '--orange', note: 'cam ấm (Figma)' },
   { name: '--red-orange', note: 'cam-đỏ thương hiệu' },
-  { name: '--red-orange-d', note: 'suy ra, chữ nhỏ' },
-  { name: '--brown', note: 'nâu, chữ chính' },
-  { name: '--cream', note: 'kem, nền' },
-  { name: '--card', note: 'trắng, thẻ' },
-  { name: '--muted', note: 'chữ phụ' },
+  { name: '--red-orange-d', note: 'terracotta AA' },
+  { name: '--brown', note: 'nâu espresso' },
+  { name: '--cream', note: 'kem nền (Figma)' },
+  { name: '--cream-warm', note: 'kem ấm (Figma)' },
+  { name: '--sand', note: 'nền cát ấm (Figma)' },
+  { name: '--card', note: 'trắng thẻ' },
+  { name: '--muted', note: 'chữ phụ AA' },
   { name: '--line', note: 'đường kẻ' },
-  { name: '--green-soft', note: 'nền nhạt' },
-  { name: '--orange-soft', note: 'nền nhạt' },
+  { name: '--green-soft', note: 'nền nhạt xanh' },
+  { name: '--orange-soft', note: 'nền nhạt cam' },
   { name: '--red', note: 'lỗi' },
   { name: '--blue', note: 'thông tin' }
 ];

@@ -1,67 +1,56 @@
 <template>
   <div class="video-hook-container">
-    <div class="video-wrapper" :class="{ 'is-muted': isMuted }">
-      <!-- Top Badges -->
+    <div class="video-wrapper">
+      <!-- Top Badges (left-aligned so top-right 3D Harvest Gold seal never overlaps) -->
       <div class="video-top-bar">
-        <span class="hook-badge">
-          <span class="live-dot"></span>
-          10s Mở Hộp &amp; Nấu 15 Phút
-        </span>
         <button
           type="button"
-          class="sound-toggle-btn"
-          :title="isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'"
-          @click="toggleSound"
+          class="play-toggle-btn"
+          :aria-pressed="!isPaused"
+          :aria-label="isPaused ? 'Tiếp tục trình chiếu 3 bước nấu' : 'Tạm dừng trình chiếu'"
+          @click="togglePlay"
         >
-          <span class="sound-icon">{{ isMuted ? '🔇' : '🔊' }}</span>
-          <span class="sound-text">{{ isMuted ? 'Bật tiếng' : 'Tắt tiếng' }}</span>
+          <span class="toggle-icon" aria-hidden="true">{{ isPaused ? '▶' : '❚❚' }}</span>
+          <span class="toggle-text">{{ isPaused ? 'Chạy tiếp' : 'Tạm dừng' }}</span>
         </button>
       </div>
 
-      <!-- Main HTML5 Video -->
-      <video
-        v-if="!hasError"
-        ref="videoRef"
-        class="hook-video"
-        :src="HERO_DEMO_VIDEO_URL"
-        autoplay
-        muted
-        loop
-        playsinline
-        preload="auto"
-        @timeupdate="onTimeUpdate"
-        @error="onError"
-      ></video>
+      <!-- High-res Local Figma Meal Stage (Zero external 403 media) -->
+      <div class="hook-stage" @click="nextPhase">
+        <picture
+          v-for="(scene, idx) in scenes"
+          :key="scene.key"
+          class="scene-layer"
+          :class="{ active: currentPhase === idx }"
+        >
+          <img
+            :src="scene.src"
+            :alt="scene.alt"
+            class="scene-img"
+            :fetchpriority="idx === 2 ? 'high' : undefined"
+            :loading="idx === 2 ? undefined : 'eager'"
+            decoding="async"
+          />
+        </picture>
 
-      <!-- Fallback Visual Animation if offline or video cannot be loaded -->
-      <div v-else class="hook-fallback">
-        <div class="fallback-scene" :class="'phase-' + currentPhase">
-          <div class="scene-visual">
-            <div v-if="currentPhase === 0" class="scene-box">
-              <span class="scene-emoji">📦</span>
-              <h4>Thùng Cách Nhiệt Đắk Lắk</h4>
-              <p>Thịt thảo mộc, rau củ sơ chế sạch 100%, túi xốt định lượng sẵn</p>
-            </div>
-            <div v-else-if="currentPhase === 1" class="scene-pan">
-              <span class="scene-emoji sizzling">🍳</span>
-              <h4>Đảo 1 Chảo Lửa Lớn</h4>
-              <p>Rưới túi xốt độc quyền, thơm nức mũi trong 5–7 phút</p>
-            </div>
-            <div v-else class="scene-table">
-              <span class="scene-emoji pulse">🍲</span>
-              <h4>Hoàn Thành Mâm Cơm 5 Món</h4>
-              <p>Đạm, rau, canh, tinh bột, trái cây nóng hổi sẵn sàng</p>
-            </div>
-          </div>
+        <div class="scene-scrim" aria-hidden="true"></div>
+
+        <!-- Caption for current cooking moment -->
+        <div class="scene-caption">
+          <span class="scene-chip">{{ activeScene.badge }}</span>
+          <strong class="scene-title">{{ activeScene.title }}</strong>
+          <p class="scene-desc">{{ activeScene.desc }}</p>
         </div>
       </div>
 
-      <!-- 3 Time-step Timeline Overlay (Grand Frais Style) -->
-      <div class="timeline-bar">
+      <!-- 3 Time-step Timeline Overlay -->
+      <div class="timeline-bar" role="tablist" aria-label="Tiến trình nấu 15 phút">
         <button
           v-for="(step, idx) in steps"
-          :key="idx"
+          :key="step.time"
           type="button"
+          role="tab"
+          :aria-selected="currentPhase === idx"
           class="timeline-step"
           :class="{ active: currentPhase === idx }"
           @click="seekToPhase(idx)"
@@ -79,24 +68,41 @@
   </div>
 </template>
 
-<script>
-// =========================================================================
-// URL VIDEO HOOK CẬN CẢNH SƠ CHẾ & NẤU 15 PHÚT (GRAND FRAIS HOOK)
-// Khi nhận video chính thức từ xưởng sơ chế Đắk Lắk & R&D, chỉ cần thay thành:
-// export const HERO_DEMO_VIDEO_URL = '/videos/mova-unbox-15m.mp4';
-// =========================================================================
-export const HERO_DEMO_VIDEO_URL = 'https://assets.mixkit.co/videos/preview/mixkit-fresh-vegetables-and-cooking-ingredients-on-a-table-41131-large.mp4';
-</script>
-
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { figmaImg } from '../../shared/utils/assets';
 
-const videoRef = ref(null);
-const isMuted = ref(true);
-const hasError = ref(false);
-const currentPhase = ref(0); // 0: 00:00, 1: 00:05, 2: 00:15
-const currentTime = ref(0);
+const currentPhase = ref(2); // Khởi đầu tại mâm cơm 5 món Việt rực rỡ (00:15)
+const currentTime = ref(10);
+const isPaused = ref(false);
 let timerId = null;
+
+const scenes = [
+  {
+    key: 'unbox',
+    src: figmaImg('brand-farm-harvest.webp'),
+    alt: 'Nguyên liệu tươi từ nông trại Đắk Lắk sơ chế sạch 100%',
+    badge: 'Đắk Lắk • Sáng nay',
+    title: 'Mở hộp nguyên liệu sơ chế sạch 100%',
+    desc: 'Thịt cá cắt chuẩn cỡ, rau củ nhặt rửa sạch và gói xốt định lượng sẵn.'
+  },
+  {
+    key: 'cook',
+    src: figmaImg('meal-ga-nuong-mat-ong.webp'),
+    alt: 'Đảo một chảo lửa lớn cùng gói xốt MOVA đặc biệt',
+    badge: 'Chỉ 1 chảo • Không bừa bếp',
+    title: 'Đảo 1 chảo & rưới túi xốt MOVA',
+    desc: 'Không phải băm tỏi, nêm nếm cầu kỳ; dầu sôi vào chảo là dậy mùi thơm.'
+  },
+  {
+    key: 'serve',
+    src: figmaImg('meal-mam-com-viet.webp'),
+    alt: 'Hoàn thành mâm cơm Việt 5 món đủ đạm rau canh tinh bột trái cây',
+    badge: '15 Phút • 5 Món Đầy Đặn',
+    title: 'Trọn mâm cơm Việt 5 món nóng hổi',
+    desc: 'Đủ đạm, rau, canh, tinh bột và trái cây tráng miệng cho cả nhà.'
+  }
+];
 
 const steps = [
   { time: '00:00', label: 'Mở hộp Đắk Lắk sơ chế sạch', startSec: 0, endSec: 5 },
@@ -104,40 +110,26 @@ const steps = [
   { time: '00:15', label: 'Xong mâm cơm 5 món', startSec: 10, endSec: 15 }
 ];
 
-function toggleSound() {
-  if (videoRef.value) {
-    videoRef.value.muted = !videoRef.value.muted;
-    isMuted.value = videoRef.value.muted;
-  } else {
-    isMuted.value = !isMuted.value;
-  }
-}
+const activeScene = computed(() => scenes[currentPhase.value] || scenes[0]);
 
-function onTimeUpdate() {
-  if (!videoRef.value) return;
-  currentTime.value = videoRef.value.currentTime % 15; // vòng lặp 15s
+function updatePhaseFromTime() {
   if (currentTime.value < 5) currentPhase.value = 0;
   else if (currentTime.value < 10) currentPhase.value = 1;
   else currentPhase.value = 2;
 }
 
-function onError() {
-  hasError.value = true;
-  startFallbackTimer();
-}
-
 function seekToPhase(idx) {
   currentPhase.value = idx;
-  const targetSec = steps[idx].startSec;
-  currentTime.value = targetSec;
-  if (videoRef.value) {
-    try {
-      videoRef.value.currentTime = targetSec;
-      videoRef.value.play();
-    } catch {
-      // ignore
-    }
-  }
+  currentTime.value = steps[idx].startSec;
+}
+
+function nextPhase() {
+  const next = (currentPhase.value + 1) % steps.length;
+  seekToPhase(next);
+}
+
+function togglePlay() {
+  isPaused.value = !isPaused.value;
 }
 
 function progressStyle(idx) {
@@ -148,33 +140,21 @@ function progressStyle(idx) {
   return { width: `${pct}%` };
 }
 
-function startFallbackTimer() {
+function startCycleTimer() {
+  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    isPaused.value = true;
+    return;
+  }
   if (timerId) clearInterval(timerId);
   timerId = setInterval(() => {
-    currentTime.value = (currentTime.value + 0.5) % 15;
-    if (currentTime.value < 5) currentPhase.value = 0;
-    else if (currentTime.value < 10) currentPhase.value = 1;
-    else currentPhase.value = 2;
-  }, 500);
+    if (isPaused.value) return;
+    currentTime.value = (currentTime.value + 0.25) % 15;
+    updatePhaseFromTime();
+  }, 250);
 }
 
 onMounted(() => {
-  if (videoRef.value) {
-    videoRef.value.muted = true;
-    const playPromise = videoRef.value.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        // Trình duyệt chặn autoplay có tiếng -> fallback sang muted
-        if (videoRef.value) {
-          videoRef.value.muted = true;
-          videoRef.value.play().catch(() => {
-            hasError.value = true;
-            startFallbackTimer();
-          });
-        }
-      });
-    }
-  }
+  startCycleTimer();
 });
 
 onUnmounted(() => {
@@ -185,245 +165,239 @@ onUnmounted(() => {
 <style scoped>
 .video-hook-container {
   width: 100%;
-  border-radius: 20px;
+  border-radius: 26px;
   overflow: hidden;
-  box-shadow: 0 12px 36px rgba(18, 53, 36, 0.12);
-  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
   background: var(--brown);
-  position: relative;
+  border: 1px solid rgba(40, 37, 31, 0.14);
 }
 
 .video-wrapper {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background: var(--brown);
+  aspect-ratio: 4 / 3;
+  min-height: 280px;
   overflow: hidden;
+  background: var(--ink);
 }
 
-@media (max-width: 640px) {
-  .video-wrapper {
-    aspect-ratio: 4 / 3;
-  }
-}
-
-.hook-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* Top bar with badge and audio toggle */
 .video-top-bar {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 6;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  z-index: 5;
+  gap: 8px;
   pointer-events: none;
 }
 
-.hook-badge {
+.hook-badge,
+.play-toggle-btn {
+  pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(18, 53, 36, 0.85);
-  backdrop-filter: blur(8px);
-  color: var(--white);
-  font-size: 13px;
-  font-weight: 700;
+  gap: 7px;
+  min-height: 34px;
   padding: 6px 12px;
   border-radius: 999px;
+  background: rgba(40, 37, 31, 0.82);
+  color: var(--text-on-dark);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.play-toggle-btn {
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.play-toggle-btn:hover {
+  background: rgba(40, 37, 31, 0.96);
 }
 
 .live-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green);
-  animation: pulse-dot 1.5s infinite;
+  background: var(--harvest-gold);
+  box-shadow: 0 0 0 3px rgba(217, 175, 8, 0.28);
 }
 
-@keyframes pulse-dot {
-  0% { transform: scale(0.9); opacity: 0.8; }
-  50% { transform: scale(1.3); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.8; }
-}
-
-.sound-toggle-btn {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
-  color: var(--white);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sound-toggle-btn:hover {
-  background: rgba(0, 0, 0, 0.85);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-/* Fallback visual */
-.hook-fallback {
+.hook-stage {
+  position: relative;
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--brown) 0%, var(--green-dd) 50%, var(--green-dd) 100%);
-  color: var(--white);
-  text-align: center;
-  padding: 20px;
+  cursor: pointer;
 }
 
-.fallback-scene {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  animation: fadeIn 0.4s ease;
-}
-
-.scene-emoji {
-  font-size: 52px;
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.03);
+  transition: opacity 0.45s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
   display: block;
-  margin-bottom: 8px;
 }
 
-.scene-emoji.sizzling {
-  animation: sizzle 0.6s infinite alternate ease-in-out;
+.scene-layer.active {
+  opacity: 1;
+  transform: scale(1);
 }
 
-.scene-emoji.pulse {
-  animation: pulse-emoji 1s infinite alternate ease-in-out;
+.scene-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-@keyframes sizzle {
-  from { transform: rotate(-3deg) translateY(0); }
-  to { transform: rotate(3deg) translateY(-4px); }
+.scene-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(24, 21, 17, 0.22) 0%,
+    rgba(24, 21, 17, 0.08) 42%,
+    rgba(24, 21, 17, 0.88) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
 }
 
-@keyframes pulse-emoji {
-  from { transform: scale(1); }
-  to { transform: scale(1.1); }
+.scene-caption {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 74px;
+  z-index: 4;
+  color: var(--text-on-dark);
+  display: grid;
+  gap: 4px;
+  pointer-events: none;
 }
 
-.scene-box h4, .scene-pan h4, .scene-table h4 {
-  font-size: 20px;
+.scene-chip {
+  justify-self: start;
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--harvest-gold);
+  color: var(--text-on-yellow);
+  font-size: 11px;
   font-weight: 800;
-  margin: 0 0 4px;
-  color: var(--white);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
-.scene-box p, .scene-pan p, .scene-table p {
-  font-size: 14px;
-  color: var(--line-strong);
+.scene-title {
+  font-size: clamp(16px, 2.2vw, 20px);
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--text-on-dark);
+}
+
+.scene-desc {
   margin: 0;
-  max-width: 32ch;
+  font-size: 13px;
+  line-height: 1.38;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 44ch;
 }
 
-/* 3-Step Timeline Bar */
 .timeline-bar {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(10, 25, 17, 0.95) 40%, rgba(10, 25, 17, 0.98) 100%);
-  padding: 14px 12px 10px;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 6;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  z-index: 5;
 }
 
 .timeline-step {
-  background: transparent;
-  border: 0;
-  padding: 0;
+  appearance: none;
+  background: rgba(40, 37, 31, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 7px 9px;
+  min-height: 48px;
+  color: var(--text-on-dark);
   text-align: left;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
+  display: grid;
+  gap: 5px;
+  align-content: start;
+  backdrop-filter: blur(6px);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.timeline-step:hover,
 .timeline-step.active {
-  opacity: 1;
+  background: rgba(40, 37, 31, 0.92);
+  border-color: var(--harvest-gold);
 }
 
 .step-progress-track {
   width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 2px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
   overflow: hidden;
 }
 
 .step-progress-fill {
   height: 100%;
-  background: var(--green);
-  transition: width 0.1s linear;
-}
-
-.timeline-step.active .step-progress-fill {
-  background: var(--green);
+  background: var(--harvest-gold);
+  border-radius: 999px;
+  transition: width 0.2s linear;
 }
 
 .step-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
+  min-width: 0;
 }
 
 .step-time {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
-  color: var(--faint);
-  font-family: monospace;
-}
-
-.timeline-step.active .step-time {
-  color: var(--green-d);
+  color: var(--harvest-gold);
+  line-height: 1.1;
 }
 
 .step-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--line-2);
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.94);
+  line-height: 1.2;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 560px) {
+  .video-wrapper {
+    aspect-ratio: 4 / 3.4;
+  }
+  .scene-caption {
+    bottom: 82px;
+  }
   .step-label {
     font-size: 10px;
   }
-  .step-time {
-    font-size: 10px;
+  .toggle-text {
+    display: none;
   }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+@media (prefers-reduced-motion: reduce) {
+  .scene-layer,
+  .step-progress-fill {
+    transition: none;
+    transform: none;
+  }
 }
 </style>

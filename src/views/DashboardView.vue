@@ -111,12 +111,16 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dash-view { padding: 22px 0 70px; min-height: 70vh; }
+.dash-view { padding: 22px 0 86px; min-height: 70vh; }
 .gate { max-width: 560px; margin: 24px auto; }
 .gate-btns { display: grid; gap: 10px; }
 .alert { margin-bottom: 16px; }
 .alert p { font-size: 16px; }
 .alert .pl-btn { justify-self: start; }
+.phone-link-banner {
+  border-left: 4px solid var(--red-orange-d);
+  background: var(--orange-soft);
+}
 
 .dash-tabs {
   display: flex;

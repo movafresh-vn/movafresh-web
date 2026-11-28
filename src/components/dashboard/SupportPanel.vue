@@ -43,6 +43,25 @@
       <p v-if="sent" role="status">Đã ghi nhận yêu cầu #{{ sent }}. MOVA cần xử lý thủ công; chưa thay đổi đơn.</p>
       <button class="pl-btn primary" type="submit" :disabled="busy || !message">{{ uncertain ? 'Gửi lại cùng yêu cầu' : 'Gửi yêu cầu' }}</button>
     </form>
+
+    <div class="oa-channel" aria-label="Kênh hỗ trợ trực tiếp Zalo OA">
+      <div>
+        <b>Cần trao đổi nhanh với Chăm sóc Khách hàng?</b>
+        <p class="pl-note">Nhắn Zalo Official Account MOVA FRESH hoặc gọi 1900 8899 (06:00 – 21:00 hàng ngày).</p>
+      </div>
+      <div class="oa-actions">
+        <a
+          href="https://zalo.me"
+          :target="inMiniApp ? undefined : '_blank'"
+          :rel="inMiniApp ? undefined : 'noopener noreferrer'"
+          class="pl-btn sm zalo-oa-btn"
+          @click="openExt($event, 'https://zalo.me')"
+        >
+          Chat Zalo OA
+        </a>
+        <a href="tel:19008899" class="pl-btn outline sm" @click="openExt($event, 'tel:19008899')">📞 1900 8899</a>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -51,6 +70,14 @@ import { ref } from 'vue';
 import { api } from '../../shared/api';
 import { newKey } from '../../shared/api/http';
 import { fmt } from '../../shared/utils/formatters';
+import { isZaloMiniApp, openExternalUrl } from '../../services/zaloMiniApp';
+
+const inMiniApp = isZaloMiniApp();
+function openExt(event, url) {
+  if (!inMiniApp) return;
+  event.preventDefault();
+  void openExternalUrl(url);
+}
 
 const account = ref(null);
 const weeks = ref([]);
@@ -133,7 +160,22 @@ load();
 </script>
 
 <style scoped>
-.support, .support-form { display: grid; gap: 10px; }
+.support, .support-form { display: grid; gap: 12px; }
 .support ul { padding-left: 20px; }
 .support textarea { min-height: 100px; }
+.oa-channel {
+  margin-top: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--cream-warm);
+  border: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.oa-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.oa-actions a { text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.zalo-oa-btn { background: var(--pay-zalo); border-color: var(--pay-zalo); color: var(--text-on-primary); }
 </style>

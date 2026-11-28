@@ -58,14 +58,21 @@ h1 { font-size: 21px; font-weight: 800; overflow-wrap: anywhere; }
 .u-info p { font-size: 15px; }
 .u-stats { display: flex; gap: 10px; flex-wrap: wrap; }
 .stat {
-  background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 8px 14px;
-  text-align: left; min-height: 44px; display: grid; gap: 0;
+  background: var(--bg); border: 1.5px solid var(--line); border-radius: 16px; padding: 10px 16px;
+  text-align: left; min-height: 48px; display: grid; gap: 1px;
 }
-button.stat { cursor: pointer; }
-button.stat:hover { background: var(--green-soft); }
-.stat small { font-size: 13px; color: var(--muted); font-weight: 600; }
-.stat b { font-size: 18px; font-weight: 800; color: var(--green-d); }
-.stat span { font-size: 13px; color: var(--muted); }
+button.stat {
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--green-soft) 0%, var(--butter) 100%);
+  border-color: var(--green);
+}
+button.stat:hover {
+  background: var(--green-soft);
+}
+.stat small { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+button.stat small { color: var(--green-dd); }
+.stat b { font-size: 19px; font-weight: 800; color: var(--green-d); }
+.stat span { font-size: 12.5px; color: var(--muted); }
 @media (max-width: 640px) {
   .dash-header { padding: 16px; }
   .u-stats { width: 100%; }

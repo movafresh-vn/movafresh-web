@@ -1,7 +1,8 @@
 <template>
   <section class="faq" id="hoi-dap">
-    <div class="wrap" style="max-width: 860px">
+    <div class="wrap faq-wrap">
       <div class="sec-h">
+        <span class="faq-kicker">MINH BẠCH MỌI THÔNG TIN</span>
         <h2>Hỏi đáp thường gặp</h2>
       </div>
       <details v-for="f in faqs" :key="f.q">
@@ -49,13 +50,89 @@ const faqs = [
 </script>
 
 <style scoped>
-.faq { padding: 40px 0 60px; }
-.sec-h { margin-bottom: 16px; }
-.sec-h h2 { font-size: clamp(22px, 3vw, 30px); font-weight: 800; }
-.faq details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; }
-.faq summary { list-style: none; cursor: pointer; padding: 16px 18px; min-height: 52px; font-weight: 700; font-size: 17px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: "+"; font-size: 24px; line-height: 1; color: var(--green-d); font-weight: 500; }
-.faq details[open] summary::after { content: "−"; }
-.faq details p { padding: 0 18px 16px; color: var(--muted); max-width: 72ch; font-size: 16px; }
+.faq {
+  padding: 52px 0 64px;
+  background: var(--cream-warm);
+  border-top: 1px solid var(--line);
+}
+
+.faq-wrap {
+  max-width: 860px;
+}
+
+.sec-h {
+  margin-bottom: 20px;
+}
+
+.faq-kicker {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--green-d);
+  background: var(--green-soft);
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.sec-h h2 {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.faq details {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.18s ease;
+}
+
+.faq details[open] {
+  border-color: var(--green);
+}
+
+.faq summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 16px 20px;
+  min-height: 54px;
+  font-weight: 700;
+  font-size: 16.5px;
+  color: var(--ink);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary::after {
+  content: '+';
+  font-size: 22px;
+  line-height: 1;
+  color: var(--green-d);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.faq details[open] summary::after {
+  content: '−';
+  color: var(--red-orange-d);
+}
+
+.faq details p {
+  padding: 0 20px 18px;
+  color: var(--muted);
+  max-width: 72ch;
+  font-size: 15.5px;
+  line-height: 1.55;
+}
 </style>

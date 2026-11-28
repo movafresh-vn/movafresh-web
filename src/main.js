@@ -5,6 +5,7 @@ import router from './router';
 import { useMovaStore } from './stores/useMovaStore';
 import { supabase } from './services/supabase';
 import { api } from './shared/api';
+import './assets/styles/tokens.css';
 import './assets/styles/main.css';
 import './assets/styles/plans.css';
 

@@ -920,4 +920,19 @@ const formattedSteps = computed(() => {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+@media (max-width: 640px) {
+  .dish-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .dish-modal-box {
+    border-radius: 22px 22px 0 0;
+    max-height: 92svh;
+  }
+  .dish-hero-banner {
+    height: 185px;
+    padding: 16px;
+  }
+}
 </style>

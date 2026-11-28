@@ -2,128 +2,180 @@
   <section class="box" id="ben-trong">
     <div class="wrap">
       <div class="sec-h">
-        <h2>Bên trong hộp MOVA</h2>
+        <div>
+          <span class="box-kicker">TRẢI NGHIỆM BÓC HỘP TRỰC QUAN 3D</span>
+          <h2>Bên trong hộp MOVA</h2>
+        </div>
         <p>Mỗi bữa là một bộ đủ để nấu ngay. Bạn chỉ cần chảo, bếp và 15 phút.</p>
       </div>
-      <div class="boxgrid">
-        <div class="bx">
-          <svg viewBox="0 0 64 64" aria-hidden="true">
-            <rect x="6" y="18" width="52" height="34" rx="8" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="2"/>
-            <rect x="12" y="24" width="18" height="12" rx="5" fill="var(--orange-ink)"/>
-            <rect x="33" y="24" width="18" height="12" rx="5" fill="var(--orange-ink)"/>
-            <rect x="18" y="37" width="20" height="10" rx="5" fill="var(--orange-ink)"/>
-            <path d="M14 18c4-6 32-6 36 0" fill="none" stroke="var(--green-d)" stroke-width="2"/>
-          </svg>
-          <b>Đạm sơ chế sạch</b>
-          <p>Thịt, cá cắt miếng chuẩn cỡ, định lượng đúng số người ăn. Mở hộp ra là nấu.</p>
+
+      <div class="box-layout">
+        <!-- Mô hình hộp 3D MOVA tương tác theo cuộn trang / chạm -->
+        <div class="box-3d-col">
+          <MovaBox3D />
         </div>
 
-        <div class="bx">
-          <svg viewBox="0 0 64 64" aria-hidden="true">
-            <path d="M16 14h32l-3 40H19z" fill="var(--green-soft)" stroke="var(--green-d)" stroke-width="2"/>
-            <circle cx="26" cy="30" r="5" fill="var(--violet)"/>
-            <circle cx="38" cy="34" r="4" fill="var(--amber-soft)"/>
-            <rect x="24" y="40" width="16" height="4" rx="2" fill="var(--green)"/>
-            <path d="M33 22l6 4" stroke="var(--red)" stroke-width="3" stroke-linecap="round"/>
-          </svg>
-          <b>Rau củ và trái cây</b>
-          <p>Rau củ rửa sạch, cắt sẵn; trái cây theo mùa. Nấu xong là có mâm cơm đủ sắc.</p>
-        </div>
+        <!-- 4 lớp nguyên liệu với icon vector trích xuất từ Figma -->
+        <div class="boxgrid">
+          <div class="bx">
+            <img :src="iconProtein" alt="" class="bx-icon" aria-hidden="true" loading="lazy" />
+            <b>Đạm sơ chế sạch</b>
+            <p>Thịt, cá cắt miếng chuẩn cỡ, định lượng đúng số người ăn. Mở hộp ra là nấu.</p>
+          </div>
 
-        <div class="bx">
-          <svg viewBox="0 0 64 64" aria-hidden="true">
-            <rect x="14" y="12" width="36" height="42" rx="6" fill="var(--orange-soft)" stroke="var(--red-orange-d)" stroke-width="2"/>
-            <path d="M14 22h36" stroke="var(--red-orange-d)" stroke-width="2" stroke-dasharray="3 3"/>
-            <path d="M22 38c4-6 16-6 20 0-4 6-16 6-20 0z" fill="var(--red-orange-d)"/>
-          </svg>
-          <b>Gói xốt MOVA đặc biệt</b>
-          <p>Mỗi món một gói xốt đặc biệt của MOVA. Mắm, muối, đường, dầu ăn bếp nhà bạn đã có nên MOVA không đóng kèm.</p>
-        </div>
+          <div class="bx">
+            <img :src="iconGreens" alt="" class="bx-icon" aria-hidden="true" loading="lazy" />
+            <b>Rau củ và trái cây</b>
+            <p>Rau củ rửa sạch, cắt sẵn; trái cây theo mùa. Nấu xong là có mâm cơm đủ sắc.</p>
+          </div>
 
-        <div class="bx">
-          <svg viewBox="0 0 64 64" aria-hidden="true">
-            <rect x="8" y="18" width="48" height="36" rx="6" fill="var(--white)" stroke="var(--blue-line)" stroke-width="2"/>
-            <rect x="8" y="12" width="48" height="10" rx="4" fill="var(--blue-soft)" stroke="var(--blue-line)" stroke-width="2"/>
-            <rect x="16" y="30" width="14" height="16" rx="4" fill="var(--blue-line)"/>
-            <rect x="34" y="30" width="14" height="16" rx="4" fill="var(--blue-line)"/>
-            <path d="M23 34v8M19 38h8M41 34v8M37 38h8" stroke="var(--blue)" stroke-width="1.6"/>
-          </svg>
-          <b>Thùng giữ nhiệt & đá gel -18°C</b>
-          <p>Đá gel cấp đông −18°C giữ thực phẩm trong khoảng 0–4°C suốt 16 giờ xuyên đêm.</p>
+          <div class="bx">
+            <img :src="iconSauce" alt="" class="bx-icon" aria-hidden="true" loading="lazy" />
+            <b>Gói xốt MOVA đặc biệt</b>
+            <p>Mỗi món một gói xốt đặc biệt của MOVA. Mắm, muối, đường, dầu ăn bếp nhà bạn đã có nên MOVA không đóng kèm.</p>
+          </div>
+
+          <div class="bx">
+            <img :src="iconColdbox" alt="" class="bx-icon" aria-hidden="true" loading="lazy" />
+            <b>Thùng giữ nhiệt &amp; đá gel -18°C</b>
+            <p>Đá gel cấp đông −18°C giữ thực phẩm trong khoảng 0–4°C suốt 16 giờ xuyên đêm.</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 </template>
 
+<script setup>
+import MovaBox3D from './MovaBox3D.vue';
+import { figmaImg } from '../../shared/utils/assets';
+
+const iconProtein = figmaImg('box-protein.svg');
+const iconGreens = figmaImg('box-greens.svg');
+const iconSauce = figmaImg('box-sauce.svg');
+const iconColdbox = figmaImg('box-coldbox.svg');
+</script>
+
 <style scoped>
 .box {
-  padding: 40px 0;
-  background: var(--card);
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  padding: 52px 0;
+  background: var(--harvest-gold);
+  color: var(--text-on-yellow);
+  border-top: 1px solid rgba(40, 37, 31, 0.12);
+  border-bottom: 1px solid rgba(40, 37, 31, 0.12);
 }
 
 .sec-h {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 16px;
+  gap: 18px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.box-kicker {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: rgba(40, 37, 31, 0.12);
+  color: var(--text-on-yellow);
+  border-radius: 999px;
+  padding: 4px 12px;
+  margin-bottom: 8px;
 }
 
 .sec-h h2 {
-  font-size: clamp(22px, 2.8vw, 30px);
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 700;
+  color: var(--text-on-yellow);
 }
 
 .sec-h p {
-  color: var(--muted);
-  max-width: 56ch;
-  font-size: 14.5px;
+  color: rgba(40, 37, 31, 0.9);
+  max-width: 52ch;
+  font-size: 15.5px;
+  font-weight: 500;
+}
+
+.box-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: stretch;
+}
+
+.box-3d-col {
+  min-width: 0;
 }
 
 .boxgrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
 }
 
 .bx {
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  border: 1px solid rgba(40, 37, 31, 0.14);
+  border-radius: 20px;
   padding: 18px;
-  background: var(--bg);
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.bx svg {
-  width: 56px;
-  height: 56px;
+.bx:hover {
+  transform: translate3d(0, -3px, 0);
+  box-shadow: var(--shadow-md);
+}
+
+.bx-icon {
+  width: 50px;
+  height: 50px;
   display: block;
   margin-bottom: 12px;
+  border-radius: 12px;
 }
 
 .bx b {
   display: block;
-  font-size: 15.5px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
 }
 
 .bx p {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--muted);
   margin-top: 6px;
+  line-height: 1.48;
 }
 
-@media (max-width: 900px) {
-  .boxgrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 980px) {
+  .box-layout {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 560px) {
+  .box {
+    padding: 36px 0;
+  }
   .boxgrid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bx {
+    transition: none;
   }
 }
 </style>

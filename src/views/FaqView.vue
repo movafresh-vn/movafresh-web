@@ -548,6 +548,11 @@ function toggleItem(id) {
   font-weight: 700;
   font-size: 14px;
   padding: 8px 18px;
-  border-radius: 12px;
+  border-radius: 999px;
+}
+.zalo-btn {
+  background: var(--pay-zalo);
+  border-color: var(--pay-zalo);
+  color: var(--text-on-primary);
 }
 </style>

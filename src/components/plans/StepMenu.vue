@@ -284,14 +284,15 @@ const staples = computed(() => {
   gap: 16px;
   align-items: start;
 }
+.m-grid > * { min-width: 0; }
 .people-in { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
 .p-t { font-size: 17px; }
-.side { display: grid; gap: 14px; position: sticky; top: 84px; }
-.meals { display: grid; gap: 12px; }
+.side { display: grid; gap: 14px; position: sticky; top: 84px; min-width: 0; }
+.meals { display: grid; gap: 12px; min-width: 0; }
 .staples { font-size: 15px; background: var(--green-soft); color: var(--green-d); border-radius: 12px; padding: 10px 14px; }
 .cta {
-  position: sticky; bottom: 0; z-index: 10; margin: 18px -20px 0; padding: 12px 20px max(12px, var(--zmp-safe-bottom, env(safe-area-inset-bottom, 0px)));
-  background: rgba(250, 249, 245, .96); border-top: 1px solid var(--line);
+  position: sticky; bottom: 0; z-index: 15; margin: 18px -20px 0; padding: 12px 20px max(12px, var(--zmp-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  background: rgba(249, 247, 236, .96); backdrop-filter: blur(8px); border-top: 1px solid var(--line);
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
 }
 .cta-sum { display: grid; line-height: 1.15; }

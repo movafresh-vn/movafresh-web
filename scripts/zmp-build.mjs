@@ -66,7 +66,7 @@ function writeInlineBootstrap() {
     '  if (!head.querySelector(\'link[href*="fonts.googleapis.com"]\')) {',
     '    var fl = document.createElement("link");',
     '    fl.rel = "stylesheet";',
-    '    fl.href = "https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700;800&subset=vietnamese&display=swap";',
+    '    fl.href = "https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&family=Playfair+Display:ital,wght@0,600;0,700;1,600&subset=vietnamese&display=swap";',
     '    head.appendChild(fl);',
     '  }',
     '})();',

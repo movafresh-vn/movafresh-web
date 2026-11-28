@@ -1,10 +1,10 @@
 @import "./tokens.css";
 
-/* Tên token cũ ánh xạ sang tokens.css (nguồn duy nhất); 869 chỗ dùng var(--…) không phải sửa. */
+/* Ánh xạ token giao diện Warm Light Mode từ Figma (5358:1234 & 5719:5151) */
 :root {
-  --bg: var(--cream);
+  --bg: var(--cream-warm);
   --card: var(--white);
-  --ink: var(--brown);
+  --ink: var(--ink-dark);
   color-scheme: light;
   box-sizing: border-box;
 }
@@ -15,24 +15,30 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 84px;
+  scroll-padding-top: 88px;
   overflow-x: hidden;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: 16px/1.55 var(--font);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  max-width: 100vw;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 h1, h2, h3, h4 {
   margin: 0;
-  letter-spacing: -0.015em;
-  line-height: 1.2;
+  letter-spacing: -0.02em;
+  line-height: 1.18;
+  color: inherit;
 }
 
 p {
@@ -53,7 +59,7 @@ a {
 }
 
 :focus-visible {
-  outline: 2.5px solid var(--green);
+  outline: 2.5px solid var(--green-d);
   outline-offset: 2px;
 }
 
@@ -64,7 +70,13 @@ a {
 .wrap {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
+}
+
+@media (max-width: 768px) {
+  .wrap {
+    padding-inline: 16px;
+  }
 }
 
 .muted {
@@ -79,11 +91,15 @@ a {
   clip: rect(0 0 0 0);
 }
 
-/* common buttons */
+/* ============================================================================
+ * Khóa chặt tương phản chữ cho nút, banner, badge (Web & ZMP single-bundle CSS)
+ * ============================================================================ */
 .btn {
   border: 1px solid var(--line);
   background: var(--card);
-  border-radius: 12px;
+  color: var(--ink);
+  border-radius: var(--r-ctl);
+  min-height: 44px;
   padding: 11px 18px;
   font-weight: 600;
   font-size: 14.5px;
@@ -92,58 +108,71 @@ a {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: .15s;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease, box-shadow .16s ease;
 }
 
-.btn:hover {
+.btn:hover:not(:disabled) {
   background: var(--line-2);
 }
 
-.btn.primary {
+.btn.primary,
+button.btn.primary,
+a.btn.primary {
   background: var(--green-d);
   border-color: var(--green-d);
-  color: var(--white);
+  color: var(--text-on-primary);
 }
 
-.btn.primary:hover {
+.btn.primary:hover:not(:disabled),
+button.btn.primary:hover:not(:disabled),
+a.btn.primary:hover:not(:disabled) {
   background: var(--green-dd);
+  border-color: var(--green-dd);
+  color: var(--text-on-primary);
+  box-shadow: var(--shadow-primary-hover);
 }
 
-.btn.orange {
+.btn.orange,
+button.btn.orange,
+a.btn.orange {
   background: var(--red-orange-d);
   border-color: var(--red-orange-d);
-  color: var(--white);
+  color: var(--text-on-accent);
 }
 
-.btn.orange:hover {
+.btn.orange:hover:not(:disabled),
+button.btn.orange:hover:not(:disabled),
+a.btn.orange:hover:not(:disabled) {
   background: var(--red-orange-dd);
+  border-color: var(--red-orange-dd);
+  color: var(--text-on-accent);
 }
 
 .btn.sm {
-  padding: 7px 12px;
+  min-height: 38px;
+  padding: 7px 13px;
   font-size: 13px;
   border-radius: 10px;
 }
 
 .btn.ghost {
-  background: none;
+  background: transparent;
   border-color: transparent;
   color: var(--green-d);
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-inline: 6px;
 }
 
-.btn.ghost:hover {
-  background: none;
+.btn.ghost:hover:not(:disabled) {
+  background: var(--green-tint);
   text-decoration: underline;
 }
 
 .btn:disabled {
-  opacity: .45;
+  opacity: .48;
   cursor: not-allowed;
 }
 
-/* input & money fields */
+/* Input & money fields */
 .blabel {
   font-size: 13.5px;
   font-weight: 600;
@@ -155,7 +184,7 @@ a {
   display: flex;
   align-items: center;
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-ctl);
   background: var(--bg);
   padding: 0 12px;
 }
@@ -181,11 +210,12 @@ a {
   color: var(--muted);
 }
 
-/* chip selector */
+/* Chip selector */
 .chip {
   border: 1px solid var(--line);
   background: var(--card);
-  border-radius: 999px;
+  color: var(--ink);
+  border-radius: var(--r-pill);
   padding: 6px 12px;
   font-size: 13.5px;
   font-weight: 500;
@@ -209,7 +239,7 @@ a {
   color: var(--orange-ink);
 }
 
-/* tags */
+/* Tags */
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -219,7 +249,7 @@ a {
 .tag {
   font-size: 11.5px;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 3px 8px;
   background: var(--green-soft);
   color: var(--green-d);
@@ -230,7 +260,7 @@ a {
   color: var(--red);
 }
 
-/* dish image */
+/* Dish image */
 .dimg {
   height: 172px;
   overflow: hidden;
@@ -240,13 +270,13 @@ a {
   position: relative;
 }
 
-/* toggle switches */
+/* Toggle switches */
 .tog {
   display: flex;
   gap: 10px;
   align-items: flex-start;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-ctl);
   padding: 9px 11px;
   margin-top: 8px;
   cursor: pointer;
@@ -269,7 +299,7 @@ a {
   font-size: 12px;
 }
 
-/* stepper */
+/* Stepper */
 .stepper {
   display: inline-flex;
   align-items: center;
@@ -299,7 +329,7 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
-/* steam animation */
+/* Steam animation */
 .steam {
   position: absolute;
   inset: -14px 0 auto;
@@ -329,12 +359,13 @@ a {
   100% { opacity: 0; transform: translateY(-16px) scaleX(1.8); }
 }
 
-  /* modals */
+/* Modals (tự động chuyển thành bottom sheet trên mobile <= 640px) */
 .modal {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(84, 63, 24, .5);
+  background: rgba(40, 37, 31, .52);
+  backdrop-filter: blur(4px);
   display: grid;
   place-items: center;
   padding: 16px;
@@ -347,29 +378,47 @@ a {
 
 .zmp-env .modal {
   padding-top: calc(var(--zmp-safe-top, 12px) + 48px);
-  padding-bottom: max(16px, var(--zmp-safe-bottom, 0px));
+  padding-bottom: max(0px, var(--zmp-safe-bottom, 0px));
 }
 
 .mbox {
   background: var(--card);
+  color: var(--ink);
   border-radius: 22px;
   max-width: 680px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 20px 50px rgba(20, 15, 10, .25);
+  box-shadow: var(--shadow-2);
+}
+
+@media (max-width: 640px) {
+  .modal {
+    align-items: end;
+    padding: 0;
+  }
+  .mbox {
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 22px 22px 0 0;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .zmp-env .modal {
+    padding: calc(var(--zmp-safe-top, 12px) + 48px) 0 0;
+  }
 }
 
 .mclose {
   position: absolute;
   right: 14px;
   top: 14px;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 0;
-  background: rgba(240, 238, 230, .9);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--cream-warm);
+  color: var(--ink);
   font-size: 20px;
   z-index: 2;
   display: grid;
@@ -380,10 +429,10 @@ a {
   background: var(--line);
 }
 
-/* OKHEAD CSS CHO MODAL THÀNH CÔNG (BUG 1 FIX) */
+/* OKHEAD CHO MODAL THÀNH CÔNG */
 .okhead {
   background: var(--green-d);
-  color: var(--white);
+  color: var(--text-on-primary);
   padding: 22px 24px;
   border-radius: 22px 22px 0 0;
   position: relative;
@@ -392,21 +441,24 @@ a {
 .okhead h3 {
   font-size: 20px;
   font-weight: 800;
+  color: var(--text-on-primary);
 }
 
 .okhead p {
-  opacity: .9;
+  opacity: .92;
   margin-top: 4px;
   font-size: 13.5px;
+  color: var(--text-on-primary);
 }
 
-/* sheet close button */
+/* Sheet close button */
 .sheet-x {
   border: 0;
   background: var(--line-2);
+  color: var(--ink);
   border-radius: 10px;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -432,9 +484,10 @@ a {
   align-items: center;
   gap: 8px;
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-ctl);
   padding: 10px 12px;
   background: var(--card);
+  color: var(--ink);
   text-align: left;
   font-size: 13.5px;
   font-weight: 600;
@@ -461,11 +514,32 @@ a {
 .pay .badge {
   font-size: 11px;
   font-weight: 700;
-  color: var(--white);
+  color: var(--text-on-accent);
   background: var(--red-orange-d);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 3px 8px;
   white-space: nowrap;
+}
+
+/* Nút Zalo chính thống */
+.zalo-btn,
+button.zalo-btn,
+a.zalo-btn {
+  background: var(--pay-zalo);
+  border-color: var(--pay-zalo);
+  color: var(--text-on-primary);
+}
+.zalo-btn:hover:not(:disabled),
+button.zalo-btn:hover:not(:disabled),
+a.zalo-btn:hover:not(:disabled) {
+  background: var(--pay-zalo-d);
+  border-color: var(--pay-zalo-d);
+  color: var(--text-on-primary);
+}
+
+/* Chừa đáy cho thanh ZmpBottomNav khi ở Mini App */
+.zmp-env.has-zmp-nav {
+  padding-bottom: calc(68px + var(--zmp-safe-bottom, 0px));
 }
 
 @media (prefers-reduced-motion: reduce) {

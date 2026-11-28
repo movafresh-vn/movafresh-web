@@ -16,7 +16,18 @@
       </div>
 
       <label class="pl-label" for="first-date">Ngày bắt đầu sớm nhất (không bắt buộc)</label>
-      <input id="first-date" v-model="c.startDate" class="pl-input" type="date" :min="earliestCycleDate || undefined" :disabled="loadingDates" @change="changeStartDate" />
+      <div class="date-field-wrap" :class="{ 'has-value': Boolean(c.startDate) }">
+        <span class="date-ico" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="3" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </span>
+        <span v-if="!c.startDate" class="date-placeholder" aria-hidden="true">dd/mm/yyyy — MOVA tự chọn sớm nhất</span>
+        <input id="first-date" v-model="c.startDate" class="pl-input date-input" type="date" :min="earliestCycleDate || undefined" :disabled="loadingDates" @change="changeStartDate" />
+      </div>
       <p class="pl-note">MOVA sẽ tìm ngày giao phù hợp từ ngày bạn chọn<template v-if="availDatesMeta.min_lead_hours"> (đặt trước tối thiểu {{ availDatesMeta.min_lead_hours }} giờ theo khu vực)</template>.</p>
 
       <!-- Bảng ngày giao khả dụng theo giờ máy chủ kèm khung giờ & trạng thái khóa lô -->
@@ -1029,18 +1040,26 @@ watch(() => c.packId, save);
 </script>
 
 <style scoped>
-.co { display: grid; gap: 16px; max-width: 760px; margin: 0 auto; }
-.sec { display: grid; gap: 14px; }
+.co { display: grid; gap: 16px; max-width: 760px; margin: 0 auto; width: 100%; min-width: 0; }
+.sec { display: grid; gap: 14px; min-width: 0; }
+.date-field-wrap { position: relative; display: flex; align-items: center; min-width: 0; }
+.date-ico { position: absolute; left: 14px; color: var(--green-d); display: grid; place-items: center; pointer-events: none; z-index: 2; }
+.date-placeholder {
+  position: absolute; left: 42px; right: 42px; color: var(--muted); font-size: 14.5px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; z-index: 1;
+}
+.date-input { padding-left: 42px !important; color-scheme: light; min-height: 48px; position: relative; }
+.date-field-wrap:not(.has-value) .date-input::-webkit-datetime-edit { color: transparent; }
 .freq-chips { display: flex; gap: 10px; flex-wrap: wrap; }
-.freq-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 14px; text-align: left; }
+.freq-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 14px; text-align: left; max-width: 100%; }
 .freq-title { font-weight: 700; font-size: 16px; }
-.recommend-pill { font-size: 12px; font-weight: 600; background: var(--green); color: var(--white); padding: 2px 8px; border-radius: 99px; }
+.recommend-pill { font-size: 12px; font-weight: 700; background: var(--green-d); color: var(--text-on-primary); padding: 3px 10px; border-radius: 99px; }
 
-.slot-chip { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; width: 100%; }
+.slot-chip { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; text-align: left; width: 100%; min-height: 48px; }
 .slot-badge { font-size: 12px; font-weight: 700; background: var(--green-soft); color: var(--green-d); padding: 3px 8px; border-radius: 6px; }
 
-.phone-row { display: flex; gap: 8px; align-items: center; }
-.phone-row .pl-input { flex: 1; }
+.phone-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.phone-row .pl-input { flex: 1; min-width: 140px; }
 .sm-btn { padding: 8px 12px; font-size: 14px; white-space: nowrap; }
 .zalo-btn { background: #0068FF; border-color: #0068FF; color: #fff; }
 .zalo-btn:hover:not(:disabled) { background: #0055d4; border-color: #0055d4; }
@@ -1086,8 +1105,8 @@ watch(() => c.packId, save);
 .c-shield { font-size: 20px; flex-shrink: 0; }
 
 .voucher-card { padding: 16px; }
-.voucher-box { display: flex; gap: 8px; align-items: center; }
-.voucher-input { flex: 1; }
+.voucher-box { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.voucher-input { flex: 1; min-width: 150px; }
 .applied-voucher { display: flex; justify-content: space-between; align-items: center; background: var(--green-soft); color: var(--green-d); padding: 8px 12px; border-radius: 8px; font-size: 15px; font-weight: 700; }
 .v-amt { font-size: 16px; }
 .v-success { color: var(--green-d); font-weight: 600; }
@@ -1150,7 +1169,7 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
 .agree { display: flex; gap: 12px; align-items: flex-start; min-height: 44px; font-size: 15px; font-weight: 600; cursor: pointer; }
 .agree input { width: 22px; height: 22px; accent-color: var(--green); flex-shrink: 0; margin-top: 2px; }
 
-.pay-bar { position: sticky; bottom: 0; background: rgba(250, 249, 245, .97); border-top: 1px solid var(--line); margin: 0 -20px; padding: 12px 20px max(12px, var(--zmp-safe-bottom, env(safe-area-inset-bottom, 0px))); display: grid; gap: 8px; z-index: 10; }
+.pay-bar { position: sticky; bottom: 0; background: rgba(249, 247, 236, .97); backdrop-filter: blur(8px); border-top: 1px solid var(--line); margin: 0 -20px; padding: 12px 20px max(12px, var(--zmp-safe-bottom, env(safe-area-inset-bottom, 0px))); display: grid; gap: 8px; z-index: 15; }
 .pay-breakdown { display: grid; gap: 4px; }
 .pay-line { display: flex; justify-content: space-between; font-size: 14px; }
 .pay-line.green { color: var(--green-d); font-weight: 600; }
@@ -1247,7 +1266,10 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
 }
 
 @media (max-width: 560px) {
+  .phone-row .sm-btn { width: 100%; justify-content: center; min-height: 44px; }
+  .pay-line, .pay-sum { flex-wrap: wrap; gap: 4px 10px; }
+  .cap-list li, .charges li { flex-wrap: wrap; }
   .bank { grid-template-columns: 1fr; justify-items: center; }
-  .pay-bar { margin: 0 -16px; padding: 10px 16px; }
+  .pay-bar { margin: 0 -16px; padding: 10px 16px max(12px, var(--zmp-safe-bottom, env(safe-area-inset-bottom, 0px))); }
 }
 </style>

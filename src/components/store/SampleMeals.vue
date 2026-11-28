@@ -2,39 +2,54 @@
   <section class="samples" id="mam-com-mau">
     <div class="wrap">
       <div class="sec-h">
+        <span class="samples-kicker">THỰC ĐƠN ĐẶC SẢN VÙNG MIỀN</span>
         <h2>Vài mâm cơm mẫu chuẩn Đầu bếp MOVA</h2>
         <p>Chỉ để bạn hình dung. Thực đơn thật của nhà bạn do Đầu bếp MOVA tuyển chọn theo khẩu vị và thể trạng riêng của gia đình.</p>
       </div>
 
-      <!-- Video giới thiệu sơ chế & nấu 15 phút - 1 chảo -->
+      <!-- Banner giới thiệu sơ chế & nấu 15 phút - 1 chảo -->
       <div class="video-card">
-        <div class="video-banner" @click="showVideoModal = true" role="button" tabindex="0" aria-label="Xem video nấu 15 phút 1 chảo">
+        <div
+          class="video-banner"
+          role="button"
+          tabindex="0"
+          aria-label="Xem hướng dẫn nấu 15 phút 1 chảo"
+          @click="showVideoModal = true"
+          @keydown.enter="showVideoModal = true"
+          @keydown.space.prevent="showVideoModal = true"
+        >
+          <span class="watermark" aria-hidden="true">FRESH</span>
           <div class="video-overlay">
-            <div class="play-btn-pulse">
+            <div class="play-btn-pulse" aria-hidden="true">
               <span class="play-icon">▶</span>
             </div>
             <div class="video-caption">
-              <span class="v-badge">VIDEO ĐẦU BẾP HƯỚNG DẪN</span>
-              <h3 class="v-title">Sơ chế sạch 100% & Nấu cơm nhà 15 phút — Chỉ 1 chảo</h3>
-              <p class="v-desc">Xem cách mẹ bận rộn và dân văn phòng chỉ mất 15 phút là có mâm cơm nóng hổi chuẩn vị</p>
+              <span class="v-badge">BẾP MOVA TRỰC QUAN</span>
+              <h3 class="v-title">Sơ chế sạch 100% &amp; Nấu cơm nhà 15 phút — Chỉ 1 chảo</h3>
+              <p class="v-desc">Xem cách gia đình bận rộn chỉ mất 15 phút là có mâm cơm 5 món nóng hổi chuẩn vị nhà</p>
             </div>
           </div>
         </div>
       </div>
 
       <div class="grid">
-        <div v-for="s in samples" :key="s.title" class="sample-card">
+        <article
+          v-for="(s, idx) in samples"
+          :key="s.title"
+          class="sample-card"
+          :style="tilts[idx].cardStyle()"
+          @pointermove="tilts[idx].onPointerMove"
+          @pointerleave="tilts[idx].onPointerLeave"
+        >
+          <div class="card-glare" aria-hidden="true"></div>
           <div class="sample-media">
             <img
               :src="s.image"
               :alt="s.imageAlt"
               class="sample-img"
               loading="lazy"
-              @error="(e) => (e.target.style.display = 'none')"
+              decoding="async"
             />
-            <div class="sample-fallback-gradient" aria-hidden="true">
-              <span class="fallback-icon">🍲</span>
-            </div>
             <div class="img-badge-overlay">
               <span class="theme-badge">{{ s.theme }}</span>
             </div>
@@ -43,39 +58,36 @@
             <p class="tag">{{ s.title }}</p>
             <MealCard :meal="s.meal" :show-price="false" />
           </div>
-        </div>
+        </article>
       </div>
 
-      <p class="more">
-        <BaseButton tag="router-link" to="/menus" variant="secondary" style="margin-right: 10px;">Xem toàn bộ thực đơn tuần</BaseButton>
-        <BaseButton tag="router-link" to="/plans">Xem thực đơn riêng do Đầu bếp thiết kế</BaseButton>
-      </p>
+      <div class="more">
+        <BaseButton tag="router-link" to="/menus" variant="secondary">Xem toàn bộ thực đơn tuần</BaseButton>
+        <BaseButton tag="router-link" to="/plans" variant="orange">Xem thực đơn riêng do Đầu bếp thiết kế</BaseButton>
+      </div>
 
-      <!-- Video Modal -->
+      <!-- Chef Showcase Modal -->
       <div v-if="showVideoModal" class="modal" role="dialog" aria-modal="true" @click.self="showVideoModal = false">
         <div class="video-modal-box">
-          <button class="mclose" type="button" @click="showVideoModal = false" aria-label="Đóng video">×</button>
+          <button class="mclose" type="button" @click="showVideoModal = false" aria-label="Đóng hướng dẫn">×</button>
           <div class="video-frame">
-            <div class="mock-player">
+            <div class="chef-player">
               <div class="player-header">
-                <span class="rec-dot"></span>
-                <b>Đầu bếp MOVA: Nấu Bò Lúc Lắc Tiêu Đen & Cải Xào 15 Phút</b>
+                <span class="rec-dot" aria-hidden="true"></span>
+                <b>Đầu bếp MOVA: Nấu Bò Lúc Lắc Tiêu Đen Chư Sê &amp; Cải Xào 15 Phút</b>
               </div>
               <div class="player-screen">
-                <div class="pan-animation">
-                  <div class="pan-graphic">🍳</div>
-                  <div class="sizzle-text">🔥 Đang xào áp chảo 1 phút... Xốt Tiêu Đen Chư Sê quyện vị!</div>
-                </div>
+                <img :src="heroDishPreview" alt="Mâm cơm Việt MOVA 5 món" class="player-photo" />
                 <div class="steps-overlay">
-                  <div class="s-step">✓ 00:00 - Mở túi thịt bò sơ chế sẵn hút chân không</div>
-                  <div class="s-step">✓ 05:00 - Áp chảo thịt 2 phút, thêm xốt tiêu đen</div>
-                  <div class="s-step">✓ 10:00 - Xào nhanh bông cải xanh baby Đà Lạt</div>
-                  <div class="s-step">✓ 15:00 - Mâm cơm hoàn tất, thơm lừng không dọn rửa nhiều</div>
+                  <div class="s-step">✓ 00:00 — Mở túi thịt bò sơ chế sẵn hút chân không</div>
+                  <div class="s-step">✓ 05:00 — Áp chảo thịt 2 phút, rưới gói xốt tiêu đen Chư Sê</div>
+                  <div class="s-step">✓ 10:00 — Xào nhanh bông cải xanh baby Đà Lạt trên cùng 1 chảo</div>
+                  <div class="s-step">✓ 15:00 — Trọn mâm cơm nóng hổi, không bừa bếp rửa dọn</div>
                 </div>
               </div>
               <div class="player-controls">
-                <span>02:15 / 15:00</span>
-                <span class="tag-live">Chuẩn vị Á Đông</span>
+                <span>Tổng thời gian chuẩn bị &amp; nấu: 15:00</span>
+                <span class="tag-live">1 Chảo • 5 Món</span>
               </div>
             </div>
           </div>
@@ -92,8 +104,11 @@ import BaseButton from '../ui/BaseButton.vue';
 import { DISHES, SAUCES } from '../../shared/data/catalog';
 import { generateMeals, carbOptionsFor } from '../../shared/domain/mealPlan';
 import { rng } from '../../shared/utils/formatters';
+import { figmaImg } from '../../shared/utils/assets';
+import { use3dTilt } from '../../composables/use3dTilt';
 
 const showVideoModal = ref(false);
+const heroDishPreview = figmaImg('meal-mam-com-viet.webp');
 
 const dishView = (id) => (id ? { dish_id: id, name: DISHES[id].name } : undefined);
 
@@ -129,7 +144,7 @@ const samples = [
     { householdSize: 1 },
     11,
     'Suất ăn nấu 1 chảo',
-    'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=700&q=80',
+    figmaImg('meal-ga-nuong-mat-ong.webp'),
     'Suất ăn nấu 1 chảo cho 1 người'
   ),
   build(
@@ -137,7 +152,7 @@ const samples = [
     { householdSize: 2 },
     23,
     'Mâm cơm Việt 5 phần',
-    'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=700&q=80',
+    figmaImg('meal-mam-com-viet.webp'),
     'Mâm cơm Việt 5 phần cho cặp đôi'
   ),
   build(
@@ -145,85 +160,143 @@ const samples = [
     { householdSize: 4, goals: ['low_carb'] },
     37,
     'Mâm cơm Việt 5 phần',
-    'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=80',
-    'Mâm cơm Việt 5 phần cho gia đình'
+    figmaImg('meal-salad-vuon-xanh.webp'),
+    'Mâm cơm Việt 5 phần ít tinh bột cho gia đình'
   )
+];
+
+const tilts = [
+  use3dTilt({ maxTilt: 6, glareOpacity: 0.14 }),
+  use3dTilt({ maxTilt: 6, glareOpacity: 0.14 }),
+  use3dTilt({ maxTilt: 6, glareOpacity: 0.14 })
 ];
 </script>
 
 <style scoped>
-.samples { padding: 40px 0 8px; }
-.sec-h { margin-bottom: 20px; }
-.sec-h h2 { font-size: clamp(22px, 3vw, 30px); font-weight: 800; }
-.sec-h p { color: var(--muted); font-size: 16px; margin-top: 4px; }
+.samples {
+  padding: 52px 0 48px;
+  background: var(--sand);
+  border-top: 1px solid var(--line);
+}
 
-.video-card { margin-bottom: 28px; }
+.sec-h {
+  margin-bottom: 22px;
+}
+
+.samples-kicker {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--red-orange-d);
+  background: var(--orange-soft);
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-bottom: 10px;
+}
+
+.sec-h h2 {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.sec-h p {
+  color: var(--muted);
+  font-size: 16px;
+  margin-top: 6px;
+  max-width: 60ch;
+}
+
+.video-card {
+  margin-bottom: 28px;
+}
+
 .video-banner {
-  height: 220px;
-  background: linear-gradient(135deg, var(--green-dd) 0%, var(--green-dd) 100%);
-  border-radius: 20px;
+  min-height: 200px;
+  background: linear-gradient(125deg, var(--red-orange-d) 0%, var(--red-orange-dd) 100%);
+  border-radius: 22px;
   overflow: hidden;
   position: relative;
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 24px 32px;
-  box-shadow: 0 10px 24px rgba(84, 63, 24, 0.15);
-  transition: transform .2s ease, box-shadow .2s ease;
+  padding: 28px 32px;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
+
 .video-banner:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(84, 63, 24, 0.22);
+  transform: translate3d(0, -3px, 0);
+  box-shadow: var(--shadow-lg);
 }
+
+.watermark {
+  position: absolute;
+  right: 20px;
+  bottom: -18px;
+  font-size: clamp(64px, 10vw, 120px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  line-height: 1;
+}
+
 .video-overlay {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 24px;
   width: 100%;
 }
+
 .play-btn-pulse {
-  width: 68px;
-  height: 68px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: var(--orange, var(--orange));
+  background: var(--harvest-gold);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 0 0 8px rgba(248, 145, 34, 0.3);
-  animation: pulse 2s infinite;
+  box-shadow: 0 0 0 8px rgba(217, 175, 8, 0.28);
 }
+
 .play-icon {
-  color: var(--white);
-  font-size: 26px;
-  margin-left: 4px;
+  color: var(--text-on-yellow);
+  font-size: 24px;
+  margin-left: 3px;
 }
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(248, 145, 34, 0.5); }
-  70% { box-shadow: 0 0 0 14px rgba(248, 145, 34, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(248, 145, 34, 0); }
+
+.video-caption {
+  color: var(--text-on-accent);
 }
-.video-caption { color: var(--white); }
+
 .v-badge {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--amber-line);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .05em;
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--butter);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: 999px;
   margin-bottom: 6px;
 }
+
 .v-title {
   font-size: clamp(18px, 2.5vw, 24px);
   font-weight: 800;
   margin: 4px 0 6px;
-  color: var(--white);
+  color: var(--text-on-accent);
 }
+
 .v-desc {
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.92);
   margin: 0;
   max-width: 58ch;
 }
@@ -234,178 +307,228 @@ const samples = [
   gap: 20px;
   align-items: stretch;
 }
+
 .sample-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: 22px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-  transition: transform .2s ease, box-shadow .2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+  will-change: transform;
 }
+
 .sample-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: var(--red-orange);
+  box-shadow: var(--shadow-md);
 }
+
+.card-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 240px at var(--glare-x, 50%) var(--glare-y, 50%),
+    rgba(255, 255, 255, var(--glare-o, 0)),
+    transparent 70%
+  );
+  z-index: 3;
+}
+
 .sample-media {
   width: 100%;
   aspect-ratio: 16 / 10;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--green-dd) 0%, var(--green-dd) 100%);
+  background: var(--cream-warm);
 }
+
 .sample-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform .3s ease;
+  transition: transform 0.35s ease;
 }
+
 .sample-card:hover .sample-img {
-  transform: scale(1.03);
+  transform: scale(1.04);
 }
-.sample-fallback-gradient {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 0;
-}
-.fallback-icon {
-  font-size: 38px;
-  opacity: 0.8;
-}
+
 .img-badge-overlay {
   position: absolute;
   bottom: 10px;
   left: 12px;
   z-index: 2;
 }
+
 .theme-badge {
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(40, 37, 31, 0.84);
   backdrop-filter: blur(4px);
-  color: var(--white);
+  color: var(--text-on-dark);
   font-size: 12px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 6px;
-  letter-spacing: 0.02em;
+  padding: 5px 11px;
+  border-radius: 999px;
 }
+
 .sample-content {
-  padding: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   flex: 1;
 }
+
 .sample-content .tag {
   font-size: 17px;
   font-weight: 800;
   margin-bottom: 12px;
   color: var(--ink);
 }
+
 .sample-content :deep(.meal) {
   border: none;
   padding: 0;
   background: transparent;
   flex: 1;
 }
-.more { margin-top: 24px; text-align: center; }
 
-@media (max-width: 900px) {
-  .grid { grid-template-columns: 1fr; }
+.more {
+  margin-top: 28px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 980px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .video-banner {
+    height: auto;
+    padding: 22px;
+  }
+  .video-overlay {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
 }
 
 /* Modal */
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(24, 21, 17, 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
 }
+
 .video-modal-box {
-  background: var(--brown);
-  border-radius: 20px;
-  max-width: 640px;
+  background: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px;
+  max-width: 620px;
   width: 100%;
   padding: 24px;
   position: relative;
-  color: var(--white);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  color: var(--text-on-dark);
+  box-shadow: var(--shadow-lg);
 }
+
 .mclose {
   position: absolute;
-  top: 14px;
-  right: 18px;
-  background: transparent;
+  top: 12px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.12);
   border: 0;
-  color: var(--white);
-  font-size: 32px;
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  color: var(--text-on-dark);
+  font-size: 26px;
   cursor: pointer;
+  display: grid;
+  place-items: center;
 }
-.mock-player {
+
+.chef-player {
   display: grid;
   gap: 16px;
 }
+
 .player-header {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 16px;
+  padding-right: 40px;
 }
+
 .rec-dot {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
-  background: var(--red);
+  background: var(--harvest-gold);
   display: inline-block;
-  animation: blink 1s infinite alternate;
+  flex-shrink: 0;
 }
-@keyframes blink { from { opacity: 0.3; } to { opacity: 1; } }
+
 .player-screen {
-  background: var(--brown);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px;
-  padding: 28px 20px;
-  text-align: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 16px;
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
-.pan-graphic { font-size: 54px; }
-.sizzle-text { font-size: 17px; font-weight: 700; color: var(--amber-line); }
+
+.player-photo {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
 .steps-overlay {
   text-align: left;
-  background: rgba(255,255,255,0.06);
-  border-radius: 10px;
-  padding: 12px 16px;
   display: grid;
   gap: 8px;
   font-size: 14px;
-  color: var(--line);
+  color: rgba(255, 255, 255, 0.92);
 }
+
 .player-controls {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
-  color: var(--muted);
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.88);
 }
+
 .tag-live {
   background: var(--green-d);
-  color: var(--white);
-  padding: 2px 8px;
-  border-radius: 6px;
+  color: var(--text-on-primary);
+  padding: 4px 10px;
+  border-radius: 999px;
   font-weight: 700;
 }
 
-@media (max-width: 980px) {
-  .grid { grid-template-columns: minmax(0, 1fr); }
-  .video-banner { height: auto; padding: 20px; }
-  .video-overlay { flex-direction: column; align-items: flex-start; gap: 14px; }
+@media (prefers-reduced-motion: reduce) {
+  .sample-card,
+  .sample-img,
+  .video-banner {
+    transition: none;
+    transform: none !important;
+  }
 }
 </style>

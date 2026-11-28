@@ -1,5 +1,5 @@
 <template>
-  <div id="mova-app" :class="{ 'zmp-env': inMiniApp }">
+  <div id="mova-app" :class="{ 'zmp-env': inMiniApp, 'has-zmp-nav': hasZmpNav }">
     <!-- Thanh ưu đãi thẻ quà tặng (trang chủ; trên Mini App đặt dưới header để không bị capsule Zalo che) -->
     <PromoBar v-if="route.path === '/' && !inMiniApp" />
 
@@ -16,10 +16,13 @@
     <!-- Footer thông tin -->
     <AppFooter />
 
+    <!-- Thanh điều hướng đáy cho Zalo Mini App -->
+    <ZmpBottomNav />
+
     <!-- Ngăn kéo thông báo bên phải -->
     <NotificationDrawer />
 
-    <!-- Nút nổi chat Zalo hỗ trợ -->
+    <!-- Nút nổi chat Zalo hỗ trợ (chỉ hiện trên Web, tự ẩn ở bước thanh toán & Zalo Mini App) -->
     <FloatingZaloBtn />
 
     <!-- Thông báo Toast toàn cục -->
@@ -32,11 +35,12 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import PromoBar from './components/common/PromoBar.vue';
 import AppHeader from './components/common/AppHeader.vue';
 import AppFooter from './components/common/AppFooter.vue';
+import ZmpBottomNav from './components/common/ZmpBottomNav.vue';
 import NotificationDrawer from './components/common/NotificationDrawer.vue';
 import FloatingZaloBtn from './components/common/FloatingZaloBtn.vue';
 import ToastMessage from './components/common/ToastMessage.vue';
@@ -52,6 +56,13 @@ const store = useMovaStore();
 const route = useRoute();
 const inMiniApp = isZaloMiniApp();
 
+const hasZmpNav = computed(() => {
+  if (!inMiniApp) return false;
+  if (store.activeModal || store.notifDrawerOpen) return false;
+  if (route?.path === '/plans' && (Number(route.query.step) || 1) >= 2) return false;
+  return true;
+});
+
 const handleKeydown = (e) => {
   if (e.key === 'Escape') {
     if (store.activeModal) {
@@ -65,7 +76,6 @@ const handleKeydown = (e) => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
-  // Nạp dữ liệu tài khoản (nếu đã đăng nhập) và tải lại định kỳ (tab đang ẩn thì bỏ qua)
   void store.refresh();
   store.startPolling();
 });

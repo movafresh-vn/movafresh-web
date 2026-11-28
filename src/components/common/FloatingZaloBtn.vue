@@ -1,14 +1,14 @@
 <template>
   <button
-    v-if="!isCheckoutStep"
+    v-if="!inMiniApp && !isCheckoutStep"
     class="float-help"
     @click="openZaloHelp"
     aria-label="Chat Zalo hỗ trợ"
   >
-    <svg viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.03 2 11c0 2.87 1.5 5.43 3.86 7.03L5 22l4.28-1.42C10.15 20.81 11.06 21 12 21c5.52 0 10-4.03 10-9s-4.48-9-10-9zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2C6.48 2 2 6.03 2 11c0 2.75 1.38 5.21 3.55 6.86L4.5 22l4.46-1.78C9.92 20.47 10.94 20.6 12 20.6c5.52 0 10-4.03 10-9.6S17.52 2 12 2zm1 13H7.5v-1.8l3.78-4.6H7.8V7h5.2v1.8l-3.78 4.6H13V15zm4.5 0h-2V7h2v8z"/>
     </svg>
-    <span>Chat Zalo hỗ trợ</span>
+    <span>Chat Zalo</span>
   </button>
 </template>
 
@@ -16,11 +16,13 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMovaStore } from '../../stores/useMovaStore';
+import { isZaloMiniApp } from '../../services/zaloMiniApp';
 
 const store = useMovaStore();
 const route = useRoute();
+const inMiniApp = isZaloMiniApp();
 
-// Ẩn nút Zalo trên các bước checkout của /plans (bước 2 tùy chọn món, bước 3 thanh toán) để tránh chồng lấn nút CTA và thanh sticky bar
+// Ẩn nút Zalo trên Zalo Mini App (dùng mục Zalo OA ở Tài khoản/FAQ) và trên bước chọn món/thanh toán /plans
 const isCheckoutStep = computed(() => {
   if (!route || route.path !== '/plans') return false;
   const step = Number(route.query.step) || 1;
@@ -63,9 +65,10 @@ const openZaloHelp = () => {
 
 @media (max-width: 980px) {
   .float-help {
-    bottom: 96px;
+    bottom: 16px;
     right: 14px;
-    padding: 9px 14px;
+    padding: 8px 13px;
+    font-size: 13px;
   }
 }
 </style>

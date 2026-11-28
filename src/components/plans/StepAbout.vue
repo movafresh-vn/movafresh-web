@@ -411,7 +411,7 @@
       <aside class="about-right" aria-label="Hình ảnh ẩm thực minh họa">
         <div class="visual-card">
           <div class="visual-img-container">
-            <!-- Fallback SVG gradient phong cách ẩm thực tự nhiên -->
+            <img :src="currentSceneImage" :alt="currentSceneTitle" class="visual-photo" loading="eager" decoding="async" />
             <div class="visual-art" :class="'scene-q' + q">
               <div class="art-overlay-gradient"></div>
               <div class="art-badge-strip">
@@ -458,6 +458,7 @@ import { api } from '../../shared/api';
 import { BUSINESS } from '../../shared/config/business';
 import { fmt } from '../../shared/utils/formatters';
 import { budgetChoiceLabel, budgetExplain } from '../../shared/domain/budgetExplain';
+import { figmaImg } from '../../shared/utils/assets';
 
 const LAST = 6;
 
@@ -897,6 +898,18 @@ const currentSceneTitle = computed(() => {
   }
 });
 
+const currentSceneImage = computed(() => {
+  switch (q.value) {
+    case 1: return figmaImg('brand-farm-harvest.webp');
+    case 2: return figmaImg('meal-mam-com-viet.webp');
+    case 3: return figmaImg('meal-ga-nuong-mat-ong.webp');
+    case 4: return figmaImg('meal-salad-vuon-xanh.webp');
+    case 5: return figmaImg('brand-chef-bowls.webp');
+    case 6: return figmaImg('brand-salmon-plate.webp');
+    default: return figmaImg('meal-mam-com-viet.webp');
+  }
+});
+
 const currentSceneSubtitle = computed(() => {
   switch (q.value) {
     case 1: return 'Xe lạnh rời xưởng Đắk Lắk 18:00, giao sáng trước 10:00 tại TP.HCM trong thùng cách nhiệt 6 giờ.';
@@ -1309,13 +1322,13 @@ function clearBudgetAndFinish() {
   flex-direction: column;
 }
 .visual-card {
-  background: var(--white);
+  background: var(--card);
   border: 1.5px solid var(--line);
-  border-radius: 20px;
+  border-radius: 22px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 12px 32px rgba(20, 108, 67, 0.08);
+  box-shadow: var(--shadow-md);
   height: 100%;
 }
 .visual-img-container {
@@ -1323,6 +1336,15 @@ function clearBudgetAndFinish() {
   position: relative;
   min-height: 380px;
   overflow: hidden;
+  background: var(--ink);
+}
+.visual-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .visual-art {
   width: 100%;
@@ -1332,26 +1354,27 @@ function clearBudgetAndFinish() {
   justify-content: space-between;
   padding: 20px;
   position: relative;
-  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-dd) 60%, var(--green-dd) 100%);
-  color: var(--white);
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(24, 21, 17, 0.36) 0%, rgba(24, 21, 17, 0.28) 45%, rgba(24, 21, 17, 0.86) 100%);
+  color: var(--text-on-dark);
 }
 .visual-art.scene-q1 {
-  background: linear-gradient(135deg, var(--green-dd) 0%, var(--green-d) 60%, var(--green-dd) 100%);
+  background: linear-gradient(180deg, rgba(6, 95, 60, 0.34) 0%, rgba(24, 21, 17, 0.86) 100%);
 }
 .visual-art.scene-q2 {
-  background: linear-gradient(135deg, var(--amber-ink) 0%, var(--amber-ink) 60%, var(--green-dd) 100%);
+  background: linear-gradient(180deg, rgba(84, 63, 24, 0.32) 0%, rgba(24, 21, 17, 0.86) 100%);
 }
 .visual-art.scene-q3 {
-  background: linear-gradient(135deg, var(--red) 0%, var(--red) 60%, var(--green-d) 100%);
+  background: linear-gradient(180deg, rgba(196, 58, 20, 0.32) 0%, rgba(24, 21, 17, 0.86) 100%);
 }
 .visual-art.scene-q4 {
-  background: linear-gradient(135deg, var(--blue-ink) 0%, var(--blue-ink) 60%, var(--green-dd) 100%);
+  background: linear-gradient(180deg, rgba(13, 79, 139, 0.32) 0%, rgba(24, 21, 17, 0.86) 100%);
 }
 .visual-art.scene-q5 {
-  background: linear-gradient(135deg, var(--blue-ink) 0%, var(--violet) 60%, var(--green-d) 100%);
+  background: linear-gradient(180deg, rgba(82, 101, 43, 0.32) 0%, rgba(24, 21, 17, 0.86) 100%);
 }
 .visual-art.scene-q6 {
-  background: linear-gradient(135deg, var(--blue-ink) 0%, var(--violet) 60%, var(--green-dd) 100%);
+  background: linear-gradient(180deg, rgba(40, 37, 31, 0.32) 0%, rgba(24, 21, 17, 0.86) 100%);
 }
 
 .art-overlay-gradient {
@@ -1363,6 +1386,7 @@ function clearBudgetAndFinish() {
 .art-badge-strip {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   position: relative;
   z-index: 2;
@@ -1373,9 +1397,10 @@ function clearBudgetAndFinish() {
   color: var(--white);
   font-size: 11.5px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 5px 11px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.3);
+  white-space: nowrap;
 }
 .art-badge.alt {
   background: rgba(217, 83, 30, 0.85);

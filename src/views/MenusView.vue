@@ -392,16 +392,17 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  min-height: 44px;
+  padding: 9px 16px;
   border-radius: 999px;
   border: 1.5px solid var(--line);
-  background: var(--white);
+  background: var(--card);
   font-size: 13.5px;
   font-weight: 700;
   color: var(--ink);
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 .cat-filter-btn:hover {
   border-color: var(--faint);
@@ -409,7 +410,7 @@ onMounted(() => {
 .cat-filter-btn.active {
   background: var(--green-d);
   border-color: var(--green-d);
-  color: var(--white);
+  color: var(--text-on-primary);
 }
 .cat-count {
   font-size: 11px;
@@ -765,6 +766,12 @@ onMounted(() => {
   align-items: center;
   gap: 16px;
   box-shadow: 0 10px 30px rgba(11, 156, 99, 0.15);
+}
+@media (max-width: 768px) {
+  .sticky-bottom-cta {
+    position: static;
+    margin-top: 24px;
+  }
 }
 @media (max-width: 700px) {
   .cta-inner {

@@ -374,9 +374,16 @@ async function linkPhoneWithZalo() {
 .protein-grid { display: grid; gap: 8px; }
 .protein-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; }
 .sm-select { width: auto; min-width: 140px; padding: 6px 10px; }
-.phone-link-card { border-color: var(--orange, #e67e22); }
+.phone-link-card {
+  border-color: var(--red-orange);
+  border-left: 4px solid var(--red-orange-d);
+  background: var(--orange-soft);
+}
 .zalo-btn { background: #0068FF; border-color: #0068FF; color: #fff; }
 .zalo-btn:hover:not(:disabled) { background: #0055d4; border-color: #0055d4; }
-.link-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.link-row .pl-input { flex: 1; min-width: 160px; }
+.link-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.link-row .pl-input { flex: 1; min-width: 140px; }
+@media (max-width: 560px) {
+  .link-row .pl-btn { width: 100%; min-height: 44px; justify-content: center; }
+}
 </style>

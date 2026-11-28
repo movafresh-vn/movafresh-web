@@ -92,11 +92,19 @@ describe('Zalo Mini App SDK helper & cấu hình', () => {
     expect(CUSTOMER_ROUTES.zaloMiniApp).toEqual(['POST', '/auth/zalo-miniapp', { auth: false }]);
   });
 
-  it('AppHeader, LoginModal, StepCheckout và ProfileTab tuân thủ capsule clearance & kiểm duyệt SĐT Zalo', () => {
+  it('AppHeader 1 hàng, ZmpBottomNav, FloatingZaloBtn, LoginModal, StepCheckout và ProfileTab tuân thủ capsule clearance & kiểm duyệt SĐT Zalo', () => {
     const hdr = readRoot('src/components/common/AppHeader.vue');
     expect(hdr).toContain('isZaloMiniApp');
     expect(hdr).toContain('zmp-hdr');
-    expect(hdr).toContain('margin-top: 44px');
+    expect(hdr).toContain('padding-right: 112px');
+    expect(hdr).not.toContain('margin-top: 44px');
+
+    const bnav = readRoot('src/components/common/ZmpBottomNav.vue');
+    expect(bnav).toContain('env(safe-area-inset-bottom');
+    expect(bnav).toContain('step >= 2');
+
+    const floatBtn = readRoot('src/components/common/FloatingZaloBtn.vue');
+    expect(floatBtn).toContain('!inMiniApp && !isCheckoutStep');
 
     const login = readRoot('src/components/modals/LoginModal.vue');
     expect(login).toContain('v-if="!inMiniApp"');
