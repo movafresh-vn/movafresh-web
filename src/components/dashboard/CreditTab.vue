@@ -1,5 +1,14 @@
 <template>
-  <div v-if="sum" class="credit">
+  <section v-if="loading && !sum" class="pl-card bal" aria-busy="true" aria-live="polite">
+    <p class="pl-note">Đang tải số dư và lịch sử Fresh Credit…</p>
+  </section>
+
+  <section v-else-if="error && !sum" class="pl-card bal" role="alert">
+    <p class="pl-error">{{ error }}</p>
+    <button type="button" class="pl-btn outline sm" @click="load()">Thử tải lại</button>
+  </section>
+
+  <div v-else-if="sum" class="credit">
     <section class="pl-card bal">
       <h2 class="pl-h2">Fresh Credit</h2>
       <p class="total num">{{ fmt(sum.balance.total_vnd) }}</p>
@@ -143,11 +152,18 @@ watch(() => store.version, () => load());
 .part small { font-size: 15px; font-weight: 700; }
 .part b { font-size: 20px; }
 .part span { font-size: 14px; color: var(--muted); }
-.hist ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; }
-.hist li { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-2); align-items: flex-start; }
-.hist li > div { display: grid; gap: 2px; min-width: 0; }
-.hist b { font-size: 16px; }
-.hist small { font-size: 14px; color: var(--muted); }
+.hist ul,
+.flows ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; }
+.hist li,
+.flows li { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-2); align-items: flex-start; }
+.hist li:last-child,
+.flows li:last-child { border-bottom: 0; padding-bottom: 0; }
+.hist li > div,
+.flows li > div { display: grid; gap: 4px; min-width: 0; }
+.hist b,
+.flows b { font-size: 16px; color: var(--ink-dark); }
+.hist small,
+.flows small { font-size: 14px; color: var(--muted); line-height: 1.45; }
 .search { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
 .amt { font-weight: 800; font-size: 17px; color: var(--green-d); white-space: nowrap; }
 .amt.minus { color: var(--ink); }

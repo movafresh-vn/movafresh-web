@@ -1,7 +1,7 @@
 <template>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="skip-title" @click.self="$emit('close')">
     <div class="mbox box">
-      <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng">×</button>
+      <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng"><X :size="18" aria-hidden="true" /></button>
       <h2 id="skip-title" class="pl-h2">Tạm hoãn Tuần {{ week.number }}</h2>
 
       <p v-if="loadError" class="pl-error" role="alert">{{ loadError }}</p>
@@ -26,6 +26,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
+import { X } from 'lucide-vue-next';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';

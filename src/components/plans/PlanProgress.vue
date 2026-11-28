@@ -3,7 +3,8 @@
     <ol>
       <li v-for="(s, i) in STEPS" :key="s" :class="{ done: i + 1 < step, cur: i + 1 === step }" :aria-current="i + 1 === step ? 'step' : undefined">
         <button type="button" class="dot" :disabled="!canGo(i + 1)" :aria-label="`Bước ${i + 1}: ${s}`" @click="$emit('go', i + 1)">
-          <span class="num">{{ i + 1 < step ? '✓' : i + 1 }}</span>
+          <Check v-if="i + 1 < step" :size="18" :stroke-width="2.6" aria-hidden="true" />
+          <span v-else class="num">{{ i + 1 }}</span>
         </button>
         <span class="lbl">{{ s }}</span>
       </li>
@@ -13,6 +14,7 @@
 </template>
 
 <script setup>
+import { Check } from 'lucide-vue-next';
 const STEPS = ['Về bạn', 'Thực đơn tuần 1', 'Giao hàng và thanh toán', 'Hoàn tất'];
 
 const props = defineProps({ step: { type: Number, required: true }, reach: { type: Number, default: 1 } });
@@ -29,7 +31,7 @@ li { display: grid; justify-items: center; gap: 6px; position: relative; text-al
 li::before { content: ''; position: absolute; top: 20px; left: -50%; width: 100%; height: 3px; background: var(--line); z-index: 0; }
 li:first-child::before { display: none; }
 li.done::before, li.cur::before { background: var(--green); }
-.dot { position: relative; z-index: 1; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); font-size: 17px; font-weight: 800; color: var(--muted); }
+.dot { position: relative; z-index: 1; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); font-size: 17px; font-weight: 800; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; }
 li.cur .dot { border-color: var(--green-d); background: var(--green-d); color: var(--white); }
 li.done .dot { border-color: var(--green); background: var(--green-soft); color: var(--green-d); }
 .dot:disabled { cursor: default; }

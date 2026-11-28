@@ -57,9 +57,13 @@
           class="pl-btn sm zalo-oa-btn"
           @click="openExt($event, 'https://zalo.me')"
         >
-          Chat Zalo OA
+          <MessageCircle :size="16" aria-hidden="true" />
+          <span>Chat Zalo OA</span>
         </a>
-        <a href="tel:19008899" class="pl-btn outline sm" @click="openExt($event, 'tel:19008899')">📞 1900 8899</a>
+        <a href="tel:19008899" class="pl-btn outline sm" @click="openExt($event, 'tel:19008899')">
+          <Phone :size="16" aria-hidden="true" />
+          <span>1900 8899</span>
+        </a>
       </div>
     </div>
   </section>
@@ -67,6 +71,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { MessageCircle, Phone } from 'lucide-vue-next';
 import { api } from '../../shared/api';
 import { newKey } from '../../shared/api/http';
 import { fmt } from '../../shared/utils/formatters';

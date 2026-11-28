@@ -4,7 +4,7 @@
     <div class="newsletter-strip">
       <div class="wrap newsletter-inner">
         <div class="newsletter-left">
-          <span class="nl-icon" aria-hidden="true">👨‍🍳</span>
+          <span class="nl-icon" aria-hidden="true"><ChefHat :size="28" :stroke-width="1.8" /></span>
           <div class="nl-texts">
             <h3 class="nl-title">Đăng ký nhận bản tin công thức Đầu bếp MOVA</h3>
             <p class="nl-desc">
@@ -23,12 +23,14 @@
             :disabled="subscribed"
           />
           <button type="submit" class="nl-btn" :disabled="subscribed">
-            {{ subscribed ? '✓ Đã đăng ký' : 'Đăng ký nhận công thức' }}
+            <Check v-if="subscribed" :size="15" aria-hidden="true" />
+            <span>{{ subscribed ? 'Đã đăng ký' : 'Đăng ký nhận công thức' }}</span>
           </button>
         </form>
       </div>
       <div v-if="subscribed" class="wrap nl-success-msg">
-        ✓ Cảm ơn bạn! Đầu bếp MOVA đã ghi nhận email <b>{{ emailInput }}</b> và cộng ngay +15.000đ Fresh Credit vào tài khoản của bạn.
+        <Check :size="15" aria-hidden="true" />
+        <span>Cảm ơn bạn! Đầu bếp MOVA đã ghi nhận email <b>{{ emailInput }}</b> và cộng ngay +15.000đ Fresh Credit vào tài khoản của bạn.</span>
       </div>
     </div>
 
@@ -98,7 +100,8 @@
           </div>
 
           <p class="f-sec-note">
-            🔒 Bảo mật SSL/TLS 256-bit · Hủy liên kết thẻ 1 chạm bất kỳ lúc nào.
+            <Lock :size="13" aria-hidden="true" class="f-sec-ico" />
+            <span>Bảo mật SSL/TLS 256-bit · Hủy liên kết thẻ 1 chạm bất kỳ lúc nào.</span>
           </p>
         </div>
 
@@ -107,7 +110,7 @@
           <h4 class="f-col-title">Vận hành &amp; Liên hệ</h4>
           <div class="f-contact-items">
             <div class="contact-item">
-              <span class="c-ico" aria-hidden="true">🏭</span>
+              <span class="c-ico" aria-hidden="true"><Store :size="16" /></span>
               <div>
                 <b>Xưởng sơ chế trung tâm Đắk Lắk:</b>
                 <span>Xã Hòa Thắng, TP. Buôn Ma Thuột, Đắk Lắk</span>
@@ -115,7 +118,7 @@
             </div>
 
             <div class="contact-item">
-              <span class="c-ico" aria-hidden="true">❄️</span>
+              <span class="c-ico" aria-hidden="true"><Snowflake :size="16" /></span>
               <div>
                 <b>Kho lạnh phân phối TP.HCM:</b>
                 <span>Phường Tân Phong, Quận 7, TP. Hồ Chí Minh</span>
@@ -123,7 +126,7 @@
             </div>
 
             <div class="contact-item">
-              <span class="c-ico" aria-hidden="true">📞</span>
+              <span class="c-ico" aria-hidden="true"><Phone :size="16" /></span>
               <div>
                 <b>Hotline hỗ trợ bếp:</b>
                 <a href="tel:19008899" class="hotline-link" @click="openHotline">1900 8899</a>
@@ -132,7 +135,7 @@
             </div>
 
             <div class="contact-item">
-              <span class="c-ico" aria-hidden="true">💬</span>
+              <span class="c-ico" aria-hidden="true"><MessageCircle :size="16" /></span>
               <div>
                 <b>Zalo Official Account:</b>
                 <span>MOVA FRESH Official</span>
@@ -165,6 +168,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { Check, ChefHat, Lock, MessageCircle, Phone, Snowflake, Store } from 'lucide-vue-next';
 import { useMovaStore } from '../../stores/useMovaStore';
 import BrandLogo from './BrandLogo.vue';
 import { BRAND_TAGLINE } from '../../shared/config/brandLogo';
@@ -222,7 +226,14 @@ function submitNewsletter() {
 }
 
 .nl-icon {
-  font-size: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--text-on-accent);
   flex-shrink: 0;
 }
 
@@ -270,6 +281,10 @@ function submitNewsletter() {
 }
 
 .nl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-height: 46px;
   padding: 0 20px;
   background: var(--ink);
@@ -284,7 +299,7 @@ function submitNewsletter() {
 }
 
 .nl-btn:hover:not(:disabled) {
-  background: #14120E;
+  background: var(--footer-dark);
 }
 
 .nl-btn:disabled {
@@ -294,6 +309,9 @@ function submitNewsletter() {
 }
 
 .nl-success-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   margin-top: 12px;
   font-size: 13.5px;
   color: var(--text-on-accent);
@@ -463,9 +481,12 @@ function submitNewsletter() {
 }
 
 .c-ico {
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-d);
   flex-shrink: 0;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .contact-item b {

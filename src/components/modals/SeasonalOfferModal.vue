@@ -1,7 +1,7 @@
 <template>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="season-title" @click.self="$emit('close')">
     <div class="mbox box">
-      <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng">×</button>
+      <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng"><X :size="18" aria-hidden="true" /></button>
       <h2 id="season-title" class="pl-h2">{{ offer.title }}</h2>
 
       <template v-if="picks.length">
@@ -25,6 +25,7 @@
 </template>
 
 <script setup>
+import { X } from 'lucide-vue-next';
 import { LOCK_MENU_OFFER } from '../../shared/domain/campaign';
 
 // Popup chiến dịch: chỉ được mở khi chiến dịch đang chạy (cha kiểm campaignActive). Chấp nhận = gửi lock_menu khi tạo gói.

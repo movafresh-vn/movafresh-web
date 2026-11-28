@@ -18,13 +18,13 @@
       </div>
 
       <div class="ai-consents">
-        <label>
+        <label class="consent-row" :class="{ on: personalDataConsent }">
           <input v-model="personalDataConsent" type="checkbox" @change="savePersonalDataConsent">
-          Tôi đồng ý chia sẻ thông tin khảo sát khẩu vị (không gồm thông tin liên hệ) để Bếp trưởng MOVA gợi ý thực đơn.
+          <span>Tôi đồng ý chia sẻ thông tin khảo sát khẩu vị (không gồm thông tin liên hệ) để Đầu bếp MOVA gợi ý thực đơn.</span>
         </label>
-        <label>
+        <label class="consent-row" :class="{ on: behaviorConsent, disabled: !personalDataConsent }">
           <input v-model="behaviorConsent" type="checkbox" :disabled="!personalDataConsent" @change="saveBehaviorConsent">
-          Tôi đồng ý ghi nhận lượt xem chi tiết và đổi món để Bếp trưởng tối ưu khẩu vị cho các tuần tiếp theo (tùy chọn).
+          <span>Tôi đồng ý ghi nhận lượt xem chi tiết và đổi món để Đầu bếp MOVA tối ưu khẩu vị cho các tuần tiếp theo (tùy chọn).</span>
         </label>
       </div>
       <p v-if="behaviorConsent && !hasSupabaseSession" class="ai-hint">
@@ -250,15 +250,15 @@ async function runAgents() {
 
 <style scoped>
 .ai-section {
-  padding: clamp(32px, 5vw, 64px) 0;
-  background: linear-gradient(180deg, var(--green-soft), rgba(228, 240, 232, 0));
+  padding: 0;
+  background: transparent;
 }
 .ai-panel {
-  padding: clamp(20px, 4vw, 36px);
-  border: 1px solid var(--line);
-  border-radius: 24px;
+  padding: clamp(18px, 3vw, 28px);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-lg);
   background: var(--card);
-  box-shadow: 0 16px 40px rgba(20, 35, 25, .08);
+  box-shadow: var(--shadow-1);
 }
 .ai-heading {
   display: flex;
@@ -268,7 +268,7 @@ async function runAgents() {
 }
 .ai-heading h2 {
   margin: 2px 0 6px;
-  font-size: 24px;
+  font-size: 22px;
 }
 .ai-heading p {
   margin: 0;
@@ -279,18 +279,39 @@ async function runAgents() {
   font-weight: 800;
   letter-spacing: .08em;
 }
-.ai-consents input[type="checkbox"] {
-  accent-color: var(--green);
-}
 .ai-consents {
   display: grid;
   gap: 8px;
   margin-top: 16px;
-  font-size: 13px;
+  font-size: 13.5px;
 }
-.ai-consents label {
+.consent-row {
   display: flex;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--r-ctl);
+  border: 1px solid var(--line);
+  background: var(--surface-tint);
+  cursor: pointer;
+  line-height: 1.45;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.consent-row.on {
+  border-color: var(--green-line);
+  background: var(--green-tint);
+}
+.consent-row.disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+.consent-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--green-d);
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 .ai-results {
   margin-top: 20px;
@@ -319,6 +340,7 @@ async function runAgents() {
   font-size: 12px;
 }
 @media (max-width: 680px) {
-  .ai-heading { align-items: flex-start; flex-direction: column; }
+  .ai-heading { align-items: stretch; flex-direction: column; }
+  .ai-heading .btn { width: 100%; justify-content: center; min-height: 46px; }
 }
 </style>

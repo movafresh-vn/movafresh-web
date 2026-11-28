@@ -2,7 +2,7 @@
   <div class="f-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="f-modal-title" @click.self="$emit('close')">
     <div class="f-modal-box">
       <!-- Nút đóng -->
-      <button class="mclose" type="button" aria-label="Đóng" @click="$emit('close')">×</button>
+      <button class="mclose" type="button" aria-label="Đóng" @click="$emit('close')"><X :size="20" aria-hidden="true" /></button>
 
       <!-- Tiêu đề Header -->
       <div class="f-modal-head">
@@ -14,10 +14,7 @@
       <!-- Ô tìm kiếm nhanh -->
       <div class="f-search-row">
         <div class="f-search-input-wrap">
-          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
+          <Search :size="18" class="search-icon" aria-hidden="true" />
           <input
             v-model="searchQuery"
             type="text"
@@ -25,7 +22,7 @@
             placeholder="Tìm nhanh theo tên món hoặc nguyên liệu (bò, heo, gà, cá, tôm, rau, canh, mì...)"
             autofocus
           />
-          <button v-if="searchQuery" class="clear-btn" type="button" @click="searchQuery = ''">×</button>
+          <button v-if="searchQuery" class="clear-btn" type="button" aria-label="Xóa tìm kiếm" @click="searchQuery = ''"><X :size="16" aria-hidden="true" /></button>
         </div>
       </div>
 
@@ -61,7 +58,7 @@
         >
           <div class="f-card-top">
             <div class="f-card-header">
-              <span class="f-region-pill">📍 {{ d.terroir_region || 'Đắk Lắk' }}</span>
+              <span class="f-region-pill"><MapPin :size="12" aria-hidden="true" /> {{ d.terroir_region || 'Đắk Lắk' }}</span>
               <span v-if="isCurrent(d.id)" class="f-current-pill">Đang chọn</span>
               <span
                 v-else
@@ -77,7 +74,7 @@
 
           <div class="f-card-meta">
             <div class="f-sauce-tag">
-              <span class="icon-sauce">🍶</span>
+              <span class="icon-sauce" aria-hidden="true"><Sparkles :size="14" /></span>
               <span class="sauce-text">{{ sauceName(d) }}</span>
             </div>
             <div v-if="d.nutrition_per_serving" class="f-nutri-line num">
@@ -123,6 +120,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { MapPin, Search, Sparkles, X } from 'lucide-vue-next';
 import DishDetailModal from './DishDetailModal.vue';
 import { DISHES, SAUCES, SKUS } from '../../shared/data/catalog';
 import { recipeFor } from '../../shared/data/recipes';
@@ -230,7 +228,7 @@ function selectDish(dish) {
 .f-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.65);
+  background: var(--overlay-dark);
   backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex;
@@ -249,7 +247,7 @@ function selectDish(dish) {
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 24px 48px -12px rgba(16, 24, 40, 0.25);
+  box-shadow: var(--shadow-sheet);
   overflow: hidden;
 }
 
@@ -365,6 +363,14 @@ function selectDish(dish) {
   background: var(--surface);
 }
 @media (max-width: 640px) {
+  .f-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .f-modal-box {
+    border-radius: 22px 22px 0 0;
+    max-height: 92svh;
+  }
   .f-dish-list { grid-template-columns: 1fr; padding: 12px 16px; }
 }
 
@@ -388,7 +394,7 @@ function selectDish(dish) {
 }
 .f-dish-card:hover {
   border-color: var(--line-strong);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-1);
   transform: translateY(-1px);
 }
 .f-dish-card.is-current {
@@ -521,7 +527,7 @@ function selectDish(dish) {
 .f-detail-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  background: var(--overlay-dark);
   backdrop-filter: blur(2px);
   z-index: 10;
   display: flex;
@@ -539,7 +545,7 @@ function selectDish(dish) {
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-sheet);
 }
 .f-detail-header {
   padding: 20px 20px 12px;

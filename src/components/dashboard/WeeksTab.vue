@@ -44,13 +44,14 @@
       <!-- Quyền lợi khách hàng & Quản lý thanh toán 1 chạm (Luật BVQLNTD 19/2023) -->
       <section v-if="data.subscription.status === 'active'" class="pl-card plan-actions-card">
         <div class="actions-header">
-          <span class="shield-badge">🛡️ BẢO VỆ NGƯỜI TIÊU DÙNG</span>
+          <span class="shield-badge"><ShieldCheck :size="14" aria-hidden="true" /> BẢO VỆ NGƯỜI TIÊU DÙNG</span>
           <h3 class="actions-h3">Quản lý gói &amp; Hủy 1 chạm bất kỳ lúc nào</h3>
           <p class="actions-sub">Không cam kết trói buộc · Xem thông tin hủy hoặc hoàn tiền trước khi xác nhận · Thông báo trước 7 ngày làm việc khi kết thúc chu kỳ.</p>
         </div>
         <div class="actions-btns">
           <button class="pl-btn outline danger-btn" type="button" @click="stopping = true">
-            🛑 Dừng hoặc hủy gói
+            <CircleSlash :size="16" aria-hidden="true" />
+            <span>Dừng hoặc hủy gói</span>
           </button>
           <button
             v-if="data.subscription.payment_method === 'card'"
@@ -58,7 +59,8 @@
             type="button"
             @click="unlinkCardAction"
           >
-            💳 Hủy liên kết thẻ/ví đối tác
+            <CreditCard :size="16" aria-hidden="true" />
+            <span>Hủy liên kết thẻ/ví đối tác</span>
           </button>
           <button
             v-if="data.subscription.payment_method !== 'card'"
@@ -67,7 +69,8 @@
             data-testid="link-card-open"
             @click="linking = true"
           >
-            💳 Liên kết thẻ/ví đối tác
+            <CreditCard :size="16" aria-hidden="true" />
+            <span>Liên kết thẻ/ví đối tác</span>
           </button>
           <button
             v-if="current?.skip?.allowed"
@@ -75,7 +78,8 @@
             type="button"
             @click="skipping = current"
           >
-            ⏸️ Tạm hoãn tuần này (Không mất ưu đãi)
+            <PauseCircle :size="16" aria-hidden="true" />
+            <span>Tạm hoãn tuần này (Không mất ưu đãi)</span>
           </button>
         </div>
       </section>
@@ -91,6 +95,7 @@
 <script setup>
 import { computed, ref, watch, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
+import { CircleSlash, CreditCard, PauseCircle, ShieldCheck } from 'lucide-vue-next';
 import { api } from '../../shared/api';
 import { dowOfKey, parseDayKey } from '../../shared/utils/time';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -181,7 +186,7 @@ async function afterLink() {
 
 async function afterUnlink() {
   linking.value = false;
-  store.toast('✓ Đã hủy liên kết thẻ/ví đối tác thành công');
+  store.toast('Đã hủy liên kết thẻ/ví đối tác thành công');
   await load();
 }
 
@@ -189,7 +194,7 @@ async function unlinkCardAction() {
   if (window.confirm('Bạn có chắc chắn muốn hủy liên kết thẻ/ví đối tác? Sau khi hủy, MOVA sẽ không tự động trừ tiền các tuần tiếp theo.')) {
     const res = await api.customer.unlinkCard();
     if (res.status === 'success') {
-      store.toast('✓ Đã hủy liên kết thẻ/ví đối tác thành công');
+      store.toast('Đã hủy liên kết thẻ/ví đối tác thành công');
       await load();
     } else {
       store.toast(res.error?.message || 'Không thể hủy liên kết lúc này');
@@ -252,13 +257,15 @@ onMounted(async () => {
   gap: 12px;
 }
 .shield-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: var(--green-soft);
   color: var(--green-d);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: .04em;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
   margin-bottom: 4px;
 }

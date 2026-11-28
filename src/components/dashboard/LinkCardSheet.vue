@@ -1,11 +1,12 @@
 <template>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="link-title" @click.self="$emit('close')">
     <div class="mbox box">
-      <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng">×</button>
+      <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng"><X :size="18" aria-hidden="true" /></button>
       <h2 id="link-title" class="pl-h2">Thẻ / ví đối tác</h2>
 
       <p class="state" :class="linked ? 'on' : 'off'" data-testid="link-state">
-        {{ linked ? '✓ Đã liên kết: MOVA trừ tiền từng tuần trước giờ giao 72 tiếng.' : 'Chưa liên kết thẻ hoặc ví đối tác.' }}
+        <Check v-if="linked" :size="16" aria-hidden="true" class="state-ico" />
+        <span>{{ linked ? 'Đã liên kết: MOVA trừ tiền từng tuần trước giờ giao 72 tiếng.' : 'Chưa liên kết thẻ hoặc ví đối tác.' }}</span>
       </p>
 
       <template v-if="!linked">
@@ -32,6 +33,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { Check, X } from 'lucide-vue-next';
 import { api } from '../../shared/api';
 import { isZaloMiniApp, openExternalUrl } from '../../services/zaloMiniApp';
 
@@ -87,7 +89,8 @@ async function unlink() {
 
 <style scoped>
 .box { max-width: 480px; padding: 26px 20px; display: grid; gap: 14px; }
-.state { margin: 0; padding: 10px 14px; border-radius: 12px; font-size: 15px; font-weight: 600; }
+.state { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 10px 14px; border-radius: 12px; font-size: 15px; font-weight: 600; }
+.state-ico { flex-shrink: 0; margin-top: 3px; }
 .state.on { background: var(--green-soft); color: var(--green-d); }
 .state.off { background: var(--butter); color: var(--ink); }
 .btns { display: grid; gap: 10px; }

@@ -47,7 +47,7 @@
           <div class="bx">
             <div class="bx-media">
               <img :src="imgColdbox" alt="Nông sản giữ lạnh 0-4°C với đá gel -18°C" class="bx-photo" loading="lazy" decoding="async" />
-              <span class="bx-tag cold">❄️ -18°C · 0–4°C</span>
+              <span class="bx-tag cold"><Snowflake :size="13" aria-hidden="true" /> -18°C · 0–4°C</span>
             </div>
             <b>Thùng giữ nhiệt &amp; đá gel -18°C</b>
             <p>Đá gel cấp đông −18°C giữ thực phẩm trong khoảng 0–4°C suốt 16 giờ xuyên đêm.</p>
@@ -59,6 +59,7 @@
 </template>
 
 <script setup>
+import { Snowflake } from 'lucide-vue-next';
 import MovaBox3D from './MovaBox3D.vue';
 import { figmaImg } from '../../shared/utils/assets';
 
@@ -195,6 +196,9 @@ const imgColdbox = figmaImg('brand-farm-harvest.webp');
 }
 
 .bx-tag.cold {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: rgba(29, 111, 165, 0.92);
 }
 

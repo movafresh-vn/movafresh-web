@@ -39,7 +39,7 @@
             Tuần này cần {{ fmt(alert.amount_vnd) }}, bạn đang có {{ fmt(alert.balance_vnd) }}, còn thiếu {{ fmt(alert.shortfall_vnd) }}.
             MOVA trừ tiền lúc <b>{{ alert.charge_label }}</b>; nếu chưa đủ, tuần này sẽ bị tạm hoãn khi tới giờ chốt sổ.
           </p>
-          <button class="pl-btn orange sm" type="button" @click="store.openModal('topup')">Nạp thêm Fresh Credit</button>
+          <button class="pl-btn orange sm" type="button" @click="store.openModal('topup')">Mua thêm Gói Fresh Credit</button>
         </section>
 
         <div class="dash-tabs" role="tablist" aria-label="Tài khoản">

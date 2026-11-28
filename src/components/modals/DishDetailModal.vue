@@ -2,13 +2,13 @@
   <div class="dish-modal-overlay" role="dialog" aria-modal="true" :aria-label="dish?.name" @click.self="$emit('close')">
     <div class="dish-modal-box">
       <!-- Nút đóng góc phải -->
-      <button class="mclose" type="button" aria-label="Đóng" @click="$emit('close')">×</button>
+      <button class="mclose" type="button" aria-label="Đóng" @click="$emit('close')"><X :size="20" aria-hidden="true" /></button>
 
       <!-- 1. Ảnh lớn đầu Modal với Gradient tối nhẹ ở đáy -->
       <div class="dish-hero-banner" :class="'theme-' + (dish?.kind || 'protein')">
         <div class="hero-bg-gradient"></div>
         
-        <!-- Ảnh món hoặc fallback gradient nghệ thuật -->
+        <!-- Ảnh món hoặc fallback icon nghệ thuật -->
         <div class="hero-media">
           <img
             v-if="dish?.image"
@@ -18,14 +18,14 @@
             @error="(e) => (e.target.style.display = 'none')"
           />
           <div class="hero-fallback-icon" aria-hidden="true">
-            {{ getDishEmoji(dish) }}
+            <component :is="getDishIcon(dish)" :size="56" :stroke-width="1.6" />
           </div>
         </div>
 
         <!-- Lớp phủ đáy hiển thị thông tin -->
         <div class="hero-content-overlay">
           <div class="hero-meta-row">
-            <span class="terroir-pill">📍 {{ dish?.terroir_region || 'Đắk Lắk' }}</span>
+            <span class="terroir-pill"><MapPin :size="12" aria-hidden="true" /> {{ dish?.terroir_region || 'Đắk Lắk' }}</span>
             <span class="kind-pill" :class="dish?.kind">{{ getKindBadge(dish?.kind) }}</span>
             
             <button
@@ -34,7 +34,9 @@
               :title="copied ? 'Đã sao chép link!' : 'Chia sẻ món ăn'"
               @click="shareDish"
             >
-              {{ copied ? '✓ Đã chép' : '🔗 Chia sẻ' }}
+              <Check v-if="copied" :size="13" aria-hidden="true" />
+              <Sparkles v-else :size="13" aria-hidden="true" />
+              <span>{{ copied ? 'Đã chép' : 'Chia sẻ' }}</span>
             </button>
           </div>
           <h2 class="hero-dish-title">{{ dish?.name }}</h2>
@@ -46,28 +48,28 @@
         <!-- Thanh 4 chỉ số nhanh ngang hàng -->
         <div class="quick-stats-strip">
           <div class="stat-cell">
-            <span class="stat-icon">⏱</span>
+            <span class="stat-icon" aria-hidden="true"><Clock :size="18" /></span>
             <div class="stat-texts">
               <span class="stat-lbl">Thời gian nấu</span>
               <b class="stat-val">15 phút</b>
             </div>
           </div>
           <div class="stat-cell">
-            <span class="stat-icon">🔥</span>
+            <span class="stat-icon" aria-hidden="true"><Flame :size="18" /></span>
             <div class="stat-texts">
               <span class="stat-lbl">Năng lượng</span>
               <b class="stat-val num">{{ nutrition.calories }} kcal</b>
             </div>
           </div>
           <div class="stat-cell">
-            <span class="stat-icon">💪</span>
+            <span class="stat-icon" aria-hidden="true"><Award :size="18" /></span>
             <div class="stat-texts">
               <span class="stat-lbl">Chất đạm</span>
               <b class="stat-val num">{{ nutrition.protein_g }}g</b>
             </div>
           </div>
           <div class="stat-cell">
-            <span class="stat-icon">👨‍🍳</span>
+            <span class="stat-icon" aria-hidden="true"><ChefHat :size="18" /></span>
             <div class="stat-texts">
               <span class="stat-lbl">Độ khó</span>
               <b class="stat-val">Dễ (1 chảo)</b>
@@ -77,12 +79,12 @@
 
         <!-- 3. Mô tả & Câu chuyện Terroir + Mẹo Đầu bếp MOVA -->
         <div v-if="dish?.terroir_story || dish?.chef_note" class="info-section terroir-box">
-          <div class="section-badge">🌿 CÂU CHUYỆN THỔ NHƯỠNG &amp; NÔNG SẢN ĐẶC SẢN</div>
+          <div class="section-badge"><Leaf :size="13" aria-hidden="true" /> CÂU CHUYỆN THỔ NHƯỠNG &amp; NÔNG SẢN ĐẶC SẢN</div>
           <p v-if="dish?.terroir_story" class="terroir-text">
             {{ dish.terroir_story }}
           </p>
           <div v-if="dish?.chef_note" class="chef-note-box">
-            <span class="chef-avatar">👨‍🍳</span>
+            <span class="chef-avatar" aria-hidden="true"><ChefHat :size="18" /></span>
             <div>
               <b>Mẹo vàng từ Đầu bếp MOVA:</b>
               <p>{{ dish.chef_note }}</p>
@@ -93,7 +95,7 @@
         <!-- 4. Cảnh báo Dị ứng 2 tầng (Zero-Tolerance) -->
         <div class="info-section allergy-box">
           <div class="allergy-header">
-            <span class="allergy-title-badge">🛡️ THÔNG TIN CHẤT DỊ ỨNG &amp; AN TOÀN BẾP</span>
+            <span class="allergy-title-badge"><ShieldCheck :size="14" aria-hidden="true" /> THÔNG TIN CHẤT DỊ ỨNG &amp; AN TOÀN BẾP</span>
             <span class="zero-badge">Zero-Tolerance</span>
           </div>
           
@@ -102,24 +104,26 @@
             <span class="tier-label">Chất gây dị ứng có trong món:</span>
             <div class="allergen-tags">
               <span v-for="tag in allergenList" :key="tag.label" class="allergen-tag" :class="tag.type">
-                {{ tag.icon }} {{ tag.label }}
+                <component :is="tag.iconComp" :size="13" aria-hidden="true" />
+                <span>{{ tag.label }}</span>
               </span>
               <span v-if="!allergenList.length" class="safe-tag">
-                ✓ Không chứa chất gây dị ứng phổ biến
+                <Check :size="13" aria-hidden="true" /> Không chứa chất gây dị ứng phổ biến
               </span>
             </div>
           </div>
 
           <!-- Tầng 2: Ghi chú quy chuẩn nhà máy Đắk Lắk -->
           <p class="allergy-tier-2">
-            ℹ️ <b>Ghi chú sơ chế:</b> Nguyên liệu được phân luồng vô trùng và sơ chế tách riêng tại xưởng Đắk Lắk có xử lý hải sản, đậu phộng, mè và đậu nành. Đóng khay hút chân không kèm dán nhãn phân loại màu.
+            <Info :size="14" aria-hidden="true" class="tier2-ico" />
+            <span><b>Ghi chú sơ chế:</b> Nguyên liệu được phân luồng vô trùng và sơ chế tách riêng tại xưởng Đắk Lắk có xử lý hải sản, đậu phộng, mè và đậu nành. Đóng khay hút chân không kèm dán nhãn phân loại màu.</span>
           </p>
         </div>
 
         <!-- 5. Lưới Nguyên liệu 2 cột (Khẩu phần cho X người) -->
         <div class="info-section">
           <div class="section-header-row">
-            <h3 class="section-title">⚖️ Thành phần &amp; Định lượng tịnh</h3>
+            <h3 class="section-title"><Scale :size="17" aria-hidden="true" /> Thành phần &amp; Định lượng tịnh</h3>
             <span class="portion-badge">Khẩu phần cho <b>{{ householdSize }} người</b></span>
           </div>
 
@@ -135,7 +139,7 @@
             <!-- Gói xốt đặc biệt đi kèm -->
             <div class="ing-card sauce-card">
               <div class="ing-top">
-                <span class="ing-name">🍶 {{ sauceInfo.name }}</span>
+                <span class="ing-name ing-sauce-name"><Sparkles :size="14" aria-hidden="true" /> {{ sauceInfo.name }}</span>
                 <b class="ing-grams num">{{ sauceInfo.grams }}g</b>
               </div>
               <small class="ing-spec">{{ sauceInfo.desc }}</small>
@@ -148,7 +152,7 @@
           <!-- Cột 1: Gia vị bếp cơ bản (không kèm trong hộp) -->
           <div class="prep-card">
             <div class="prep-header">
-              <span class="p-icon">🧂</span>
+              <span class="p-icon" aria-hidden="true"><Sparkles :size="18" /></span>
               <div>
                 <b>Gia vị bếp cơ bản</b>
                 <small class="prep-sub">Không kèm trong hộp</small>
@@ -167,7 +171,7 @@
           <!-- Cột 2: Dụng cụ cần dùng -->
           <div class="prep-card">
             <div class="prep-header">
-              <span class="p-icon">🍳</span>
+              <span class="p-icon" aria-hidden="true"><Utensils :size="18" /></span>
               <div>
                 <b>Dụng cụ cần dùng</b>
                 <small class="prep-sub">Chỉ 15 phút — 1 chảo</small>
@@ -186,7 +190,7 @@
 
         <!-- 7. Bảng giá trị dinh dưỡng đầy đủ -->
         <div class="info-section">
-          <h3 class="section-title">🥗 Giá trị dinh dưỡng (1 khẩu phần chuẩn)</h3>
+          <h3 class="section-title"><Salad :size="17" aria-hidden="true" /> Giá trị dinh dưỡng (1 khẩu phần chuẩn)</h3>
           <div class="full-nutri-table">
             <div class="nutri-box">
               <span class="n-val num">{{ nutrition.calories }}</span>
@@ -218,7 +222,7 @@
 
         <!-- 8. 3 bước nấu nhanh dạng thẻ đánh số rõ ràng -->
         <div class="info-section">
-          <h3 class="section-title">⏱️ 3 bước nấu nhanh (15 phút — 1 chảo)</h3>
+          <h3 class="section-title"><Clock :size="17" aria-hidden="true" /> 3 bước nấu nhanh (15 phút — 1 chảo)</h3>
           <div class="cooking-steps-stack">
             <div v-for="(st, idx) in formattedSteps" :key="idx" class="step-card-item">
               <div class="step-number-pill">Bước {{ idx + 1 }}</div>
@@ -239,7 +243,8 @@
           :disabled="isCurrent"
           @click="$emit('select', dish)"
         >
-          {{ isCurrent ? '✓ Món hiện tại trong thực đơn' : 'Chọn đổi sang món này' }}
+          <Check v-if="isCurrent" :size="16" aria-hidden="true" />
+          <span>{{ isCurrent ? 'Món hiện tại trong thực đơn' : 'Chọn đổi sang món này' }}</span>
         </button>
       </div>
     </div>
@@ -248,6 +253,11 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import {
+  Award, Beef, Check, ChefHat, Clock, Drumstick, Flame, Info, Leaf,
+  MapPin, Milk, Salad, Scale, Shell, ShieldCheck, Soup, Sparkles, Sprout,
+  Utensils, UtensilsCrossed, Wheat, X
+} from 'lucide-vue-next';
 import { SKUS, SAUCES } from '../../shared/data/catalog';
 import { recipeFor } from '../../shared/data/recipes';
 
@@ -272,19 +282,19 @@ function shareDish() {
   }
 }
 
-function getDishEmoji(d) {
-  if (!d) return '🍲';
+function getDishIcon(d) {
+  if (!d) return Soup;
   if (d.kind === 'protein') {
-    if (d.tags?.includes('beef')) return '🥩';
-    if (d.tags?.includes('pork')) return '🥓';
-    if (d.tags?.includes('seafood')) return '🦐';
-    return '🍗';
+    if (d.tags?.includes('beef')) return Beef;
+    if (d.tags?.includes('pork')) return Drumstick;
+    if (d.tags?.includes('seafood')) return Shell;
+    return UtensilsCrossed;
   }
-  if (d.kind === 'veg') return '🥬';
-  if (d.kind === 'soup') return '🍲';
-  if (d.kind === 'carb') return '🍚';
-  if (d.kind === 'dessert') return '🍇';
-  return '🍽️';
+  if (d.kind === 'veg') return Salad;
+  if (d.kind === 'soup') return Soup;
+  if (d.kind === 'carb') return Utensils;
+  if (d.kind === 'dessert') return Sprout;
+  return UtensilsCrossed;
 }
 
 function getKindBadge(kind) {
@@ -312,12 +322,12 @@ const nutrition = computed(() => {
 const allergenList = computed(() => {
   const tags = props.dish?.tags || [];
   const list = [];
-  if (tags.includes('seafood')) list.push({ label: 'Hải sản / Tôm cá', icon: '🦐', type: 'danger' });
-  if (tags.includes('beef')) list.push({ label: 'Thịt bò', icon: '🥩', type: 'warn' });
-  if (tags.includes('pork')) list.push({ label: 'Thịt heo', icon: '🥓', type: 'warn' });
-  if (tags.includes('spicy')) list.push({ label: 'Ớt cay', icon: '🌶️', type: 'warn' });
-  if (tags.includes('gluten')) list.push({ label: 'Gluten / Bột mì', icon: '🌾', type: 'danger' });
-  if (tags.includes('lactose')) list.push({ label: 'Lactose / Sữa', icon: '🥛', type: 'danger' });
+  if (tags.includes('seafood')) list.push({ label: 'Hải sản / Tôm cá', iconComp: Shell, type: 'danger' });
+  if (tags.includes('beef')) list.push({ label: 'Thịt bò', iconComp: Beef, type: 'warn' });
+  if (tags.includes('pork')) list.push({ label: 'Thịt heo', iconComp: Drumstick, type: 'warn' });
+  if (tags.includes('spicy')) list.push({ label: 'Ớt cay', iconComp: Flame, type: 'warn' });
+  if (tags.includes('gluten')) list.push({ label: 'Gluten / Bột mì', iconComp: Wheat, type: 'danger' });
+  if (tags.includes('lactose')) list.push({ label: 'Lactose / Sữa', iconComp: Milk, type: 'danger' });
   return list;
 });
 
@@ -382,7 +392,7 @@ const formattedSteps = computed(() => {
 .dish-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.7);
+  background: var(--overlay-dark);
   backdrop-filter: blur(5px);
   z-index: 1050;
   display: flex;
@@ -402,31 +412,29 @@ const formattedSteps = computed(() => {
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(16, 24, 40, 0.3);
+  box-shadow: var(--shadow-sheet);
 }
 
 .mclose {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
   z-index: 20;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(24, 21, 17, 0.56);
   color: var(--white);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  font-size: 22px;
-  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, transform 0.15s ease;
 }
 .mclose:hover {
-  background: rgba(15, 23, 42, 0.85);
-  transform: scale(1.08);
+  background: rgba(24, 21, 17, 0.84);
+  transform: scale(1.06);
 }
 
 /* 1. Hero banner */
@@ -442,25 +450,25 @@ const formattedSteps = computed(() => {
   flex-shrink: 0;
 }
 .dish-hero-banner.theme-protein {
-  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-dd) 60%, var(--ink) 100%);
+  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-dd) 65%, var(--ink-forest) 100%);
 }
 .dish-hero-banner.theme-veg {
-  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-d) 60%, var(--green-dd) 100%);
+  background: linear-gradient(135deg, var(--green) 0%, var(--forest) 100%);
 }
 .dish-hero-banner.theme-soup {
-  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-ink) 60%, var(--blue-ink) 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-ink) 55%, var(--ink-forest) 100%);
 }
 .dish-hero-banner.theme-carb {
-  background: linear-gradient(135deg, var(--amber-ink) 0%, var(--amber-ink) 60%, var(--amber-ink) 100%);
+  background: linear-gradient(135deg, var(--amber-ink) 0%, var(--brown) 100%);
 }
 .dish-hero-banner.theme-dessert {
-  background: linear-gradient(135deg, var(--violet) 0%, var(--violet) 60%, var(--violet) 100%);
+  background: linear-gradient(135deg, var(--violet) 0%, var(--ink-dark) 100%);
 }
 
 .hero-bg-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+  background: linear-gradient(to top, var(--scrim-dark) 0%, transparent 60%);
   z-index: 2;
   pointer-events: none;
 }
@@ -478,9 +486,10 @@ const formattedSteps = computed(() => {
   object-fit: cover;
 }
 .hero-fallback-icon {
-  font-size: 90px;
-  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.4));
-  opacity: 0.9;
+  padding-bottom: 58px;
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 0.24;
+  pointer-events: none;
 }
 
 .hero-content-overlay {
@@ -497,12 +506,15 @@ const formattedSteps = computed(() => {
   flex-wrap: wrap;
 }
 .terroir-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11.5px;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(4px);
   color: var(--white);
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
@@ -511,31 +523,36 @@ const formattedSteps = computed(() => {
   font-weight: 700;
   background: var(--red-orange-d);
   color: var(--white);
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
 }
 .share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   margin-left: auto;
-  margin-right: 40px;
+  margin-right: 48px;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.4);
   color: var(--white);
   font-size: 11.5px;
   font-weight: 600;
-  padding: 3px 10px;
+  padding: 5px 12px;
+  min-height: 32px;
   border-radius: 999px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 .share-btn:hover {
   background: rgba(255, 255, 255, 0.35);
 }
 .hero-dish-title {
-  font-size: 21px;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
   margin: 0;
   line-height: 1.3;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 6px rgba(24, 21, 17, 0.65);
 }
 
 /* 2. Thân Modal */
@@ -570,7 +587,11 @@ const formattedSteps = computed(() => {
   gap: 8px;
 }
 .stat-icon {
-  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-d);
+  flex-shrink: 0;
 }
 .stat-texts {
   display: grid;
@@ -591,12 +612,18 @@ const formattedSteps = computed(() => {
   gap: 10px;
 }
 .section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 800;
   color: var(--green-d);
   letter-spacing: 0.05em;
 }
 .section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-size: 15px;
   font-weight: 800;
   color: var(--ink);
@@ -638,8 +665,12 @@ const formattedSteps = computed(() => {
   margin-top: 4px;
 }
 .chef-avatar {
-  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-d);
   flex-shrink: 0;
+  margin-top: 2px;
 }
 .chef-note-box b {
   font-size: 12.5px;
@@ -668,6 +699,9 @@ const formattedSteps = computed(() => {
   align-items: center;
 }
 .allergy-title-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   font-weight: 800;
   color: var(--amber-ink);
@@ -697,9 +731,12 @@ const formattedSteps = computed(() => {
   gap: 6px;
 }
 .allergen-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 12px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 6px;
 }
 .allergen-tag.danger {
@@ -711,14 +748,20 @@ const formattedSteps = computed(() => {
   color: var(--amber-ink);
 }
 .safe-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 12px;
   font-weight: 700;
   background: var(--green-soft);
   color: var(--green-d);
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 6px;
 }
 .allergy-tier-2 {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   font-size: 12px;
   color: var(--amber-ink);
   line-height: 1.45;
@@ -726,6 +769,7 @@ const formattedSteps = computed(() => {
   padding-top: 6px;
   border-top: 1px dashed var(--amber-line);
 }
+.tier2-ico { flex-shrink: 0; margin-top: 2px; }
 
 /* Ingredients Grid */
 .ingredients-grid {
@@ -799,7 +843,11 @@ const formattedSteps = computed(() => {
   gap: 8px;
 }
 .p-icon {
-  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-d);
+  flex-shrink: 0;
 }
 .prep-header b {
   font-size: 13.5px;

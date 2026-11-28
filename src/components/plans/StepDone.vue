@@ -1,7 +1,7 @@
 <template>
   <div v-if="r" class="done">
     <section class="pl-card hero">
-      <span class="tick" aria-hidden="true">✓</span>
+      <span class="tick" aria-hidden="true"><Check :size="30" :stroke-width="2.8" /></span>
       <h1 class="pl-h1">MOVA đã nhận gói {{ r.cycle_weeks.length }} tuần của bạn</h1>
       <p class="pl-lead">Nhà máy Đắk Lắk sẽ bắt đầu sơ chế theo thực đơn bạn đã chọn.</p>
     </section>
@@ -51,6 +51,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { Check } from 'lucide-vue-next';
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
 import { BUSINESS } from '../../shared/config/business';
 import { fmt } from '../../shared/utils/formatters';
@@ -62,7 +63,7 @@ const r = computed(() => store.result);
 const rewards = BUSINESS.incentives.rewards;
 const copied = ref(false);
 
-const METHODS = { fresh_credit: 'Nạp Fresh Credit', bank_transfer_4w: 'Chuyển khoản một lần cho cả gói', card: 'Liên kết thẻ, tự trừ từng tuần' };
+const METHODS = { fresh_credit: 'Gói Suất ăn trả trước (Fresh Credit)', bank_transfer_4w: 'Chuyển khoản một lần cho cả gói', card: 'Liên kết thẻ/ví đối tác, tự trừ từng tuần' };
 const methodLabel = computed(() => METHODS[r.value.payment_method] || '');
 
 async function invite() {
@@ -86,7 +87,7 @@ async function invite() {
 <style scoped>
 .done { display: grid; gap: 16px; max-width: 680px; margin: 0 auto; }
 .hero { text-align: center; background: var(--green-soft); border-color: var(--green-line); }
-.tick { width: 60px; height: 60px; border-radius: 50%; background: var(--green); color: var(--white); display: inline-grid; place-items: center; font-size: 32px; font-weight: 800; margin-bottom: 10px; }
+.tick { width: 60px; height: 60px; border-radius: 50%; background: var(--green); color: var(--white); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 10px; }
 .sum { display: grid; gap: 14px; }
 dl { margin: 0; display: grid; gap: 0; }
 dl > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line-2); font-size: 16px; }

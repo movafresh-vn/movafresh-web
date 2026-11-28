@@ -364,7 +364,7 @@ a.btn.orange:hover:not(:disabled) {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(40, 37, 31, .52);
+  background: var(--overlay-dark);
   backdrop-filter: blur(4px);
   display: grid;
   place-items: center;
@@ -411,10 +411,10 @@ a.btn.orange:hover:not(:disabled) {
 
 .mclose {
   position: absolute;
-  right: 14px;
-  top: 14px;
-  width: 40px;
-  height: 40px;
+  right: 12px;
+  top: 12px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   border: 1px solid var(--line);
   background: var(--cream-warm);

@@ -1,7 +1,7 @@
 <template>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="stop-title" @click.self="$emit('close')">
     <div class="mbox box">
-      <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng">×</button>
+      <button class="mclose" type="button" @click="$emit('close')" aria-label="Đóng"><X :size="18" aria-hidden="true" /></button>
       <h2 id="stop-title" class="pl-h2">{{ p && p.unpaid ? 'Hủy gói chưa thanh toán?' : 'Dừng gói?' }}</h2>
 
       <p v-if="loading" class="pl-note" style="text-align: center; padding: 24px 0;">Đang tải thông tin hủy hoặc dừng gói...</p>
@@ -26,7 +26,7 @@
 
         <section v-else class="pl-panel plan-details" aria-label="Chi tiết bữa ăn chưa nhận">
           <div class="meals-summary">
-            <span class="icon">📦</span>
+            <span class="icon" aria-hidden="true"><PackageCheck :size="22" /></span>
             <div>
               <b>Số bữa chưa giao: <span class="num">{{ p.undelivered_meals || (p.weeks_cancelled * 5) }}</span> bữa</b>
               <p class="pl-note" style="margin: 0;">(Tổng cộng {{ p.weeks_cancelled }} tuần chưa chốt sổ sản xuất)</p>
@@ -48,7 +48,8 @@
           <h3>Số tiền hoàn lại thực tế</h3>
           <p class="refund num">{{ fmt(p.refund_vnd) }}</p>
           <div class="refund-promise">
-            🛡️ <b>Cam kết Luật BVQLNTD 19/2023:</b> Hoàn tiền về tài khoản nguồn trong vòng <b>7 ngày làm việc</b>.
+            <ShieldCheck :size="16" aria-hidden="true" class="promise-ico" />
+            <span><b>Cam kết Luật BVQLNTD 19/2023:</b> Hoàn tiền về tài khoản nguồn trong vòng <b>7 ngày làm việc</b>.</span>
           </div>
           <p class="pl-note" style="margin-top: 6px;">Hoàn 100% phần tiền ăn tương ứng với các bữa ăn chưa giao. {{ p.weeks_cancelled }} tuần chưa chốt sổ sẽ được hủy<template v-if="p.kept_orders">; {{ p.kept_orders }} chuyến đã chốt sổ nhà máy vẫn được giao đúng hẹn</template>.</p>
         </section>
@@ -72,6 +73,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { PackageCheck, ShieldCheck, X } from 'lucide-vue-next';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -140,8 +142,9 @@ dd { margin: 0; font-weight: 700; }
 .total dd { font-size: 20px; color: var(--orange-ink); }
 .refund { font-size: 28px; font-weight: 800; color: var(--green-d); margin: 4px 0; }
 .meals-summary { display: flex; align-items: center; gap: 12px; }
-.meals-summary .icon { font-size: 24px; }
-.refund-promise { background: var(--green-tint); border-radius: 8px; padding: 8px 12px; font-size: 14px; color: var(--green-d); margin: 8px 0; }
+.meals-summary .icon { display: inline-flex; align-items: center; justify-content: center; color: var(--green-d); flex-shrink: 0; }
+.refund-promise { display: flex; align-items: flex-start; gap: 8px; background: var(--green-tint); border-radius: 8px; padding: 8px 12px; font-size: 14px; color: var(--green-d); margin: 8px 0; }
+.promise-ico { flex-shrink: 0; margin-top: 2px; }
 .alt { background: var(--butter); border-color: var(--amber-line); }
 .btns { display: grid; gap: 10px; }
 .pl-btn.danger { background: var(--white); border-color: var(--red); color: var(--red); }

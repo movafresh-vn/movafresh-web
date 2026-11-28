@@ -1,7 +1,7 @@
 <template>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="swap-title" @click.self="close">
     <div class="mbox box">
-      <button class="mclose" type="button" :disabled="busy" @click="close" aria-label="Đóng">×</button>
+      <button class="mclose" type="button" :disabled="busy" @click="close" aria-label="Đóng"><X :size="18" aria-hidden="true" /></button>
       <h2 id="swap-title" class="pl-h2">Đổi món linh hoạt</h2>
       <p class="pl-note">Tuần {{ week.number }}, bữa {{ target.meal.meal_index }}. Đang chọn: <b>{{ target.dish.name }}</b></p>
 
@@ -23,7 +23,8 @@
             class="open-factory-btn"
             @click="showFactoryModal = true"
           >
-            🏪 Mở toàn bộ thực đơn nhà máy
+            <Store :size="15" aria-hidden="true" />
+            <span>Mở toàn bộ thực đơn nhà máy</span>
           </button>
         </div>
 
@@ -101,13 +102,13 @@
         </div>
 
         <p v-if="preview.settle && !preview.settle.enough" class="pl-error" role="alert">
-          Fresh Credit còn thiếu {{ fmt(preview.settle.short_vnd) }} cho phần chênh lệch này. Nạp thêm rồi đổi lại, hoặc chọn món khác.
+          Fresh Credit còn thiếu {{ fmt(preview.settle.short_vnd) }} cho phần chênh lệch này. Hãy mua thêm Gói Suất ăn rồi đổi lại, hoặc chọn món khác.
         </p>
         <p v-if="error" class="pl-error" role="alert">{{ error }}</p>
 
         <div class="btns">
           <button v-if="!preview.settle || preview.settle.enough" class="pl-btn primary" type="button" :disabled="busy" @click="confirm">Xác nhận đổi món</button>
-          <button v-else class="pl-btn orange" type="button" @click="topup">Nạp thêm Fresh Credit</button>
+          <button v-else class="pl-btn orange" type="button" @click="topup">Mua thêm Gói Fresh Credit</button>
           <button class="pl-btn" type="button" :disabled="busy || uncertain" @click="preview = null">Chọn món khác</button>
         </div>
       </template>
@@ -139,6 +140,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { Store, X } from 'lucide-vue-next';
 import { api } from '../../shared/api';
 import { newKey } from '../../shared/api/http';
 import { fmt } from '../../shared/utils/formatters';
@@ -290,6 +292,11 @@ function topup() {
 .swap-search-bar { margin: -4px 0 4px; display: flex; gap: 8px; flex-wrap: wrap; }
 .search-box { flex: 1; min-width: 200px; border-radius: 10px; font-size: 14px; padding: 8px 12px; }
 .open-factory-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
   padding: 8px 12px;
   background: var(--green-soft);
   color: var(--green-d);
@@ -347,7 +354,7 @@ function topup() {
 .sub-modal {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: var(--overlay-dark);
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -366,7 +373,7 @@ function topup() {
   display: grid;
   gap: 10px;
   position: relative;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: var(--shadow-sheet);
 }
 .detail-header { display: grid; gap: 4px; }
 .terroir-pill { font-size: 12px; font-weight: 700; color: var(--green-d); background: var(--green-soft); padding: 2px 8px; border-radius: 6px; width: fit-content; }

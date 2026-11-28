@@ -18,7 +18,7 @@
             Áp dụng cho mọi giao dịch đặt mua Gói Suất ăn trả trước và dịch vụ giao hàng định kỳ trên nền tảng <b>MOVA FRESH</b>.
           </p>
           <div class="legal-notice-box">
-            <b>⚖️ Căn cứ pháp lý áp dụng:</b>
+            <b class="notice-head"><Scale :size="15" aria-hidden="true" /> Căn cứ pháp lý áp dụng:</b>
             <ul>
               <li>Luật Bảo vệ quyền lợi người tiêu dùng số 19/2023/QH15 về giao dịch trên không gian mạng và dịch vụ cung cấp liên tục.</li>
               <li>Nghị định số 52/2024/NĐ-CP của Chính phủ quy định về thanh toán không dùng tiền mặt.</li>
@@ -94,11 +94,11 @@
           </p>
           <div class="contact-box">
             <p><b>Công ty Cổ phần Thực phẩm Sạch MOVA FRESH Việt Nam</b></p>
-            <p>📍 Xưởng sơ chế: Xã Hòa Thắng, TP. Buôn Ma Thuột, Đắk Lắk</p>
-            <p>📍 Trung tâm phân phối: Phường Tân Phong, Quận 7, TP. Hồ Chí Minh</p>
-            <p>📞 Hotline hỗ trợ bếp: <b>1900 8899</b> (06:00 – 21:00 hàng ngày)</p>
-            <p>💬 Zalo Official Account: <b>MOVA FRESH Official</b></p>
-            <p>✉️ Email tiếp nhận: <b>hotro@movafresh.vn</b></p>
+            <p class="c-line"><MapPin :size="15" aria-hidden="true" /><span>Xưởng sơ chế: Xã Hòa Thắng, TP. Buôn Ma Thuột, Đắk Lắk</span></p>
+            <p class="c-line"><MapPin :size="15" aria-hidden="true" /><span>Trung tâm phân phối: Phường Tân Phong, Quận 7, TP. Hồ Chí Minh</span></p>
+            <p class="c-line"><Phone :size="15" aria-hidden="true" /><span>Hotline hỗ trợ bếp: <b>1900 8899</b> (06:00 – 21:00 hàng ngày)</span></p>
+            <p class="c-line"><MessageCircle :size="15" aria-hidden="true" /><span>Zalo Official Account: <b>MOVA FRESH Official</b></span></p>
+            <p class="c-line"><Mail :size="15" aria-hidden="true" /><span>Email tiếp nhận: <b>hotro@movafresh.vn</b></span></p>
           </div>
         </section>
 
@@ -110,6 +110,10 @@
     </div>
   </div>
 </template>
+
+<script setup>
+import { Mail, MapPin, MessageCircle, Phone, Scale } from 'lucide-vue-next';
+</script>
 
 <style scoped>
 .legal-page {
@@ -240,6 +244,21 @@
 }
 .contact-box p {
   margin: 0;
+}
+.notice-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.contact-box .c-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.contact-box .c-line :deep(svg),
+.notice-head :deep(svg) {
+  color: var(--green-d);
+  flex-shrink: 0;
 }
 
 .legal-footer {

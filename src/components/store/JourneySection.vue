@@ -4,7 +4,7 @@
       <!-- Top Figma Value Ribbon (Butter Cream on Deep Olive) -->
       <div class="value-ribbon" role="list" aria-label="6 cam kết từ trại tới bếp">
         <div v-for="v in highlights" :key="v.label" class="ribbon-item" role="listitem">
-          <span class="ribbon-icon" aria-hidden="true">{{ v.icon }}</span>
+          <span class="ribbon-icon" aria-hidden="true"><component :is="v.iconComp" :size="16" :stroke-width="2" /></span>
           <span>{{ v.label }}</span>
         </div>
       </div>
@@ -37,6 +37,7 @@
 </template>
 
 <script setup>
+import { ChefHat, ClipboardList, Clock, Leaf, Snowflake, Sparkles } from 'lucide-vue-next';
 import { BUSINESS } from '../../shared/config/business';
 
 const t = BUSINESS.timings;
@@ -44,12 +45,12 @@ const pad = (n) => String(n).padStart(2, '0');
 const slotLabels = [...new Set(BUSINESS.zones.flatMap((z) => z.slots.map((s) => s.label)))];
 
 const highlights = [
-  { icon: '🥬', label: 'Sơ chế sạch 100%' },
-  { icon: '❄️', label: 'Xe lạnh 0–4°C Đắk Lắk' },
-  { icon: '🍳', label: 'Nấu gọn 15 phút – 1 chảo' },
-  { icon: '🥣', label: 'Gói xốt MOVA định lượng' },
-  { icon: '🕒', label: 'Khung giờ xanh tiết kiệm' },
-  { icon: '📋', label: 'Chốt giờ giao minh bạch' }
+  { iconComp: Leaf, label: 'Sơ chế sạch 100%' },
+  { iconComp: Snowflake, label: 'Xe lạnh 0–4°C Đắk Lắk' },
+  { iconComp: ChefHat, label: 'Nấu gọn 15 phút – 1 chảo' },
+  { iconComp: Sparkles, label: 'Gói xốt MOVA định lượng' },
+  { iconComp: Clock, label: 'Khung giờ xanh tiết kiệm' },
+  { iconComp: ClipboardList, label: 'Chốt giờ giao minh bạch' }
 ];
 
 // Mọi mốc giờ lấy từ cấu hình vận hành
@@ -110,7 +111,10 @@ const steps = [
 }
 
 .ribbon-icon {
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-d);
   flex-shrink: 0;
 }
 

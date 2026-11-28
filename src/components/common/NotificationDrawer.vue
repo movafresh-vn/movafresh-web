@@ -3,7 +3,7 @@
     <aside class="drawer" :class="{ open: store.notifDrawerOpen }" aria-label="Thông báo" :aria-hidden="!store.notifDrawerOpen">
       <div class="drawer-hdr">
         <h3>Thông báo từ MOVA</h3>
-        <button class="sheet-x" type="button" @click="store.notifDrawerOpen = false" aria-label="Đóng thông báo">×</button>
+        <button class="sheet-x" type="button" @click="store.notifDrawerOpen = false" aria-label="Đóng thông báo"><X :size="20" aria-hidden="true" /></button>
       </div>
       <div class="drawer-body">
         <div v-if="!store.hasMovaSession" class="empty">
@@ -31,6 +31,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { X } from 'lucide-vue-next';
 import { useMovaStore } from '../../stores/useMovaStore';
 import { fmtDeadline } from '../../shared/utils/time';
 
@@ -42,8 +43,8 @@ function describe(n) {
   const st = n.meta && n.meta.status;
   switch (n.type) {
     case 'charge_upcoming': return { label: 'Sắp trừ tiền', tone: 'money', action: { label: 'Xem tuần này', go: '/account' } };
-    case 'low_credit': return { label: 'Cần nạp thêm', tone: 'warn', action: { label: 'Nạp thêm Fresh Credit', topup: true } };
-    case 'payment_failed': return { label: 'Chưa trừ được tiền', tone: 'warn', action: { label: 'Nạp thêm Fresh Credit', topup: true } };
+    case 'low_credit': return { label: 'Cần bổ sung gói', tone: 'warn', action: { label: 'Mua thêm Gói Fresh Credit', topup: true } };
+    case 'payment_failed': return { label: 'Chưa trừ được tiền', tone: 'warn', action: { label: 'Mua thêm Gói Fresh Credit', topup: true } };
     case 'delivery_reminder': return { label: 'Sắp giao', tone: 'info' };
     case 'delivery_status':
       if (st === 'shipped') return { label: 'Đang giao', tone: 'info' };

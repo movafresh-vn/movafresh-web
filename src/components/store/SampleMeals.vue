@@ -69,7 +69,7 @@
       <!-- Chef Showcase Modal -->
       <div v-if="showVideoModal" class="modal" role="dialog" aria-modal="true" @click.self="showVideoModal = false">
         <div class="video-modal-box">
-          <button class="mclose" type="button" @click="showVideoModal = false" aria-label="Đóng hướng dẫn">×</button>
+          <button class="mclose" type="button" @click="showVideoModal = false" aria-label="Đóng hướng dẫn"><X :size="20" aria-hidden="true" /></button>
           <div class="video-frame">
             <div class="chef-player">
               <div class="player-header">
@@ -79,10 +79,10 @@
               <div class="player-screen">
                 <img :src="heroDishPreview" alt="Mâm cơm Việt MOVA 5 món" class="player-photo" />
                 <div class="steps-overlay">
-                  <div class="s-step">✓ 00:00 — Mở túi thịt bò sơ chế sẵn hút chân không</div>
-                  <div class="s-step">✓ 05:00 — Áp chảo thịt 2 phút, rưới gói xốt tiêu đen Chư Sê</div>
-                  <div class="s-step">✓ 10:00 — Xào nhanh bông cải xanh baby Đà Lạt trên cùng 1 chảo</div>
-                  <div class="s-step">✓ 15:00 — Trọn mâm cơm nóng hổi, không bừa bếp rửa dọn</div>
+                  <div class="s-step"><Check :size="14" aria-hidden="true" /> <span>00:00 — Mở túi thịt bò sơ chế sẵn hút chân không</span></div>
+                  <div class="s-step"><Check :size="14" aria-hidden="true" /> <span>05:00 — Áp chảo thịt 2 phút, rưới gói xốt tiêu đen Chư Sê</span></div>
+                  <div class="s-step"><Check :size="14" aria-hidden="true" /> <span>10:00 — Xào nhanh bông cải xanh baby Đà Lạt trên cùng 1 chảo</span></div>
+                  <div class="s-step"><Check :size="14" aria-hidden="true" /> <span>15:00 — Trọn mâm cơm nóng hổi, không bừa bếp rửa dọn</span></div>
                 </div>
               </div>
               <div class="player-controls">
@@ -99,6 +99,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { Check, X } from 'lucide-vue-next';
 import MealCard from '../plans/MealCard.vue';
 import BaseButton from '../ui/BaseButton.vue';
 import { DISHES, SAUCES } from '../../shared/data/catalog';
@@ -447,14 +448,13 @@ const tilts = [
 .mclose {
   position: absolute;
   top: 12px;
-  right: 16px;
-  background: rgba(255, 255, 255, 0.12);
+  right: 12px;
+  background: rgba(255, 255, 255, 0.14);
   border: 0;
   border-radius: 999px;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   color: var(--text-on-dark);
-  font-size: 26px;
   cursor: pointer;
   display: grid;
   place-items: center;
@@ -504,6 +504,17 @@ const tilts = [
   gap: 8px;
   font-size: 14px;
   color: rgba(255, 255, 255, 0.92);
+}
+
+.s-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.s-step :deep(svg) {
+  color: var(--harvest-gold);
+  flex-shrink: 0;
 }
 
 .player-controls {

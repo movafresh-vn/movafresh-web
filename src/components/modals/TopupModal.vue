@@ -1,7 +1,7 @@
 <template>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="topup-title" @click.self="store.closeModal">
     <div class="mbox box">
-      <button class="mclose" type="button" @click="store.closeModal" aria-label="Đóng">×</button>
+      <button class="mclose" type="button" @click="store.closeModal" aria-label="Đóng"><X :size="18" aria-hidden="true" /></button>
       <h2 id="topup-title" class="pl-h2">Mua Gói Suất ăn trả trước</h2>
 
       <p v-if="loading" class="pl-note" role="status">Đang tải các gói…</p>
@@ -46,6 +46,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { X } from 'lucide-vue-next';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { fmtDeadline } from '../../shared/utils/time';

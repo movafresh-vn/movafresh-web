@@ -4,7 +4,10 @@
 
     <ul v-if="answered.length" class="done">
       <li v-for="q in answered" :key="q.id">
-        <span class="mark" :class="{ no: !q.answer }">{{ q.answer ? '✓' : '–' }}</span>
+        <span class="mark" :class="{ no: !q.answer }">
+          <Check v-if="q.answer" :size="14" :stroke-width="2.6" aria-hidden="true" />
+          <Minus v-else :size="14" :stroke-width="2.4" aria-hidden="true" />
+        </span>
         <span class="txt">
           {{ q.question }}
           <b>{{ q.answer ? 'Có' : 'Không' }}</b>
@@ -29,6 +32,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import { Check, Minus } from 'lucide-vue-next';
 import { fmt } from '../../shared/utils/formatters';
 
 const props = defineProps({ questions: { type: Array, required: true } });

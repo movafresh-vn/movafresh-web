@@ -91,7 +91,7 @@
           <div class="family-steppers-grid">
             <!-- Stepper Người lớn -->
             <div class="stepper-card">
-              <span class="stepper-label">👨‍🦰 Người lớn</span>
+              <span class="stepper-label"><User :size="16" aria-hidden="true" /> Người lớn</span>
               <PeopleStepper
                 :model-value="adultsCount"
                 :min="1"
@@ -104,7 +104,7 @@
 
             <!-- Stepper Trẻ em (0-12 tuổi) -->
             <div class="stepper-card">
-              <span class="stepper-label">🧒 Trẻ em (0–12 tuổi)</span>
+              <span class="stepper-label"><Baby :size="16" aria-hidden="true" /> Trẻ em (0–12 tuổi)</span>
               <PeopleStepper
                 :model-value="childrenCount"
                 :min="0"
@@ -118,21 +118,21 @@
 
           <!-- Huy hiệu tổng số suất & lưu ý trẻ nhỏ -->
           <div class="family-summary-badge">
-            <span class="total-head">🍽️ Tổng quy mô: <b>{{ totalHouseholdSize }} thành viên</b> (~{{ totalHouseholdSize }} suất/bữa)</span>
+            <span class="total-head"><UtensilsCrossed :size="16" aria-hidden="true" /> Tổng quy mô: <b>{{ totalHouseholdSize }} thành viên</b> (~{{ totalHouseholdSize }} suất/bữa)</span>
             <p v-if="childrenCount > 0" class="child-priority-hint">
-              👶 <b>Nhà có trẻ nhỏ:</b> Đầu bếp MOVA sẽ tự động ưu tiên các món mềm ngọt tự nhiên, thanh đạm và lọc tuyệt đối ớt cay để bé ăn ngon miệng.
+              <Heart :size="15" aria-hidden="true" class="inline-ico" /> <span><b>Nhà có trẻ nhỏ:</b> Đầu bếp MOVA sẽ tự động ưu tiên các món mềm ngọt tự nhiên, thanh đạm và lọc tuyệt đối ớt cay để bé ăn ngon miệng.</span>
             </p>
           </div>
         </div>
 
-        <!-- 3. Khẩu vị & Nguồn đạm (👍 / 👎) -->
+        <!-- 3. Khẩu vị & Nguồn đạm (Thích / Hạn chế) -->
         <div v-else-if="q === 3" class="step-body">
-          <h2 class="step-title">Khẩu vị & Nguồn đạm yêu thích của gia đình?</h2>
-          <p class="step-sub">Bấm 👍 (Thích) để ưu tiên nhiều hơn, hoặc 👎 (Hạn chế) nếu nhà bạn ít ăn món đó.</p>
+          <h2 class="step-title">Khẩu vị &amp; Nguồn đạm yêu thích của gia đình?</h2>
+          <p class="step-sub">Chọn Thích để ưu tiên nhiều hơn, hoặc Hạn chế nếu nhà bạn ít ăn món đó.</p>
 
           <!-- Nhóm Nguồn Đạm -->
           <div class="pref-section">
-            <h3 class="pref-group-title">🥩 6 Nhóm nguồn đạm tươi sạch</h3>
+            <h3 class="pref-group-title"><Beef :size="17" aria-hidden="true" /> 6 Nhóm nguồn đạm tươi sạch</h3>
             <div class="thumbs-grid">
               <div
                 v-for="p in PROTEIN_SOURCES"
@@ -144,7 +144,7 @@
                 }"
               >
                 <div class="item-info">
-                  <span class="item-icon">{{ p.icon }}</span>
+                  <span class="item-icon" aria-hidden="true"><component :is="p.iconComp" :size="19" :stroke-width="1.9" /></span>
                   <div class="item-texts">
                     <b class="item-name">{{ p.name }}</b>
                     <small class="item-desc">{{ p.desc }}</small>
@@ -157,18 +157,22 @@
                     class="thumb-btn like"
                     :class="{ active: getProteinPref(p.id) === 'like' }"
                     :title="`Thích ${p.name}`"
+                    :aria-label="`Thích ${p.name}`"
+                    :aria-pressed="getProteinPref(p.id) === 'like'"
                     @click="setProteinPref(p.id, 'like')"
                   >
-                    👍
+                    <ThumbsUp :size="16" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     class="thumb-btn dislike"
                     :class="{ active: getProteinPref(p.id) === 'dislike' }"
                     :title="`Hạn chế ${p.name}`"
+                    :aria-label="`Hạn chế ${p.name}`"
+                    :aria-pressed="getProteinPref(p.id) === 'dislike'"
                     @click="setProteinPref(p.id, 'dislike')"
                   >
-                    👎
+                    <ThumbsDown :size="16" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -177,7 +181,7 @@
 
           <!-- Nhóm Phong cách ẩm thực -->
           <div class="pref-section" style="margin-top: 14px;">
-            <h3 class="pref-group-title">🥢 3 Phong cách ẩm thực</h3>
+            <h3 class="pref-group-title"><Utensils :size="17" aria-hidden="true" /> 3 Phong cách ẩm thực</h3>
             <div class="thumbs-grid">
               <div
                 v-for="c in CUISINE_STYLES"
@@ -189,7 +193,7 @@
                 }"
               >
                 <div class="item-info">
-                  <span class="item-icon">{{ c.icon }}</span>
+                  <span class="item-icon" aria-hidden="true"><component :is="c.iconComp" :size="19" :stroke-width="1.9" /></span>
                   <div class="item-texts">
                     <b class="item-name">{{ c.name }}</b>
                     <small class="item-desc">{{ c.desc }}</small>
@@ -202,18 +206,22 @@
                     class="thumb-btn like"
                     :class="{ active: getCuisinePref(c.id) === 'like' }"
                     :title="`Thích phong cách ${c.name}`"
+                    :aria-label="`Thích phong cách ${c.name}`"
+                    :aria-pressed="getCuisinePref(c.id) === 'like'"
                     @click="setCuisinePref(c.id, 'like')"
                   >
-                    👍
+                    <ThumbsUp :size="16" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     class="thumb-btn dislike"
                     :class="{ active: getCuisinePref(c.id) === 'dislike' }"
                     :title="`Hạn chế ${c.name}`"
+                    :aria-label="`Hạn chế ${c.name}`"
+                    :aria-pressed="getCuisinePref(c.id) === 'dislike'"
                     @click="setCuisinePref(c.id, 'dislike')"
                   >
-                    👎
+                    <ThumbsDown :size="16" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -237,9 +245,9 @@
               :aria-pressed="isAvoidSelected(item.id)"
               @click="toggleAvoidItem(item.id)"
             >
-              <span class="sq-icon">{{ item.icon }}</span>
+              <span class="sq-icon" aria-hidden="true"><component :is="item.iconComp" :size="20" :stroke-width="1.85" /></span>
               <span class="sq-label">{{ item.label }}</span>
-              <span v-if="isAvoidSelected(item.id)" class="sq-check">✓</span>
+              <span v-if="isAvoidSelected(item.id)" class="sq-check" aria-hidden="true"><Check :size="14" :stroke-width="2.6" /></span>
             </button>
           </div>
 
@@ -255,7 +263,7 @@
               @input="analyzeAvoidText"
             />
             <p v-if="avoidAnalysisTags.length" class="auto-tag-hint">
-              ✓ Đã tự động loại trừ: <b>{{ avoidAnalysisTags.join(', ') }}</b>
+              <Check :size="14" aria-hidden="true" /> Đã tự động loại trừ: <b>{{ avoidAnalysisTags.join(', ') }}</b>
             </p>
           </div>
         </div>
@@ -312,7 +320,7 @@
               @input="analyzeNeedText"
             />
             <p v-if="needAnalysisTags.length" class="auto-tag-hint">
-              ✓ Đã tự động ghi nhận: <b>{{ needAnalysisTags.join(', ') }}</b>
+              <Check :size="14" aria-hidden="true" /> Đã tự động ghi nhận: <b>{{ needAnalysisTags.join(', ') }}</b>
             </p>
           </div>
         </div>
@@ -380,10 +388,10 @@
           </div>
         </div>
 
-        <!-- HỘP CAM KẾT MÀU XANH LÁ NHẠT (#ECFDF3) GÓC DƯỚI TRÁI -->
+        <!-- HỘP CAM KẾT NGỮ CẢNH -->
         <div class="context-commitment-box" role="note">
           <div class="c-head">
-            <span class="c-icon">{{ currentCommitment.icon }}</span>
+            <span class="c-icon" aria-hidden="true"><component :is="currentCommitment.iconComp" :size="18" :stroke-width="2" /></span>
             <b class="c-title">{{ currentCommitment.title }}</b>
           </div>
           <p class="c-desc">{{ currentCommitment.desc }}</p>
@@ -407,19 +415,21 @@
         </div>
       </div>
 
-      <!-- Cột Phải: Khung hình ảnh ẩm thực / hộp nguyên liệu tươi bo góc lớn (20px) -->
+      <!-- Cột Phải: Khung hình ảnh ẩm thực nguyên bản, không bị che tâm -->
       <aside class="about-right" aria-label="Hình ảnh ẩm thực minh họa">
         <div class="visual-card">
           <div class="visual-img-container">
             <img :src="currentSceneImage" :alt="currentSceneTitle" class="visual-photo" loading="eager" decoding="async" />
             <div class="visual-art" :class="'scene-q' + q">
-              <div class="art-overlay-gradient"></div>
               <div class="art-badge-strip">
-                <span class="art-badge">{{ currentSceneBadge }}</span>
-                <span class="art-badge alt">⏱ Nấu 15 phút — 1 chảo</span>
-              </div>
-              <div class="art-center-illustration">
-                <span class="center-emoji">{{ currentSceneEmoji }}</span>
+                <span class="art-badge">
+                  <component :is="currentSceneBadge.iconComp" :size="13" aria-hidden="true" />
+                  <span>{{ currentSceneBadge.text }}</span>
+                </span>
+                <span class="art-badge alt">
+                  <Clock :size="13" aria-hidden="true" />
+                  <span>Nấu 15 phút — 1 chảo</span>
+                </span>
               </div>
               <div class="art-caption-box">
                 <h4 class="art-caption-title">{{ currentSceneTitle }}</h4>
@@ -431,16 +441,16 @@
           <!-- Dải 3 ưu điểm cốt lõi chân khung ảnh -->
           <div class="visual-pillars">
             <div class="pillar-item">
-              <span class="p-icon">🌿</span>
+              <span class="p-icon" aria-hidden="true"><Leaf :size="17" :stroke-width="1.9" /></span>
               <span>Đắk Lắk sơ chế sạch</span>
             </div>
             <div class="pillar-item">
-              <span class="p-icon">❄️</span>
+              <span class="p-icon" aria-hidden="true"><Snowflake :size="17" :stroke-width="1.9" /></span>
               <span>Xe lạnh 0–4°C xuyên đêm</span>
             </div>
             <div class="pillar-item">
-              <span class="p-icon">✨</span>
-              <span>Đổi món & dừng 1 chạm</span>
+              <span class="p-icon" aria-hidden="true"><Sparkles :size="17" :stroke-width="1.9" /></span>
+              <span>Đổi món &amp; dừng 1 chạm</span>
             </div>
           </div>
         </div>
@@ -452,6 +462,12 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import {
+  Baby, Ban, Beef, Check, ChefHat, Clock, Drumstick, Fish, Flame,
+  Heart, Leaf, Milk, Nut, PenLine, Salad, Shell, ShieldCheck,
+  Snowflake, Sparkles, Sprout, ThumbsDown, ThumbsUp, Truck, User,
+  Users, Utensils, UtensilsCrossed, Wallet, Wheat
+} from 'lucide-vue-next';
 import PeopleStepper from './PeopleStepper.vue';
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
 import { api } from '../../shared/api';
@@ -518,19 +534,19 @@ function updateChildren(val) {
 
 // Danh mục 6 nhóm đạm tươi sạch
 const PROTEIN_SOURCES = [
-  { id: 'beef', name: 'Thịt bò Tây Nguyên', icon: '🥩', desc: 'Thăn bò đồi Bazan mềm ngọt' },
-  { id: 'pork', name: 'Thịt heo thảo mộc', icon: '🥓', desc: 'Ba rọi, sườn non Cư M\'gar thơm sạch' },
-  { id: 'chicken', name: 'Gà đồi Đắk Lắk', icon: '🍗', desc: 'Gà thả vườn thớ thịt săn chắc' },
-  { id: 'fish', name: 'Cá biển tươi Vũng Tàu', icon: '🐟', desc: 'Cá bớp cắt khoanh dày ngọt thịt' },
-  { id: 'seafood', name: 'Tôm & Hải sản', icon: '🦐', desc: 'Tôm sú bóc nõn rút chỉ tiện lợi' },
-  { id: 'plant', name: 'Đạm thực vật & Nấm', icon: '🥑', desc: 'Đậu hũ non, nấm đùi gà thanh nhẹ' }
+  { id: 'beef', name: 'Thịt bò Tây Nguyên', iconComp: Beef, desc: 'Thăn bò đồi Bazan mềm ngọt' },
+  { id: 'pork', name: 'Thịt heo thảo mộc', iconComp: Drumstick, desc: 'Ba rọi, sườn non Cư M\'gar thơm sạch' },
+  { id: 'chicken', name: 'Gà đồi Đắk Lắk', iconComp: UtensilsCrossed, desc: 'Gà thả vườn thớ thịt săn chắc' },
+  { id: 'fish', name: 'Cá biển tươi Vũng Tàu', iconComp: Fish, desc: 'Cá bớp cắt khoanh dày ngọt thịt' },
+  { id: 'seafood', name: 'Tôm & Hải sản', iconComp: Shell, desc: 'Tôm sú bóc nõn rút chỉ tiện lợi' },
+  { id: 'plant', name: 'Đạm thực vật & Nấm', iconComp: Sprout, desc: 'Đậu hũ non, nấm đùi gà thanh nhẹ' }
 ];
 
 // Danh mục 3 phong cách ẩm thực
 const CUISINE_STYLES = [
-  { id: 'viet', name: 'Thuần Việt', icon: '🍚', desc: 'Cơm nhà 3 miền chuẩn vị Á Đông ấm cúng' },
-  { id: 'asian', name: 'Đồ Á hiện đại', icon: '🥢', desc: 'Món Hàn, Trung, Đài phong vị đậm đà' },
-  { id: 'western', name: 'Đồ Tây thượng hạng', icon: '🍝', desc: 'Steak bò, áp chảo, mì Ý xốt kem nấm' }
+  { id: 'viet', name: 'Thuần Việt', iconComp: Salad, desc: 'Cơm nhà 3 miền chuẩn vị Á Đông ấm cúng' },
+  { id: 'asian', name: 'Đồ Á hiện đại', iconComp: Utensils, desc: 'Món Hàn, Trung, Đài phong vị đậm đà' },
+  { id: 'western', name: 'Đồ Tây thượng hạng', iconComp: ChefHat, desc: 'Steak bò, áp chảo, mì Ý xốt kem nấm' }
 ];
 
 function getProteinPref(id) {
@@ -583,17 +599,17 @@ function setCuisinePref(id, type) {
 
 // Danh mục Kiêng cữ / Dị ứng dạng lưới ô vuông
 const ALLERGY_ITEMS = [
-  { id: 'none', label: 'Không kiêng gì', icon: '🥗' },
-  { id: 'no_seafood', label: 'Hải sản', icon: '🐟' },
-  { id: 'no_shellfish', label: 'Tôm cua vỏ', icon: '🦀' },
-  { id: 'no_peanuts', label: 'Đậu phộng', icon: '🥜' },
-  { id: 'no_nuts', label: 'Các loại hạt', icon: '🌰' },
-  { id: 'no_gluten', label: 'Gluten', icon: '🌾' },
-  { id: 'no_lactose', label: 'Sữa/Lactose', icon: '🥛' },
-  { id: 'no_beef', label: 'Không ăn Bò', icon: '🥩' },
-  { id: 'no_pork', label: 'Không ăn Heo', icon: '🥓' },
-  { id: 'no_spicy', label: 'Không ăn cay', icon: '🌶️' },
-  { id: 'custom_avoid', label: 'Khác (tự nhập)', icon: '✍️' }
+  { id: 'none', label: 'Không kiêng gì', iconComp: Check },
+  { id: 'no_seafood', label: 'Hải sản', iconComp: Fish },
+  { id: 'no_shellfish', label: 'Tôm cua vỏ', iconComp: Shell },
+  { id: 'no_peanuts', label: 'Đậu phộng', iconComp: Nut },
+  { id: 'no_nuts', label: 'Các loại hạt', iconComp: Sprout },
+  { id: 'no_gluten', label: 'Gluten', iconComp: Wheat },
+  { id: 'no_lactose', label: 'Sữa/Lactose', iconComp: Milk },
+  { id: 'no_beef', label: 'Không ăn Bò', iconComp: Beef },
+  { id: 'no_pork', label: 'Không ăn Heo', iconComp: Ban },
+  { id: 'no_spicy', label: 'Không ăn cay', iconComp: Flame },
+  { id: 'custom_avoid', label: 'Khác (tự nhập)', iconComp: PenLine }
 ];
 
 const showCustomAvoidInput = ref(false);
@@ -816,13 +832,13 @@ const currentCommitment = computed(() => {
   switch (q.value) {
     case 1:
       return {
-        icon: '🚚',
+        iconComp: Truck,
         title: 'Sơ chế sạch 100% từ Đắk Lắk, xe lạnh 0–4°C xuyên đêm:',
-        desc: 'Nông sản và thịt cá được xơ chế đóng khay vô trùng tại Buôn Ma Thuột, chuyển xe lạnh về TP.HCM lúc sáng sớm. Bạn luôn có thể đổi từng món hoặc dừng gói 1 chạm bất kỳ lúc nào.'
+        desc: 'Nông sản và thịt cá được sơ chế đóng khay vô trùng tại Buôn Ma Thuột, chuyển xe lạnh về TP.HCM lúc sáng sớm. Bạn luôn có thể đổi từng món hoặc dừng gói 1 chạm bất kỳ lúc nào.'
       };
     case 2:
       return {
-        icon: '👨‍🍳',
+        iconComp: ChefHat,
         title: 'Khẩu phần may đo chuẩn xác từng gram:',
         desc: childrenCount.value > 0
           ? 'Định lượng theo số người lớn và trẻ nhỏ. Đầu bếp MOVA tự động ưu tiên các món mềm ngọt tự nhiên, vị thanh mát, hoàn toàn không cay cho các bữa ăn có bé nhỏ.'
@@ -830,31 +846,31 @@ const currentCommitment = computed(() => {
       };
     case 3:
       return {
-        icon: '🥩',
+        iconComp: Beef,
         title: 'Đa dạng nguồn đạm, cân đối dinh dưỡng mỗi ngày:',
         desc: 'Đầu bếp MOVA tự động xếp thực đơn luân phiên giữa Bò Tây Nguyên, Heo thảo mộc, Gà đồi và Cá biển tươi, kết hợp gói xốt công thức riêng giúp mâm cơm gia đình không bao giờ ngán.'
       };
     case 4:
       return {
-        icon: '🛡️',
+        iconComp: ShieldCheck,
         title: 'Cam kết Zero-Tolerance lọc cứng 100% chất dị ứng:',
         desc: 'Hệ thống loại trừ tuyệt đối mọi món ăn chứa nguyên liệu bạn kiêng cữ. Phân xưởng Đắk Lắk sơ chế phân luồng cách ly, đảm bảo an toàn tuyệt đối cho người thân.'
       };
     case 5:
       return {
-        icon: '🥗',
+        iconComp: Salad,
         title: 'Linh hoạt số bữa & Cân bằng calo gia đình:',
         desc: 'Từ 3 đến 7 bữa/tuần tùy lịch sinh hoạt của nhà bạn. Bạn có thể tạm hoãn tuần bận rộn hoặc đổi món thoải mái trước giờ chốt sổ 08:00 sáng ngày D-2.'
       };
     case 6:
       return {
-        icon: '💰',
+        iconComp: Wallet,
         title: 'Kiểm soát chi tiêu, hoàn tiền minh bạch trong 7 ngày:',
         desc: 'Ngân sách chỉ là trần mềm định hướng. Bạn trả trước theo gói nhưng luôn có thể dừng gói bất kỳ lúc nào và nhận hoàn 100% tiền ăn các bữa chưa giao trong 7 ngày làm việc.'
       };
     default:
       return {
-        icon: '✨',
+        iconComp: Sparkles,
         title: 'Cam kết chất lượng từ MOVA Fresh:',
         desc: 'Thực phẩm sạch chuẩn vị gia đình, nói không với COD trôi nổi và không chất bảo quản công nghiệp.'
       };
@@ -864,25 +880,13 @@ const currentCommitment = computed(() => {
 // Trực quan hóa Visual Card cột phải
 const currentSceneBadge = computed(() => {
   switch (q.value) {
-    case 1: return '🚚 Chuỗi xe lạnh 0–4°C';
-    case 2: return '👨‍👩‍👧‍👦 Mâm cơm gia đình 5 món';
-    case 3: return '🥩 Đạm sạch Tây Nguyên';
-    case 4: return '🛡️ An toàn dị ứng 100%';
-    case 5: return '🥗 Dinh dưỡng cân đối';
-    case 6: return '💰 Tiết kiệm 2 giờ/ngày';
-    default: return '🌿 Nông sản Đắk Lắk';
-  }
-});
-
-const currentSceneEmoji = computed(() => {
-  switch (q.value) {
-    case 1: return '🚛';
-    case 2: return '🍲';
-    case 3: return '🥩';
-    case 4: return '🥦';
-    case 5: return '🍱';
-    case 6: return '⚖️';
-    default: return '🎁';
+    case 1: return { iconComp: Truck, text: 'Chuỗi xe lạnh 0–4°C' };
+    case 2: return { iconComp: Users, text: 'Mâm cơm gia đình 5 món' };
+    case 3: return { iconComp: Beef, text: 'Đạm sạch Tây Nguyên' };
+    case 4: return { iconComp: ShieldCheck, text: 'An toàn dị ứng 100%' };
+    case 5: return { iconComp: Salad, text: 'Dinh dưỡng cân đối' };
+    case 6: return { iconComp: Wallet, text: 'Tiết kiệm 2 giờ/ngày' };
+    default: return { iconComp: Leaf, text: 'Nông sản Đắk Lắk' };
   }
 });
 
@@ -1104,6 +1108,9 @@ function clearBudgetAndFinish() {
   gap: 10px;
 }
 .stepper-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 14px;
   font-weight: 700;
   color: var(--ink);
@@ -1114,26 +1121,39 @@ function clearBudgetAndFinish() {
   border-radius: 12px;
   padding: 10px 14px;
   display: grid;
-  gap: 4px;
+  gap: 6px;
   margin-bottom: 12px;
 }
 .total-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 14px;
   color: var(--green-d);
 }
 .child-priority-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   font-size: 13px;
   color: var(--green-d);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.45;
+}
+.inline-ico {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
-/* Thumbs Prefs (👍 / 👎) */
+/* Thumbs Prefs */
 .pref-section {
   display: grid;
   gap: 8px;
 }
 .pref-group-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-size: 14px;
   font-weight: 800;
   color: var(--ink);
@@ -1170,7 +1190,14 @@ function clearBudgetAndFinish() {
   flex: 1;
 }
 .item-icon {
-  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--green-d);
   flex-shrink: 0;
 }
 .item-texts {
@@ -1192,31 +1219,34 @@ function clearBudgetAndFinish() {
   flex-shrink: 0;
 }
 .thumb-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1px solid var(--line-strong);
   background: var(--white);
-  font-size: 15px;
+  color: var(--muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .thumb-btn:hover {
-  transform: scale(1.08);
+  transform: scale(1.06);
   border-color: var(--faint);
+  color: var(--ink);
 }
 .thumb-btn.like.active {
-  background: var(--green);
-  border-color: var(--green);
-  box-shadow: 0 2px 8px rgba(20, 108, 67, 0.3);
+  background: var(--green-d);
+  border-color: var(--green-d);
+  color: var(--text-on-primary);
+  box-shadow: var(--shadow-sm);
 }
 .thumb-btn.dislike.active {
-  background: var(--orange);
-  border-color: var(--orange);
-  box-shadow: 0 2px 8px rgba(217, 83, 30, 0.3);
+  background: var(--red-orange-d);
+  border-color: var(--red-orange-d);
+  color: var(--text-on-accent);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Lưới ô vuông dị ứng */
@@ -1236,26 +1266,32 @@ function clearBudgetAndFinish() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 10px 6px;
-  min-height: 64px;
+  gap: 5px;
+  padding: 10px 8px;
+  min-height: 68px;
   border-radius: 12px;
   border: 1.5px solid var(--line);
   background: var(--white);
   cursor: pointer;
   position: relative;
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 .allergy-square-btn:hover {
   border-color: var(--faint);
   transform: translateY(-1px);
 }
 .allergy-square-btn.on {
-  border-color: var(--green);
+  border-color: var(--green-d);
   background: var(--green-tint);
 }
 .sq-icon {
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-2);
+}
+.allergy-square-btn.on .sq-icon {
+  color: var(--green-d);
 }
 .sq-label {
   font-size: 12px;
@@ -1266,17 +1302,17 @@ function clearBudgetAndFinish() {
 }
 .sq-check {
   position: absolute;
-  top: 4px;
+  top: 6px;
   right: 6px;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--green);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-d);
 }
 
 /* Hộp cam kết ngữ cảnh (var(--green-tint)) */
 .context-commitment-box {
   margin-top: auto;
-  padding-top: 14px;
   margin-bottom: 12px;
   background: var(--green-tint);
   border: 1px solid var(--green-line);
@@ -1288,10 +1324,14 @@ function clearBudgetAndFinish() {
 .c-head {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .c-icon {
-  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-d);
+  flex-shrink: 0;
 }
 .c-title {
   font-size: 13px;
@@ -1329,12 +1369,14 @@ function clearBudgetAndFinish() {
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-md);
-  height: 100%;
+  position: sticky;
+  top: 92px;
 }
 .visual-img-container {
   flex: 1;
   position: relative;
-  min-height: 380px;
+  min-height: 440px;
+  max-height: 520px;
   overflow: hidden;
   background: var(--ink);
 }
@@ -1355,33 +1397,8 @@ function clearBudgetAndFinish() {
   padding: 20px;
   position: relative;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(24, 21, 17, 0.36) 0%, rgba(24, 21, 17, 0.28) 45%, rgba(24, 21, 17, 0.86) 100%);
+  background: linear-gradient(180deg, var(--scrim-top) 0%, transparent 28%, transparent 50%, var(--scrim-dark) 100%);
   color: var(--text-on-dark);
-}
-.visual-art.scene-q1 {
-  background: linear-gradient(180deg, rgba(6, 95, 60, 0.34) 0%, rgba(24, 21, 17, 0.86) 100%);
-}
-.visual-art.scene-q2 {
-  background: linear-gradient(180deg, rgba(84, 63, 24, 0.32) 0%, rgba(24, 21, 17, 0.86) 100%);
-}
-.visual-art.scene-q3 {
-  background: linear-gradient(180deg, rgba(196, 58, 20, 0.32) 0%, rgba(24, 21, 17, 0.86) 100%);
-}
-.visual-art.scene-q4 {
-  background: linear-gradient(180deg, rgba(13, 79, 139, 0.32) 0%, rgba(24, 21, 17, 0.86) 100%);
-}
-.visual-art.scene-q5 {
-  background: linear-gradient(180deg, rgba(82, 101, 43, 0.32) 0%, rgba(24, 21, 17, 0.86) 100%);
-}
-.visual-art.scene-q6 {
-  background: linear-gradient(180deg, rgba(40, 37, 31, 0.32) 0%, rgba(24, 21, 17, 0.86) 100%);
-}
-
-.art-overlay-gradient {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15), transparent 70%);
-  pointer-events: none;
 }
 .art-badge-strip {
   display: flex;
@@ -1392,59 +1409,45 @@ function clearBudgetAndFinish() {
   z-index: 2;
 }
 .art-badge {
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(6px);
-  color: var(--white);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(24, 21, 17, 0.56);
+  backdrop-filter: blur(8px);
+  color: var(--text-on-dark);
   font-size: 11.5px;
   font-weight: 700;
-  padding: 5px 11px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   white-space: nowrap;
 }
 .art-badge.alt {
-  background: rgba(217, 83, 30, 0.85);
-  border-color: rgba(217, 83, 30, 0.9);
+  background: var(--red-orange-d);
+  border-color: var(--red-orange);
+  color: var(--text-on-accent);
 }
-
-.art-center-illustration {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: auto 0;
-  position: relative;
-  z-index: 2;
-}
-.center-emoji {
-  font-size: 80px;
-  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.35));
-  animation: floatEmoji 3s ease-in-out infinite alternate;
-}
-@keyframes floatEmoji {
-  from { transform: translateY(0px) scale(1); }
-  to { transform: translateY(-8px) scale(1.05); }
-}
-
 .art-caption-box {
   position: relative;
   z-index: 2;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(24, 21, 17, 0.72);
   backdrop-filter: blur(8px);
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.16);
 }
 .art-caption-title {
-  font-size: 15px;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
   margin: 0 0 4px;
-  color: var(--white);
+  color: var(--text-on-dark);
 }
 .art-caption-sub {
-  font-size: 12px;
+  font-size: 12.5px;
   margin: 0;
-  color: var(--line);
-  line-height: 1.4;
+  color: var(--on-dark-muted);
+  line-height: 1.45;
 }
 
 .visual-pillars {
@@ -1459,14 +1462,17 @@ function clearBudgetAndFinish() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   text-align: center;
   font-size: 11px;
   font-weight: 600;
   color: var(--muted);
 }
 .p-icon {
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-d);
 }
 
 /* Social & Form styles */
@@ -1590,14 +1596,19 @@ function clearBudgetAndFinish() {
   .about-right {
     order: -1;
   }
-  .visual-img-container {
-    min-height: 200px;
+  .visual-card {
+    position: static;
   }
-  .center-emoji {
-    font-size: 52px;
+  .visual-img-container {
+    min-height: 220px;
+    max-height: 320px;
   }
   .art-caption-title {
-    font-size: 14px;
+    font-size: 14.5px;
+  }
+  .thumb-btn {
+    width: 44px;
+    height: 44px;
   }
 }
 </style>

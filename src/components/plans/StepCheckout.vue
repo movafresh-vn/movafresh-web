@@ -25,7 +25,7 @@
           :type="isDateMode ? 'date' : 'text'"
           :readonly="!isDateMode"
           placeholder="Chọn ngày (MOVA tự chọn sớm nhất)"
-          :min="earliestCycleDate || undefined"
+          :min="minSelectableDate || undefined"
           :disabled="loadingDates"
           @focus="activateDatePicker"
           @click="activateDatePicker"
@@ -33,46 +33,79 @@
           @change="changeStartDate"
         />
         <span v-if="!isDateMode" class="date-ico-right" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="3" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
+          <Calendar :size="18" :stroke-width="2" />
         </span>
       </div>
+      <div v-if="earliestFeasible" class="earliest-banner" data-testid="earliest-available" role="status">
+        <CalendarCheck :size="16" aria-hidden="true" class="earliest-ico" />
+        <span><b>Sớm nhất khả dụng:</b> {{ fmtDay(earliestFeasible.delivery_date) }} · {{ earliestFeasible.slot.label }}</span>
+      </div>
+      <p v-if="dateSnapNotice" class="pl-note need" role="status">{{ dateSnapNotice }}</p>
       <p class="pl-note">MOVA sẽ tìm ngày giao phù hợp từ ngày bạn chọn<template v-if="availDatesMeta.min_lead_hours"> (đặt trước tối thiểu {{ availDatesMeta.min_lead_hours }} giờ theo khu vực)</template>.</p>
 
       <!-- Bảng ngày giao khả dụng theo giờ máy chủ kèm khung giờ & trạng thái khóa lô -->
       <div v-if="availDates.length" class="avail-board" data-testid="available-dates">
-        <p class="pl-label">Chọn nhanh ngày giao khả dụng</p>
-        <ul class="avail-list">
-          <li v-for="d in availDates" :key="d.delivery_date" class="avail-day">
+        <p class="pl-label avail-board-title">Chọn nhanh ngày giao khả dụng</p>
+        <div class="avail-list" role="list">
+          <div
+            v-for="d in availDates"
+            :key="d.delivery_date"
+            role="listitem"
+            class="avail-day"
+            :class="{
+              'is-closed': dateCardStates[d.delivery_date]?.isClosed,
+              'is-earliest': dateCardStates[d.delivery_date]?.isEarliest,
+              'is-selected-day': c.startDate === d.delivery_date && dateCardStates[d.delivery_date]?.hasAvailable
+            }"
+          >
             <div class="avail-day-head">
-              <b>{{ fmtDay(d.delivery_date) }}</b>
-              <span v-if="d.is_holiday" class="pl-pill">Ngày lễ</span>
-              <span v-else-if="d.batch_locked" class="pl-pill">Lô đã chốt</span>
-              <span v-else-if="isCycleBlockedDate(d.delivery_date)" class="pl-pill" title="Đã có gói trong chu kỳ này">Đã có gói trong chu kỳ này</span>
+              <b class="avail-day-label">{{ fmtDay(d.delivery_date) }}</b>
+              <span
+                v-if="dateCardStates[d.delivery_date]?.statusTag"
+                class="avail-status-badge"
+                :class="'kind-' + dateCardStates[d.delivery_date].statusKind"
+                :title="dateCardStates[d.delivery_date].statusTag"
+              >
+                {{ dateCardStates[d.delivery_date].statusTag }}
+              </span>
             </div>
             <div class="avail-slots">
               <button
                 v-for="s in d.slots"
                 :key="d.delivery_date + ':' + s.slot_id"
                 type="button"
-                class="pl-chip sm"
-                :class="{ on: c.startDate === d.delivery_date && c.slotId === s.slot_id }"
-                :disabled="!s.available || loadingDates || isCycleBlockedDate(d.delivery_date)"
+                class="avail-slot-btn"
+                :class="{
+                  on: c.startDate === d.delivery_date && c.slotId === s.slot_id && isSlotSelectable(d, s, earliestCycleDate),
+                  'is-green-hour': s.slot_id === 'early_morning_06_08',
+                  'is-disabled': !isSlotSelectable(d, s, earliestCycleDate)
+                }"
+                :disabled="!isSlotSelectable(d, s, earliestCycleDate) || loadingDates"
+                :aria-pressed="c.startDate === d.delivery_date && c.slotId === s.slot_id && isSlotSelectable(d, s, earliestCycleDate)"
                 :title="isCycleBlockedDate(d.delivery_date) ? 'Đã có gói trong chu kỳ này' : undefined"
                 @click="pickAvailableDate(d, s)"
               >
-                <span>{{ s.label }}</span>
-                <small v-if="isCycleBlockedDate(d.delivery_date)">Đã có gói trong chu kỳ này</small>
-                <small v-else-if="s.available" class="num">Còn {{ s.remaining }}</small>
-                <small v-else>{{ reasonLabel(s.reason) }}</small>
+                <span class="slot-left">
+                  <span class="slot-title-line">
+                    <span v-if="c.startDate === d.delivery_date && c.slotId === s.slot_id && isSlotSelectable(d, s, earliestCycleDate)" class="slot-active-check" aria-hidden="true">
+                      <Check :size="14" :stroke-width="2.6" />
+                    </span>
+                    <span class="slot-time-label">{{ s.label }}</span>
+                  </span>
+                  <span v-if="s.slot_id === 'early_morning_06_08'" class="slot-green-tag">Khung giờ xanh</span>
+                </span>
+                <span
+                  class="slot-right-pill num"
+                  :class="isSlotSelectable(d, s, earliestCycleDate) ? 'is-open' : 'is-off'"
+                >
+                  <template v-if="isCycleBlockedDate(d.delivery_date)">Đã có gói</template>
+                  <template v-else-if="isSlotSelectable(d, s, earliestCycleDate)">Còn {{ s.remaining }} suất</template>
+                  <template v-else>{{ reasonLabel(s.reason) }}</template>
+                </span>
               </button>
             </div>
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
 
       <template v-if="options && options.options.length">
@@ -145,7 +178,8 @@
 
         <!-- Dòng nhắc lịch giao cố định -->
         <p class="fixed-delivery-reminder">
-          📅 <b>Lịch giao cố định:</b> Các tuần tiếp theo sẽ tự động giao vào đúng <b>{{ selectedDayLabel }}</b> hàng tuần — bạn có thể đổi ngày hoặc tạm dừng bất kỳ lúc nào trước <b>08:00 sáng ngày D-2</b>.
+          <CalendarCheck :size="17" aria-hidden="true" class="inline-icon-top" />
+          <span><b>Lịch giao cố định:</b> Các tuần tiếp theo sẽ tự động giao vào đúng <b>{{ selectedDayLabel }}</b> hàng tuần — bạn có thể đổi ngày hoặc tạm dừng bất kỳ lúc nào trước <b>08:00 sáng ngày D-2</b>.</span>
         </p>
       </template>
       <div v-else-if="options" class="pl-panel warn" role="alert">
@@ -188,7 +222,7 @@
             >
               Xác thực SĐT (OTP)
             </button>
-            <span v-else class="verified-pill">✓ Đã xác thực</span>
+            <span v-else class="verified-pill"><Check :size="14" aria-hidden="true" /> Đã xác thực</span>
           </div>
           <div v-if="inMiniApp && !c.phoneVerified" class="pl-panel zalo-phone-consent" data-testid="zalo-phone-consent-box">
             <p class="pl-note">Dùng số điện thoại để định danh đơn hàng và bảo toàn số dư Fresh Credit của bạn.</p>
@@ -315,12 +349,15 @@
           </button>
           <div v-if="c.method === 'card'" class="m-body">
             <div class="unlink-commitment">
-              <span class="c-shield">🛡️</span>
+              <span class="c-shield" aria-hidden="true"><ShieldCheck :size="20" :stroke-width="2" /></span>
               <div>
                 <b>Cam kết minh bạch:</b> Bạn có thể hủy liên kết thẻ/ví đối tác bất kỳ lúc nào chỉ với 1 chạm tại trang quản lý gói.
               </div>
             </div>
-            <p v-if="store.cardLinkNeeded || preview" class="pl-note" data-testid="card-state">{{ store.cardLinkNeeded ? 'Chưa liên kết thẻ/ví đối tác.' : '✓ Đã liên kết thẻ/ví đối tác.' }}</p>
+            <p v-if="store.cardLinkNeeded || preview" class="pl-note" data-testid="card-state">
+              <template v-if="store.cardLinkNeeded">Chưa liên kết thẻ/ví đối tác.</template>
+              <span v-else class="inline-status"><Check :size="14" aria-hidden="true" /> Đã liên kết thẻ/ví đối tác.</span>
+            </p>
             <button class="pl-btn outline sm-btn" type="button" data-testid="link-card-open" @click="linkOpen = true">{{ store.cardLinkNeeded ? 'Liên kết thẻ/ví đối tác' : preview ? 'Quản lý liên kết thẻ/ví' : 'Liên kết hoặc quản lý thẻ/ví' }}</button>
             <ul v-if="preview" class="charges">
               <li v-for="(ch, i) in preview.card.charges" :key="i">
@@ -365,7 +402,7 @@
         </button>
       </div>
       <div v-if="appliedVoucher" class="applied-voucher">
-        <span class="v-tag">✓ {{ appliedVoucher.name }}</span>
+        <span class="v-tag"><Check :size="15" aria-hidden="true" /> {{ appliedVoucher.name }}</span>
         <span v-if="appliedVoucher.discountVnd > 0" class="v-amt num">-{{ fmt(appliedVoucher.discountVnd) }}</span>
       </div>
       <p v-if="voucherMsg" :class="appliedVoucher ? 'v-success' : 'pl-error'" style="margin: 0; font-size: 14px;">
@@ -378,13 +415,16 @@
       <div class="terms-toggle-bar" @click="showTerms = !showTerms">
         <h2 class="pl-h2" style="margin: 0;">Điều khoản giao dịch từ xa &amp; Chính sách đổi trả</h2>
         <button type="button" class="terms-toggle-btn" :aria-expanded="showTerms">
-          {{ showTerms ? '▲ Thu gọn' : '▼ Chi tiết chính sách bảo vệ' }}
+          <ChevronUp v-if="showTerms" :size="16" aria-hidden="true" />
+          <ChevronDown v-else :size="16" aria-hidden="true" />
+          <span>{{ showTerms ? 'Thu gọn' : 'Chi tiết chính sách bảo vệ' }}</span>
         </button>
       </div>
 
       <div v-show="showTerms" class="terms-collapsible">
         <div class="legal-badge">
-          ⚖️ Tuân thủ Luật Bảo vệ quyền lợi người tiêu dùng 19/2023/QH15 &amp; Nghị định 52/2024/NĐ-CP
+          <Scale :size="14" aria-hidden="true" />
+          <span>Tuân thủ Luật Bảo vệ quyền lợi người tiêu dùng 19/2023/QH15 &amp; Nghị định 52/2024/NĐ-CP</span>
         </div>
         <ul class="rules legal-list">
           <li><b>Cam kết dừng gói 1 chạm bất kỳ lúc nào:</b> Bạn có thể chủ động bấm Dừng gói hoặc Hủy liên kết thẻ/ví đối tác ngay tại trang tài khoản mà không cần gọi tổng đài hay chờ duyệt phức tạp.</li>
@@ -439,7 +479,10 @@
         <div v-for="faq in checkoutFaqs" :key="faq.id" class="faq-acc-item" :class="{ open: openFaqId === faq.id }">
           <button type="button" class="faq-acc-header" @click="toggleFaq(faq.id)">
             <span class="faq-acc-q">{{ faq.q }}</span>
-            <span class="faq-acc-icon">{{ openFaqId === faq.id ? '−' : '+' }}</span>
+            <span class="faq-acc-icon" aria-hidden="true">
+              <Minus v-if="openFaqId === faq.id" :size="17" />
+              <Plus v-else :size="17" />
+            </span>
           </button>
           <div v-show="openFaqId === faq.id" class="faq-acc-body" v-html="faq.a"></div>
         </div>
@@ -486,7 +529,7 @@
     <!-- Modal xác thực OTP -->
     <div v-if="showOtpModal" class="otp-modal-backdrop" @click.self="showOtpModal = false">
       <div class="otp-modal">
-        <button class="mclose" type="button" aria-label="Đóng" @click="showOtpModal = false">×</button>
+        <button class="mclose" type="button" aria-label="Đóng" @click="showOtpModal = false"><X :size="18" aria-hidden="true" /></button>
         <h3 class="otp-title">Xác thực số điện thoại</h3>
         <p class="pl-note">MOVA vừa gửi mã OTP đến số <b>{{ phoneValue || c.phone }}</b>. Nhập mã để xác nhận số này là của bạn.</p>
         <div class="otp-form">
@@ -510,6 +553,7 @@
 
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { Calendar, CalendarCheck, Check, ChevronDown, ChevronUp, Minus, Plus, Scale, ShieldCheck, X } from 'lucide-vue-next';
 import ExpressPanel from './ExpressPanel.vue';
 import DialSelect from '../modals/DialSelect.vue';
 import LinkCardSheet from '../dashboard/LinkCardSheet.vue';
@@ -520,6 +564,14 @@ import { isZaloMiniApp } from '../../services/zaloMiniApp';
 import { BUSINESS } from '../../shared/config/business';
 import { INSTRUCTION_MODES, payTodayInfo } from '../../shared/api/adapters/checkout';
 import { checkoutErrorMessage } from '../../shared/domain/checkoutError';
+import {
+  isDateKnownClosed,
+  isSlotSelectable,
+  pickEarliestFeasibleDate,
+  reasonLabel,
+  resolveDateCardState,
+  resolveMinDeliveryDate
+} from '../../shared/domain/deliveryDates';
 import { fmt } from '../../shared/utils/formatters';
 import { fmtDay, fmtDeadline } from '../../shared/utils/time';
 import { normalizeContact, splitPhone } from '../../shared/domain/leads';
@@ -813,7 +865,7 @@ async function applyVoucher() {
   if (code === BUSINESS.incentives.giftCardCode) {
     appliedVoucher.value = { code, name: 'Thẻ quà tặng MOVA Fresh (trải đều 4 tuần)' };
     c.voucherCode = code;
-    voucherMsg.value = '✓ Đã kích hoạt thẻ quà tặng 4 tuần!';
+    voucherMsg.value = 'Đã kích hoạt thẻ quà tặng 4 tuần!';
     save();
     return;
   }
@@ -835,7 +887,7 @@ async function applyVoucher() {
     return;
   }
   appliedVoucher.value = { code, name: `Ưu đãi người quen giới thiệu (${code})` };
-  voucherMsg.value = preview.value && preview.value.referral ? `✓ Áp dụng mã giới thiệu ${code}: giảm ${fmt(preview.value.referral.referee_bonus_vnd)} vào đơn đầu` : `✓ Đã ghi nhận mã giới thiệu ${code}`;
+  voucherMsg.value = preview.value && preview.value.referral ? `Đã áp dụng mã giới thiệu ${code}: giảm ${fmt(preview.value.referral.referee_bonus_vnd)} vào đơn đầu` : `Đã ghi nhận mã giới thiệu ${code}`;
   save();
 }
 
@@ -883,7 +935,15 @@ function onDateBlur() {
   }
 }
 
+const dateSnapNotice = ref('');
+
 async function changeStartDate() {
+  dateSnapNotice.value = '';
+  const prevSlot = c.slotId;
+  if (c.startDate && minSelectableDate.value && c.startDate < minSelectableDate.value) {
+    c.startDate = minSelectableDate.value;
+    dateSnapNotice.value = `Ngày này đã qua giờ chốt sổ; MOVA đã giữ ngày sớm nhất khả dụng (${fmtDay(minSelectableDate.value)}).`;
+  }
   loadingDates.value = true;
   c.optionIndex = 0;
   c.slotId = '';
@@ -892,6 +952,17 @@ async function changeStartDate() {
   store.capacity = null;
   try {
     await store.loadOptions();
+    const matchedDay = availDates.value.find((d) => d.delivery_date === c.startDate);
+    if (matchedDay && options.value?.options?.length) {
+      const optIdx = options.value.options.findIndex((o) => o.preferred_days.includes(matchedDay.day_name));
+      if (optIdx >= 0) c.optionIndex = optIdx;
+      const openSlots = (matchedDay.slots || []).filter((s) => isSlotSelectable(matchedDay, s, earliestCycleDate.value));
+      const kept = openSlots.find((s) => s.slot_id === prevSlot);
+      if (kept) c.slotId = kept.slot_id;
+      else if (openSlots.length) c.slotId = openSlots[0].slot_id;
+    } else if (prevSlot && options.value?.options?.[c.optionIndex]?.slots?.some((s) => s.slot_id === prevSlot)) {
+      c.slotId = prevSlot;
+    }
     autoPick();
     await refresh();
   } finally {
@@ -999,6 +1070,7 @@ async function pay() {
 }
 
 onMounted(async () => {
+  const hadDraftStartDate = Boolean(c.startDate);
   await store.loadOptions();
   // Tự điền thông tin đã có của khách đã đăng nhập (khách vẫn tự do sửa trước khi xác nhận, không tự ghi đè hồ sơ gốc).
   const cust = account.account?.customer;
@@ -1034,43 +1106,104 @@ onMounted(async () => {
     voucherInput.value = store.refCode;
     await applyVoucher();
   }
-  autoPick();
   await loadAvailableDates();
+  await syncInitialEarliestDate(hadDraftStartDate);
   await refresh();
 });
 
 const availDates = ref([]);
 const availDatesMeta = ref({ min_lead_hours: 36 });
-const REASON_LABELS = {
-  holiday: 'Ngày lễ',
-  batch_locked: 'Lô đã chốt',
-  cutoff_passed: 'Qua giờ chốt',
-  lead_time_not_met: 'Chưa đủ giờ đặt trước',
-  slot_full: 'Hết chỗ'
-};
-const reasonLabel = (r) => REASON_LABELS[r] || 'Không khả dụng';
+const earliestFeasible = computed(() => pickEarliestFeasibleDate(availDates.value, earliestCycleDate.value));
+const minSelectableDate = computed(() => resolveMinDeliveryDate(availDates.value, earliestCycleDate.value));
+const dateCardStates = computed(() => {
+  const map = {};
+  const efDate = earliestFeasible.value?.delivery_date || null;
+  for (const d of availDates.value) {
+    map[d.delivery_date] = resolveDateCardState(d, earliestCycleDate.value, efDate);
+  }
+  return map;
+});
 
 async function loadAvailableDates() {
   const zoneId = options.value?.zone_id;
   if (!zoneId) return;
   const r = await api.customer.availableDates(zoneId, 14);
   if (r.status === 'success' && r.data) {
-    availDates.value = (r.data.dates || []).slice(0, 8);
+    availDates.value = (r.data.dates || []).slice(0, 10);
     availDatesMeta.value = { min_lead_hours: r.data.min_lead_hours ?? 36 };
   }
 }
 
-async function pickAvailableDate(dayObj, slotObj) {
-  if (!slotObj.available) return;
-  c.startDate = dayObj.delivery_date;
-  await changeStartDate();
-  if (options.value?.options?.length) {
-    const idx = options.value.options.findIndex((o) => o.preferred_days.includes(dayObj.day_name));
-    if (idx >= 0) c.optionIndex = idx;
+async function syncInitialEarliestDate(hadDraftStartDate) {
+  const earliest = earliestFeasible.value;
+  if (!earliest) {
+    autoPick();
+    return;
   }
+  const shouldAutoPickEarliest =
+    !hadDraftStartDate ||
+    isDateKnownClosed(availDates.value, c.startDate, '', earliestCycleDate.value);
+
+  if (shouldAutoPickEarliest) {
+    const needReload = c.startDate !== earliest.delivery_date;
+    c.startDate = earliest.delivery_date;
+    c.slotId = earliest.slot_id;
+    if (needReload) {
+      c.optionIndex = 0;
+      await store.loadOptions();
+    }
+    if (options.value?.options?.length && earliest.day_name) {
+      const idx = options.value.options.findIndex((o) => o.preferred_days.includes(earliest.day_name));
+      if (idx >= 0) c.optionIndex = idx;
+    }
+    const curOptSlots = options.value?.options?.[c.optionIndex]?.slots || [];
+    if (curOptSlots.some((s) => s.slot_id === earliest.slot_id)) {
+      c.slotId = earliest.slot_id;
+    } else {
+      autoPick();
+    }
+    save();
+    return;
+  }
+
+  // Khách đã có ngày tương lai hợp lệ trước đó: giữ nguyên ngày, chỉ đảm bảo khung giờ hợp lệ
+  const existingDay = availDates.value.find((d) => d.delivery_date === c.startDate);
+  if (existingDay) {
+    const curSlotObj = (existingDay.slots || []).find((s) => s.slot_id === c.slotId);
+    if (!isSlotSelectable(existingDay, curSlotObj, earliestCycleDate.value)) {
+      const firstOpen = (existingDay.slots || []).find((s) => isSlotSelectable(existingDay, s, earliestCycleDate.value));
+      if (firstOpen) c.slotId = firstOpen.slot_id;
+    }
+    if (options.value?.options?.length) {
+      const idx = options.value.options.findIndex((o) => o.preferred_days.includes(existingDay.day_name));
+      if (idx >= 0) c.optionIndex = idx;
+    }
+  }
+  autoPick();
+}
+
+async function pickAvailableDate(dayObj, slotObj) {
+  if (!isSlotSelectable(dayObj, slotObj, earliestCycleDate.value) || loadingDates.value) return;
+  dateSnapNotice.value = '';
+  loadingDates.value = true;
+  c.startDate = dayObj.delivery_date;
+  c.optionIndex = 0;
   c.slotId = slotObj.slot_id;
-  save();
-  await refresh();
+  store.options = null;
+  store.preview = null;
+  store.capacity = null;
+  try {
+    await store.loadOptions();
+    if (options.value?.options?.length) {
+      const idx = options.value.options.findIndex((o) => o.preferred_days.includes(dayObj.day_name));
+      if (idx >= 0) c.optionIndex = idx;
+    }
+    c.slotId = slotObj.slot_id;
+    save();
+    await refresh();
+  } finally {
+    loadingDates.value = false;
+  }
 }
 
 watch(() => c.packId, save);
@@ -1084,6 +1217,168 @@ watch(() => c.packId, save);
 .date-input { color-scheme: light; min-height: 48px; padding-right: 42px; cursor: pointer; }
 .date-input::placeholder { font-size: 14.5px; }
 .date-field-wrap.is-date-active .date-input { padding-right: 14px; }
+
+.earliest-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-ctl);
+  background: var(--green-tint);
+  border: 1px solid var(--green-line);
+  color: var(--green-dd);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+.earliest-ico { flex-shrink: 0; color: var(--green-d); }
+
+.avail-board { display: grid; gap: 10px; margin-top: 4px; }
+.avail-board-title { margin-bottom: 0; }
+.avail-list { display: grid; gap: 10px; }
+.avail-day {
+  background: var(--surface-tint);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-card);
+  padding: 12px 14px;
+  display: grid;
+  gap: 10px;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.avail-day.is-earliest {
+  border-color: var(--green-line);
+  background: var(--cream-card);
+}
+.avail-day.is-selected-day {
+  border-color: var(--green-d);
+  background: var(--green-tint);
+}
+.avail-day.is-closed {
+  background: var(--muted-bg);
+  border-color: var(--line-2);
+  padding: 10px 12px;
+  opacity: .78;
+}
+.avail-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.avail-day-label { font-size: 14.5px; color: var(--ink-dark); }
+.avail-status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+}
+.avail-status-badge.kind-earliest {
+  background: var(--green-d);
+  color: var(--text-on-primary);
+}
+.avail-status-badge.kind-closed {
+  background: var(--line-2);
+  color: var(--muted);
+}
+.avail-status-badge.kind-blocked,
+.avail-status-badge.kind-holiday {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+  border: 1px solid var(--amber-line);
+}
+.avail-slots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.avail-slot-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 12px;
+  border-radius: var(--r-ctl);
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  color: var(--ink-dark);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+}
+.avail-slot-btn:hover:not(:disabled) {
+  border-color: var(--green);
+  transform: translateY(-1px);
+}
+.avail-slot-btn.on {
+  border: 2px solid var(--green);
+  background: var(--green-tint);
+}
+.avail-slot-btn.is-disabled {
+  background: var(--surface);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.avail-slot-btn:focus-visible {
+  outline: 2px solid var(--green-d);
+  outline-offset: 2px;
+}
+.slot-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+}
+.slot-title-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.slot-active-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--green-d);
+  color: var(--text-on-primary);
+  flex-shrink: 0;
+}
+.slot-time-label { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.slot-green-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--green-soft);
+  color: var(--green-d);
+  white-space: nowrap;
+}
+.slot-right-pill {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+}
+.slot-right-pill.is-open {
+  background: var(--green-soft);
+  color: var(--green-dd);
+}
+.slot-right-pill.is-off {
+  background: var(--line-2);
+  color: var(--muted);
+}
+
 .freq-chips { display: flex; gap: 10px; flex-wrap: wrap; }
 .freq-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 14px; text-align: left; max-width: 100%; }
 .freq-title { font-weight: 700; font-size: 16px; }
@@ -1095,11 +1390,12 @@ watch(() => c.packId, save);
 .phone-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; }
 .phone-row .pl-input { flex: 1; min-width: 140px; }
 .sm-btn { padding: 8px 12px; font-size: 14px; white-space: nowrap; }
-.zalo-btn { background: #0068FF; border-color: #0068FF; color: #fff; }
-.zalo-btn:hover:not(:disabled) { background: #0055d4; border-color: #0055d4; }
-.zalo-phone-consent { margin-top: 8px; display: grid; gap: 8px; justify-items: start; background: #EFF6FF; border-color: #BFDBFE; }
+.zalo-btn { background: var(--pay-zalo); border-color: var(--pay-zalo); color: var(--text-on-primary); }
+.zalo-btn:hover:not(:disabled) { background: var(--pay-zalo-d); border-color: var(--pay-zalo-d); }
+.zalo-phone-consent { margin-top: 8px; display: grid; gap: 8px; justify-items: start; background: var(--pay-zalo-soft); border-color: var(--pay-zalo-line); }
 .needs-auth-box { display: grid; gap: 8px; justify-items: start; }
-.verified-pill { font-size: 14px; font-weight: 700; color: var(--green-d); background: var(--green-soft); padding: 6px 12px; border-radius: 8px; white-space: nowrap; }
+.verified-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 700; color: var(--green-d); background: var(--green-soft); padding: 6px 12px; border-radius: 8px; white-space: nowrap; }
+.inline-status { display: inline-flex; align-items: center; gap: 5px; color: var(--green-d); font-weight: 600; }
 .phone-err { margin-top: 4px; font-size: 14px; }
 
 .methods { display: grid; gap: 12px; }
@@ -1136,16 +1432,17 @@ watch(() => c.packId, save);
   margin-bottom: 10px;
   font-size: 14px;
 }
-.c-shield { font-size: 20px; flex-shrink: 0; }
+.c-shield { display: inline-flex; align-items: center; justify-content: center; color: var(--green-d); flex-shrink: 0; }
 
 .voucher-card { padding: 16px; }
 .voucher-box { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .voucher-input { flex: 1; min-width: 150px; }
 .applied-voucher { display: flex; justify-content: space-between; align-items: center; background: var(--green-soft); color: var(--green-d); padding: 8px 12px; border-radius: 8px; font-size: 15px; font-weight: 700; }
+.v-tag { display: inline-flex; align-items: center; gap: 6px; }
 .v-amt { font-size: 16px; }
 .v-success { color: var(--green-d); font-weight: 600; }
 .req { font-weight: 600; color: var(--orange-ink); font-size: 14px; }
-.instr { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 12px; margin-bottom: 8px; font-size: 16px; }
+.instr { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 12px; margin-bottom: 8px; font-size: 16px; cursor: pointer; }
 .instr.on { border-color: var(--green); background: var(--green-soft); }
 fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
 .cap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
@@ -1159,17 +1456,23 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   cursor: pointer;
   padding-bottom: 8px;
 }
 .terms-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: none;
   border: none;
   color: var(--green-d);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px 8px;
+  min-height: 44px;
 }
 .terms-collapsible {
   margin-top: 8px;
@@ -1179,12 +1482,14 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
   border-radius: 14px;
 }
 .legal-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: var(--green-soft);
   color: var(--green-d);
   font-size: 12px;
   font-weight: 800;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 999px;
   margin-bottom: 10px;
 }
@@ -1213,13 +1518,12 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
 .need { color: var(--orange-ink); }
 
 /* OTP Modal */
-.otp-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.otp-modal { background: var(--white); width: 100%; max-width: 400px; border-radius: 20px; padding: 24px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: grid; gap: 12px; }
-.otp-title { font-size: 20px; font-weight: 800; margin: 0; }
-.demo-hint { color: var(--green-d); font-weight: 700; }
+.otp-modal-backdrop { position: fixed; inset: 0; background: var(--overlay-dark); backdrop-filter: blur(4px); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.otp-modal { background: var(--white); width: 100%; max-width: 400px; border-radius: 20px; padding: 24px; position: relative; box-shadow: var(--shadow-sheet); display: grid; gap: 12px; }
+.otp-title { font-size: 20px; font-weight: 800; margin: 0; padding-right: 40px; }
 .otp-form { display: flex; gap: 8px; align-items: center; }
 .otp-input { width: 110px; font-size: 20px; text-align: center; letter-spacing: 4px; }
-.mclose { position: absolute; top: 16px; right: 16px; border: 0; background: var(--line-2); width: 32px; height: 32px; border-radius: 50%; font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.mclose { position: absolute; top: 12px; right: 12px; border: 0; background: var(--line-2); color: var(--ink-dark); width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
 .legal-link {
   color: var(--green-d);
@@ -1239,14 +1543,18 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
   margin-top: 4px;
 }
 .fixed-delivery-reminder {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
   font-size: 13.5px;
   color: var(--green-d);
   background: var(--green-soft);
   padding: 10px 14px;
   border-radius: 10px;
   margin: 10px 0 0;
-  line-height: 1.4;
+  line-height: 1.45;
 }
+.inline-icon-top { flex-shrink: 0; margin-top: 2px; color: var(--green-d); }
 
 .checkout-faqs-section {
   padding: 18px 20px;
@@ -1267,6 +1575,7 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
 }
 .faq-acc-header {
   width: 100%;
+  min-height: 48px;
   padding: 12px 14px;
   display: flex;
   justify-content: space-between;
@@ -1283,8 +1592,9 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
   color: var(--ink);
 }
 .faq-acc-icon {
-  font-size: 18px;
-  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--green-d);
   flex-shrink: 0;
 }
@@ -1300,6 +1610,7 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
 }
 
 @media (max-width: 768px) {
+  .avail-slots { grid-template-columns: 1fr; }
   .phone-row .sm-btn { width: 100%; justify-content: center; min-height: 44px; }
   .pay-line, .pay-sum { flex-wrap: wrap; gap: 4px 10px; }
   .cap-list li, .charges li { flex-wrap: wrap; }

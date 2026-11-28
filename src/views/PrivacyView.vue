@@ -67,8 +67,8 @@
           <h2>6. Liên hệ Bộ phận Bảo vệ dữ liệu (DPO)</h2>
           <div class="contact-box">
             <p><b>Phòng An ninh Thông tin &amp; Pháp chế — MOVA FRESH Việt Nam</b></p>
-            <p>✉️ Email tiếp nhận yêu cầu dữ liệu: <b>privacy@movafresh.vn</b></p>
-            <p>📞 Hotline: <b>1900 8899</b> (Hỗ trợ 06:00 – 21:00)</p>
+            <p class="c-line"><Mail :size="15" aria-hidden="true" /><span>Email tiếp nhận yêu cầu dữ liệu: <b>privacy@movafresh.vn</b></span></p>
+            <p class="c-line"><Phone :size="15" aria-hidden="true" /><span>Hotline: <b>1900 8899</b> (Hỗ trợ 06:00 – 21:00)</span></p>
             <p>Thời hạn phản hồi và giải quyết yêu cầu xóa dữ liệu: Trong vòng <b>72 giờ làm việc</b>.</p>
           </div>
         </section>
@@ -81,6 +81,10 @@
     </div>
   </div>
 </template>
+
+<script setup>
+import { Mail, Phone } from 'lucide-vue-next';
+</script>
 
 <style scoped>
 .legal-page {
@@ -191,6 +195,15 @@
 }
 .contact-box p {
   margin: 0;
+}
+.contact-box .c-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.contact-box .c-line :deep(svg) {
+  color: var(--green-d);
+  flex-shrink: 0;
 }
 
 .legal-footer {

@@ -10,7 +10,10 @@
           :aria-label="isPaused ? 'Tiếp tục trình chiếu 3 bước nấu' : 'Tạm dừng trình chiếu'"
           @click="togglePlay"
         >
-          <span class="toggle-icon" aria-hidden="true">{{ isPaused ? '▶' : '❚❚' }}</span>
+          <span class="toggle-icon" aria-hidden="true">
+            <Play v-if="isPaused" :size="13" />
+            <Pause v-else :size="13" />
+          </span>
           <span class="toggle-text">{{ isPaused ? 'Chạy tiếp' : 'Tạm dừng' }}</span>
         </button>
       </div>
@@ -70,6 +73,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { Pause, Play } from 'lucide-vue-next';
 import { figmaImg } from '../../shared/utils/assets';
 
 const currentPhase = ref(2); // Khởi đầu tại mâm cơm 5 món Việt rực rỡ (00:15)

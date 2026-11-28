@@ -11,7 +11,7 @@
   >
     <div class="box3d-toolbar">
       <div class="box3d-status">
-        <span class="temp-pill num">❄️ 0°C – 4°C</span>
+        <span class="temp-pill num"><Snowflake :size="14" aria-hidden="true" /> 0°C – 4°C</span>
         <span class="hint-text">
           {{ liteMode ? 'Chạm để mở lớp nguyên liệu bên trong' : 'Cuộn trang hoặc chạm để xoay & mở nắp hộp' }}
         </span>
@@ -119,6 +119,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { Snowflake } from 'lucide-vue-next';
 import { isZaloMiniApp } from '../../services/zaloMiniApp';
 import { figmaImg } from '../../shared/utils/assets';
 
@@ -131,7 +132,7 @@ const layers = [
     title: 'Đạm tươi sơ chế Đắk Lắk',
     desc: 'Thịt heo thảo mộc, bò Chư Sê, cá bớp Vũng Tàu định lượng chuẩn gram.',
     short: 'Cắt sẵn, dán nhãn màu mát/đông',
-    color: '#C43A14'
+    color: 'var(--red-orange-d)'
   },
   {
     id: 'greens',
@@ -139,7 +140,7 @@ const layers = [
     title: 'Rau củ sạch & Trái cây IQF',
     desc: 'Rau hữu cơ rửa sạch cắt khúc; chuối chín cây hoặc vải thiều IQF.',
     short: 'Sơ chế 100%, không cần rửa lại',
-    color: '#087A4D'
+    color: 'var(--green-d)'
   },
   {
     id: 'sauce',
@@ -147,7 +148,7 @@ const layers = [
     title: 'Gói xốt MOVA đặc biệt',
     desc: 'Pha sẵn chuẩn vị từng món; không đóng gói mắm muối dầu ăn thừa thãi.',
     short: '1 chảo 15 phút, không cần nêm',
-    color: '#F89122'
+    color: 'var(--orange)'
   },
   {
     id: 'gel',
@@ -155,7 +156,7 @@ const layers = [
     title: 'Đá gel -18°C & Túi xốp bạc',
     desc: 'Giữ nhiệt độ 0–4°C ổn định suốt chuyến xe lạnh xuyên đêm.',
     short: 'An toàn thực phẩm suốt 16 giờ',
-    color: '#1D6FA5'
+    color: 'var(--blue)'
   }
 ];
 
@@ -288,6 +289,9 @@ onUnmounted(() => {
 }
 
 .temp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: var(--blue-soft);
   color: var(--blue-ink);
   border: 1px solid var(--blue-line);
@@ -465,8 +469,8 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   border-radius: 10px;
-  background: linear-gradient(135deg, #087A4D 0%, #0B9C63 100%);
-  border: 2px solid #065F3C;
+  background: linear-gradient(135deg, var(--green-d) 0%, var(--green) 100%);
+  border: 2px solid var(--green-dd);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -515,19 +519,19 @@ onUnmounted(() => {
 
 .stack-layer.layer-0 {
   transform: translate3d(0, calc((1 - var(--open-p, 0.5)) * 72px), calc(var(--open-p, 0.5) * 44px));
-  border-left: 5px solid #C43A14;
+  border-left: 5px solid var(--red-orange-d);
 }
 .stack-layer.layer-1 {
   transform: translate3d(0, calc((1 - var(--open-p, 0.5)) * 52px), calc(var(--open-p, 0.5) * 38px));
-  border-left: 5px solid #087A4D;
+  border-left: 5px solid var(--green-d);
 }
 .stack-layer.layer-2 {
   transform: translate3d(0, calc((1 - var(--open-p, 0.5)) * 32px), calc(var(--open-p, 0.5) * 32px));
-  border-left: 5px solid #F89122;
+  border-left: 5px solid var(--orange);
 }
 .stack-layer.layer-3 {
   transform: translate3d(0, calc((1 - var(--open-p, 0.5)) * 12px), calc(var(--open-p, 0.5) * 26px));
-  border-left: 5px solid #1D6FA5;
+  border-left: 5px solid var(--blue);
 }
 
 .layer-pill {

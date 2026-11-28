@@ -81,7 +81,7 @@ watch(
 </script>
 
 <style scoped>
-.express-panel .note { font-size: 14px; color: var(--ink-2, #555); margin: 6px 0 10px; }
+.express-panel .note { font-size: 14px; color: var(--ink-2); margin: 6px 0 10px; }
 .express-panel .tag { font-size: 12px; font-weight: 600; background: var(--green-soft); color: var(--green-d); padding: 2px 8px; border-radius: 6px; margin-left: 6px; }
 .express-panel .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 </style>

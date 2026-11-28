@@ -17,8 +17,8 @@
       <template v-if="offer.switched_from_bank"> Gói trước bạn trả bằng chuyển khoản, nên chu kỳ mới trừ từ Fresh Credit.</template>
     </p>
     <p v-if="offer.needs_credit && (offer.balance?.total_vnd ?? 0) < (offer.weeks?.[0]?.amount_vnd ?? 0)" class="pl-panel warn">
-      Fresh Credit hiện có {{ fmt(offer.balance.total_vnd) }}, chưa đủ cho tuần đầu của chu kỳ mới. Bạn nên nạp thêm trước mốc trừ.
-      <button class="pl-btn sm" type="button" @click="store.openModal('topup')">Nạp thêm</button>
+      Fresh Credit hiện có {{ fmt(offer.balance.total_vnd) }}, chưa đủ cho tuần đầu của chu kỳ mới. Bạn nên bổ sung gói trả trước trước mốc trừ.
+      <button class="pl-btn sm" type="button" @click="store.openModal('topup')">Mua thêm Gói</button>
     </p>
 
     <label class="agree">

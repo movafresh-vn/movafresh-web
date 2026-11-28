@@ -84,10 +84,10 @@
           <h2>5. Kênh tiếp nhận và hỗ trợ hoàn tiền</h2>
           <div class="contact-box">
             <p><b>Bộ phận Dịch vụ Khách hàng &amp; Đối soát Tài chính MOVA FRESH</b></p>
-            <p>📞 Hotline xử lý đổi trả &amp; hoàn tiền: <b>1900 8899</b> (Nhánh 1)</p>
-            <p>💬 Hỗ trợ Zalo Official: <b>MOVA FRESH Official</b> (tìm kiếm trên Zalo)</p>
-            <p>✉️ Email kế toán: <b>ketoan@movafresh.vn</b></p>
-            <p>⏰ Thời gian làm việc: 06:00 – 21:00 (tất cả các ngày trong tuần)</p>
+            <p class="c-line"><Phone :size="15" aria-hidden="true" /><span>Hotline xử lý đổi trả &amp; hoàn tiền: <b>1900 8899</b> (Nhánh 1)</span></p>
+            <p class="c-line"><MessageCircle :size="15" aria-hidden="true" /><span>Hỗ trợ Zalo Official: <b>MOVA FRESH Official</b> (tìm kiếm trên Zalo)</span></p>
+            <p class="c-line"><Mail :size="15" aria-hidden="true" /><span>Email kế toán: <b>ketoan@movafresh.vn</b></span></p>
+            <p class="c-line"><Clock :size="15" aria-hidden="true" /><span>Thời gian làm việc: 06:00 – 21:00 (tất cả các ngày trong tuần)</span></p>
           </div>
         </section>
 
@@ -99,6 +99,10 @@
     </div>
   </div>
 </template>
+
+<script setup>
+import { Clock, Mail, MessageCircle, Phone } from 'lucide-vue-next';
+</script>
 
 <style scoped>
 .legal-page {
@@ -223,6 +227,15 @@
 }
 .contact-box p {
   margin: 0;
+}
+.contact-box .c-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.contact-box .c-line :deep(svg) {
+  color: var(--green-d);
+  flex-shrink: 0;
 }
 
 .legal-footer {

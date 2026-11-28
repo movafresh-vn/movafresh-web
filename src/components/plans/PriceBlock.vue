@@ -62,16 +62,18 @@
       <small class="muted">Đã gồm sơ chế sạch 100%, định lượng chuẩn &amp; gói xốt MOVA đặc biệt</small>
     </div>
 
-    <!-- Nạp Fresh Credit -->
+    <!-- Gói Suất ăn trả trước Fresh Credit -->
     <p class="pb-fc">
-      💡 Nạp Fresh Credit nhận <b class="num">{{ fmt(quote.fresh_credit.credit_received_vnd) }}</b>,
-      chỉ trả <b class="num">{{ fmt(quote.fresh_credit.pay_vnd) }}</b>
+      <Sparkles :size="15" aria-hidden="true" class="pb-fc-ico" />
+      <span>Gói Suất ăn trả trước (Fresh Credit) nhận <b class="num">{{ fmt(quote.fresh_credit.credit_received_vnd) }}</b>,
+      chỉ trả <b class="num">{{ fmt(quote.fresh_credit.pay_vnd) }}</b></span>
     </p>
   </section>
 </template>
 
 <script setup>
 import { computed } from 'vue';
+import { Sparkles } from 'lucide-vue-next';
 import { fmt } from '../../shared/utils/formatters';
 
 const props = defineProps({
@@ -324,11 +326,18 @@ function kFormat(vnd) {
 
 /* Fresh Credit */
 .pb-fc {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
   font-size: 13px;
   border-top: 1px solid var(--line-2);
   padding-top: 8px;
   margin: 0;
   color: var(--green-d);
   line-height: 1.4;
+}
+.pb-fc-ico {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 </style>

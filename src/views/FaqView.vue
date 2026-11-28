@@ -42,7 +42,7 @@
           :aria-selected="activeGroup === cat.id"
           @click="activeGroup = cat.id"
         >
-          <span class="cat-icon">{{ cat.icon }}</span>
+          <span class="cat-icon" aria-hidden="true"><component :is="cat.iconComp" :size="15" /></span>
           <span>{{ cat.title }}</span>
           <span class="cat-count num">{{ getFaqGroupCount(cat.id) }}</span>
         </button>
@@ -52,7 +52,7 @@
       <div class="faq-content-container">
         <div v-for="group in filteredGroups" :key="group.id" class="faq-group-block">
           <h2 class="group-title">
-            <span class="g-icon">{{ group.icon }}</span>
+            <span class="g-icon" aria-hidden="true"><component :is="group.iconComp" :size="19" /></span>
             <span>{{ group.title }}</span>
           </h2>
 
@@ -70,7 +70,10 @@
                 @click="toggleItem(q.id)"
               >
                 <span class="q-question-text">{{ q.q }}</span>
-                <span class="q-toggle-icon">{{ isOpen(q.id) ? '−' : '+' }}</span>
+                <span class="q-toggle-icon" aria-hidden="true">
+                  <Minus v-if="isOpen(q.id)" :size="18" />
+                  <Plus v-else :size="18" />
+                </span>
               </button>
               <div v-show="isOpen(q.id)" class="accordion-panel">
                 <div class="panel-content" v-html="q.a"></div>
@@ -88,14 +91,14 @@
       <!-- Hộp hỗ trợ trực tiếp -->
       <section class="faq-support-card pl-card">
         <div class="support-left">
-          <span class="support-avatar">👨‍🍳</span>
+          <span class="support-avatar" aria-hidden="true"><ChefHat :size="30" :stroke-width="1.8" /></span>
           <div>
             <h3>Vẫn còn câu hỏi cần giải đáp?</h3>
             <p>Đội ngũ Đầu bếp và Chăm sóc khách hàng MOVA FRESH sẵn sàng hỗ trợ bạn từ 06:00 đến 21:00 hàng ngày.</p>
           </div>
         </div>
         <div class="support-actions">
-          <a href="tel:19008899" class="pl-btn outline tel-btn" @click="openLink($event, 'tel:19008899')">📞 Gọi 1900 8899</a>
+          <a href="tel:19008899" class="pl-btn outline tel-btn" @click="openLink($event, 'tel:19008899')"><Phone :size="16" aria-hidden="true" /><span>Gọi 1900 8899</span></a>
           <a
             href="https://zalo.me"
             :target="inMiniApp ? undefined : '_blank'"
@@ -103,7 +106,8 @@
             class="pl-btn primary zalo-btn"
             @click="openLink($event, 'https://zalo.me')"
           >
-            Chat Zalo Official
+            <MessageCircle :size="16" aria-hidden="true" />
+            <span>Chat Zalo Official</span>
           </a>
         </div>
       </section>
@@ -113,6 +117,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { ChefHat, ClipboardList, CreditCard, Leaf, MessageCircle, Minus, Phone, Plus, Truck } from 'lucide-vue-next';
 import { isZaloMiniApp, openExternalUrl } from '../services/zaloMiniApp';
 
 const inMiniApp = isZaloMiniApp();
@@ -127,11 +132,11 @@ const activeGroup = ref('all');
 const openItemIds = ref(new Set(['m1', 'c1', 'p1'])); // Mặc định mở 1 số câu quan trọng
 
 const FAQ_GROUPS = [
-  { id: 'all', title: 'Tất cả chủ đề', icon: '📋' },
-  { id: 'menu', title: 'Thực đơn & Đầu bếp MOVA', icon: '👨‍🍳' },
-  { id: 'food', title: 'Nguyên liệu Đắk Lắk & Chuỗi lạnh', icon: '🌿' },
-  { id: 'payment', title: 'Gói Suất ăn & Thanh toán', icon: '💳' },
-  { id: 'delivery', title: 'Giao nhận, Hóa đơn & Hoàn tiền', icon: '🚚' }
+  { id: 'all', title: 'Tất cả chủ đề', iconComp: ClipboardList },
+  { id: 'menu', title: 'Thực đơn & Đầu bếp MOVA', iconComp: ChefHat },
+  { id: 'food', title: 'Nguyên liệu Đắk Lắk & Chuỗi lạnh', iconComp: Leaf },
+  { id: 'payment', title: 'Gói Suất ăn & Thanh toán', iconComp: CreditCard },
+  { id: 'delivery', title: 'Giao nhận, Hóa đơn & Hoàn tiền', iconComp: Truck }
 ];
 
 const RAW_FAQS = [
@@ -256,7 +261,7 @@ const filteredGroups = computed(() => {
       groups.push({
         id: g.id,
         title: g.title,
-        icon: g.icon,
+        iconComp: g.iconComp,
         questions: items
       });
     }
@@ -430,7 +435,15 @@ function toggleItem(id) {
   margin: 0 0 12px;
 }
 .g-icon {
-  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-d);
+}
+.cat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .accordion-list {
@@ -468,10 +481,10 @@ function toggleItem(id) {
   line-height: 1.4;
 }
 .q-toggle-icon {
-  font-size: 22px;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--green-d);
-  line-height: 1;
   flex-shrink: 0;
 }
 
@@ -519,7 +532,15 @@ function toggleItem(id) {
   max-width: 500px;
 }
 .support-avatar {
-  font-size: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--white);
+  color: var(--green-d);
+  border: 1px solid var(--amber-line);
   flex-shrink: 0;
 }
 .support-left h3 {
@@ -545,6 +566,7 @@ function toggleItem(id) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 7px;
   font-weight: 700;
   font-size: 14px;
   padding: 8px 18px;

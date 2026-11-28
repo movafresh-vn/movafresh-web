@@ -1,7 +1,7 @@
 <template>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title" @click.self="store.closeModal">
     <div class="mbox box">
-      <button class="mclose" type="button" @click="store.closeModal" aria-label="Đóng">×</button>
+      <button class="mclose" type="button" @click="store.closeModal" aria-label="Đóng"><X :size="18" aria-hidden="true" /></button>
       <BrandLogo class="login-logo" variant="onWhite" :width="96" />
       <h2 id="login-title" class="pl-h2">Tài khoản MOVA FRESH</h2>
 
@@ -89,6 +89,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { X } from 'lucide-vue-next';
 import DialSelect from './DialSelect.vue';
 import BrandLogo from '../common/BrandLogo.vue';
 import { supabase } from '../../services/supabase';
@@ -189,8 +190,8 @@ async function logout() {
 .social-ico { width: 20px; height: 20px; flex-shrink: 0; display: block; }
 .google-btn { background: var(--white); border-color: var(--line-strong); color: var(--ink); }
 .google-btn:hover:not(:disabled) { background: var(--cream-warm); }
-.zalo-btn { background: #0068FF; border-color: #0068FF; color: #fff; }
-.zalo-btn:hover:not(:disabled) { background: #0055d4; border-color: #0055d4; }
+.zalo-btn { background: var(--pay-zalo); border-color: var(--pay-zalo); color: var(--text-on-primary); }
+.zalo-btn:hover:not(:disabled) { background: var(--pay-zalo-d); border-color: var(--pay-zalo-d); }
 .oauth-alert { font-size: 13.5px; padding: 10px 12px; margin: 2px 0 0; }
 .or { text-align: center; margin: 0; }
 </style>

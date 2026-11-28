@@ -49,7 +49,8 @@
               class="view-all-btn"
               @click="openFactoryModal(p.kind, p.dish?.dish_id)"
             >
-              🏪 Mở toàn bộ thực đơn nhà máy
+              <Store :size="15" aria-hidden="true" />
+              <span>Mở toàn bộ thực đơn nhà máy</span>
             </button>
           </div>
 
@@ -115,6 +116,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { Store } from 'lucide-vue-next';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { DISHES, SKUS } from '../../shared/data/catalog';
@@ -268,11 +270,11 @@ function getSkuName(skuId) {
 
 function kindLabel(kind) {
   switch (kind) {
-    case 'protein': return '🥩 Đạm tươi sống';
-    case 'veg': return '🥬 Rau hữu cơ';
-    case 'soup': return '🍲 Canh ngọt nước';
-    case 'carb': return '🍚 Tinh bột lành mạnh';
-    case 'dessert': return '🍇 Trái cây tráng miệng';
+    case 'protein': return 'Đạm tươi sống';
+    case 'veg': return 'Rau hữu cơ';
+    case 'soup': return 'Canh ngọt nước';
+    case 'carb': return 'Tinh bột lành mạnh';
+    case 'dessert': return 'Trái cây tráng miệng';
     default: return 'Món ngon nhà MOVA';
   }
 }
@@ -431,103 +433,6 @@ function kindLabel(kind) {
   padding: 8px 12px;
   margin-top: auto;
 }
-
-/* Modal */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
-}
-.modal-box {
-  background: var(--card);
-  border-radius: 20px;
-  max-width: 580px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 24px 20px;
-  position: relative;
-  box-shadow: 0 16px 36px rgba(0,0,0,0.25);
-}
-.mclose {
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  background: transparent;
-  border: 0;
-  font-size: 28px;
-  color: var(--muted);
-  cursor: pointer;
-}
-.detail-header { margin-bottom: 14px; display: grid; gap: 6px; }
-.badge-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.category-pill {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: var(--muted-bg, var(--line-2));
-  color: var(--ink);
-}
-.category-pill.protein { background: var(--red-soft); color: var(--red); }
-.category-pill.veg { background: var(--green-soft); color: var(--green-d); }
-.category-pill.soup { background: var(--blue-soft); color: var(--blue-ink); }
-.category-pill.carb { background: var(--amber-soft); color: var(--amber-ink); }
-.category-pill.dessert { background: var(--violet-soft); color: var(--violet); }
-
-.terroir-badge {
-  display: inline-block;
-  background: var(--green-soft);
-  color: var(--green-d);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
-  width: fit-content;
-}
-.dish-title { font-size: 20px; font-weight: 800; margin: 0; }
-
-.terroir-story-box {
-  background: var(--surface);
-  border-left: 3px solid var(--green);
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 14px;
-  display: grid;
-  gap: 6px;
-}
-.story-text { font-size: 14px; color: var(--ink-2); line-height: 1.5; margin: 0; }
-.chef-tip { font-size: 13px; color: var(--green-d); background: var(--green-tint); padding: 6px 10px; border-radius: 6px; margin: 0; line-height: 1.4; }
-.storage-text { font-size: 13px; color: var(--blue); margin: 4px 0 0; }
-
-.detail-grid { display: grid; gap: 12px; margin-bottom: 14px; }
-.info-card {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 14px;
-}
-.card-title { font-size: 15px; font-weight: 700; margin: 0 0 8px; }
-.bom-list { list-style: none; padding: 0; margin: 0 0 6px; display: grid; gap: 4px; font-size: 14px; }
-.spec-text { font-size: 14px; margin: 6px 0 0; color: var(--muted); }
-
-.nutri-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
-.nutri-item { background: var(--white); border: 1px solid var(--line); border-radius: 8px; padding: 6px 4px; display: flex; flex-direction: column; }
-.nutri-item b { font-size: 16px; color: var(--green-d); }
-.nutri-item span { font-size: 11px; color: var(--muted); }
-
-.recipe-card {
-  background: var(--amber-soft);
-  border: 1px solid var(--red-line);
-  border-radius: 12px;
-  padding: 12px 14px;
-}
-.recipe-steps { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
 
 @media (max-width: 480px) {
   .part-row { grid-template-columns: 60px 1fr auto; gap: 6px; }

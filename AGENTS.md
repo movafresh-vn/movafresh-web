@@ -17,6 +17,9 @@ Mọi AI Agent (Gemini, Claude, GPT, Cursor, Roo, v.v.) khi được kích hoạ
 4. [`.agent/04_TECH_ARCHITECTURE_AND_CONVENTIONS.md`](file:///.agent/04_TECH_ARCHITECTURE_AND_CONVENTIONS.md): Kiến trúc Multi-Page App (MPA: `index.html` & `ops.html`), Vue 3 + Pinia, `src/shared/`, lớp gọi backend thật (`http.js` + bảng route + adapters, KHÔNG còn mock), bộ unit test Vitest, quy chuẩn UI/UX, cách chạy stack local.
 5. [`.agent/05_PROGRESS_AND_ROADMAP.md`](file:///.agent/05_PROGRESS_AND_ROADMAP.md): Bảng theo dõi tiến độ V1 $\rightarrow$ V2.2, các mốc hoàn thành và 4 đầu việc tiếp theo trước mốc Launch T12/2026.
 6. [`.agent/06_MEETING_DECISIONS_LOG.md`](file:///.agent/06_MEETING_DECISIONS_LOG.md): Biên bản các quyết định chiến lược đã chốt ngày 15/11/2026 và ngày 17/11/2026 của Ban sáng lập (không tranh luận lại).
+7. [`.agent/rules/movafresh-brand-design.md`](file:///.agent/rules/movafresh-brand-design.md): Hiến pháp Design System (`tokens.css`, typography `Epilogue` + `Playfair Display`, hệ spacing `4/8px`, `lucide-vue-next`, cấm emoji/hex/checkbox thô, Brand Voice).
+8. [`.agent/skills/movafresh-ui-audit/SKILL.md`](file:///.agent/skills/movafresh-ui-audit/SKILL.md): Quy trình kiểm toán UI/UX 7 bước trên Desktop, Mobile & Zalo Mini App (`zmp:build`).
+9. [`.agent/skills/movafresh-3d-motion/SKILL.md`](file:///.agent/skills/movafresh-3d-motion/SKILL.md): Quy chuẩn chuyển động 60fps, chống CLS, `prefers-reduced-motion` và hạ tải GPU cho Zalo Mini App.
 
 ---
 

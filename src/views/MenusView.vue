@@ -40,7 +40,7 @@
           :aria-selected="activeCategory === cat.key"
           @click="activeCategory = cat.key"
         >
-          <span class="cat-icon">{{ cat.icon }}</span>
+          <span class="cat-icon" aria-hidden="true"><component :is="cat.iconComp" :size="15" /></span>
           <span>{{ cat.label }}</span>
           <span class="cat-count num">{{ getCategoryCount(cat.key) }}</span>
         </button>
@@ -54,9 +54,9 @@
           <p class="w-cur-desc">{{ currentWeekObj.desc }}</p>
         </div>
         <div class="w-intro-right">
-          <span class="w-stat-pill">✨ 5 món cân đối Á Đông</span>
-          <span class="w-stat-pill">🌿 Gói xốt MOVA độc quyền</span>
-          <span class="w-stat-pill">❄️ Xe lạnh 0–4°C tận cửa</span>
+          <span class="w-stat-pill"><Sparkles :size="14" aria-hidden="true" /> 5 món cân đối Á Đông</span>
+          <span class="w-stat-pill"><Leaf :size="14" aria-hidden="true" /> Gói xốt MOVA độc quyền</span>
+          <span class="w-stat-pill"><Snowflake :size="14" aria-hidden="true" /> Xe lạnh 0–4°C tận cửa</span>
         </div>
       </div>
 
@@ -79,7 +79,7 @@
               @error="(e) => (e.target.style.display = 'none')"
             />
             <div class="dish-fallback-art" aria-hidden="true">
-              <span class="art-emoji">{{ getDishEmoji(dish) }}</span>
+              <component :is="getDishIcon(dish)" :size="52" :stroke-width="1.6" class="art-icon" />
             </div>
 
             <!-- Huy hiệu góc ảnh -->
@@ -88,13 +88,13 @@
                 {{ getCornerBadge(dish) }}
               </span>
               <span class="corner-badge time-badge">
-                ⏱ 15 phút
+                <Clock :size="12" aria-hidden="true" /> 15 phút
               </span>
             </div>
 
             <!-- Dòng Terroir gắn đáy ảnh -->
             <div class="terroir-strip">
-              <span>📍 {{ dish.terroir_region || 'Đắk Lắk' }}</span>
+              <MapPin :size="12" aria-hidden="true" /> <span>{{ dish.terroir_region || 'Đắk Lắk' }}</span>
             </div>
           </div>
 
@@ -114,7 +114,7 @@
             <!-- Gói xốt & Dinh dưỡng nhanh -->
             <div class="dish-meta-snippet">
               <span class="sauce-snippet">
-                🍶 {{ getSauceSnippet(dish) }}
+                <Sparkles :size="13" aria-hidden="true" class="inline-sauce-ico" /> {{ getSauceSnippet(dish) }}
               </span>
               <span class="nutri-snippet num">
                 {{ dish.nutrition_per_serving?.calories || dish.nutrition?.kcal || 380 }} kcal · {{ dish.nutrition_per_serving?.protein_g || dish.nutrition?.protein || 22 }}g đạm
@@ -155,11 +155,11 @@
             <b>1 Món Đạm chính</b> + <b>1 Món Rau xanh</b> + <b>1 Món Canh ngọt lành</b> + <b>Gạo hữu cơ ST25 Sóc Trăng</b> + <b>Trái cây tráng miệng cấp đông IQF</b>.
           </p>
           <div class="tray-icons-row">
-            <div class="tray-col"><span>🥩</span><b>Đạm tươi</b><small>Bò, Heo, Gà, Cá</small></div>
-            <div class="tray-col"><span>🥦</span><b>Rau sạch</b><small>Bông cải, Cải ngọt</small></div>
-            <div class="tray-col"><span>🍲</span><b>Canh ấm</b><small>Bí đỏ sườn, Canh chua</small></div>
-            <div class="tray-col"><span>🍚</span><b>Tinh bột</b><small>Gạo ST25, Mì Ý</small></div>
-            <div class="tray-col"><span>🍇</span><b>Tráng miệng</b><small>Vải thiều IQF, Chuối</small></div>
+            <div class="tray-col"><span class="tray-ico" aria-hidden="true"><Beef :size="22" /></span><b>Đạm tươi</b><small>Bò, Heo, Gà, Cá</small></div>
+            <div class="tray-col"><span class="tray-ico" aria-hidden="true"><Salad :size="22" /></span><b>Rau sạch</b><small>Bông cải, Cải ngọt</small></div>
+            <div class="tray-col"><span class="tray-ico" aria-hidden="true"><Soup :size="22" /></span><b>Canh ấm</b><small>Bí đỏ sườn, Canh chua</small></div>
+            <div class="tray-col"><span class="tray-ico" aria-hidden="true"><Utensils :size="22" /></span><b>Tinh bột</b><small>Gạo ST25, Mì Ý</small></div>
+            <div class="tray-col"><span class="tray-ico" aria-hidden="true"><Sprout :size="22" /></span><b>Tráng miệng</b><small>Vải thiều IQF, Chuối</small></div>
           </div>
         </div>
       </section>
@@ -192,6 +192,10 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import {
+  Beef, ChefHat, Clock, Drumstick, Leaf, MapPin, Salad, Shell,
+  Snowflake, Soup, Sparkles, Sprout, Utensils, UtensilsCrossed
+} from 'lucide-vue-next';
 import DishDetailModal from '../components/modals/DishDetailModal.vue';
 import { DISHES, SAUCES } from '../shared/data/catalog';
 import { BUSINESS } from '../shared/config/business';
@@ -208,12 +212,12 @@ const WEEKS = [
 ];
 
 const CATEGORIES = [
-  { key: 'all', label: 'Tất cả món', icon: '🍽️' },
-  { key: 'protein_viet', label: 'Đạm Việt', icon: '🥩' },
-  { key: 'protein_western', label: 'Đạm Âu', icon: '🍝' },
-  { key: 'veg_soup', label: 'Rau & Canh', icon: '🥬' },
-  { key: 'carb', label: 'Tinh bột', icon: '🍚' },
-  { key: 'dessert', label: 'Tráng miệng IQF', icon: '🍇' }
+  { key: 'all', label: 'Tất cả món', iconComp: UtensilsCrossed },
+  { key: 'protein_viet', label: 'Đạm Việt', iconComp: Beef },
+  { key: 'protein_western', label: 'Đạm Âu', iconComp: ChefHat },
+  { key: 'veg_soup', label: 'Rau & Canh', iconComp: Salad },
+  { key: 'carb', label: 'Tinh bột', iconComp: Utensils },
+  { key: 'dessert', label: 'Tráng miệng IQF', iconComp: Sprout }
 ];
 
 const selectedWeek = ref(1);
@@ -250,18 +254,18 @@ const displayedDishes = computed(() => {
   return list;
 });
 
-function getDishEmoji(dish) {
+function getDishIcon(dish) {
   if (dish.kind === 'protein') {
-    if (dish.tags?.includes('beef')) return '🥩';
-    if (dish.tags?.includes('pork')) return '🥓';
-    if (dish.tags?.includes('seafood')) return '🦐';
-    return '🍗';
+    if (dish.tags?.includes('beef')) return Beef;
+    if (dish.tags?.includes('pork')) return Drumstick;
+    if (dish.tags?.includes('seafood')) return Shell;
+    return UtensilsCrossed;
   }
-  if (dish.kind === 'veg') return '🥦';
-  if (dish.kind === 'soup') return '🍲';
-  if (dish.kind === 'carb') return '🍚';
-  if (dish.kind === 'dessert') return '🍇';
-  return '🍽️';
+  if (dish.kind === 'veg') return Salad;
+  if (dish.kind === 'soup') return Soup;
+  if (dish.kind === 'carb') return Utensils;
+  if (dish.kind === 'dessert') return Sprout;
+  return UtensilsCrossed;
 }
 
 function getCornerBadge(dish) {
@@ -468,6 +472,9 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 .w-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   font-weight: 700;
   color: var(--green-d);
@@ -520,19 +527,19 @@ onMounted(() => {
   justify-content: center;
 }
 .dish-card-media.theme-protein {
-  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-dd) 60%, var(--ink) 100%);
+  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-dd) 65%, var(--ink-forest) 100%);
 }
 .dish-card-media.theme-veg {
-  background: linear-gradient(135deg, var(--green-d) 0%, var(--green-d) 60%, var(--green-dd) 100%);
+  background: linear-gradient(135deg, var(--green) 0%, var(--forest) 100%);
 }
 .dish-card-media.theme-soup {
-  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-ink) 60%, var(--blue-ink) 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-ink) 55%, var(--ink-forest) 100%);
 }
 .dish-card-media.theme-carb {
-  background: linear-gradient(135deg, var(--amber-ink) 0%, var(--amber-ink) 60%, var(--amber-ink) 100%);
+  background: linear-gradient(135deg, var(--amber-ink) 0%, var(--brown) 100%);
 }
 .dish-card-media.theme-dessert {
-  background: linear-gradient(135deg, var(--violet) 0%, var(--violet) 60%, var(--violet) 100%);
+  background: linear-gradient(135deg, var(--violet) 0%, var(--ink-dark) 100%);
 }
 
 .dish-img {
@@ -544,10 +551,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: rgba(255, 255, 255, 0.85);
 }
-.art-emoji {
-  font-size: 64px;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+.art-icon {
+  filter: drop-shadow(0 6px 14px rgba(24, 21, 17, 0.35));
 }
 
 .dish-badges-overlay {
@@ -561,19 +568,22 @@ onMounted(() => {
   z-index: 2;
 }
 .corner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 800;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 999px;
   backdrop-filter: blur(4px);
 }
 .corner-badge.chef-pick {
-  background: rgba(11, 156, 99, 0.85);
+  background: rgba(8, 122, 77, 0.88);
   color: var(--white);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 .corner-badge.time-badge {
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(24, 21, 17, 0.64);
   color: var(--white);
 }
 
@@ -582,13 +592,14 @@ onMounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
-  padding: 12px 10px 6px;
+  background: linear-gradient(to top, var(--scrim-dark), transparent);
+  padding: 14px 10px 7px;
   font-size: 11px;
   font-weight: 700;
   color: var(--white);
   display: flex;
   align-items: center;
+  gap: 4px;
 }
 
 /* Nội dung thẻ */
@@ -633,12 +644,16 @@ onMounted(() => {
   margin-top: auto;
 }
 .sauce-snippet {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11.5px;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.inline-sauce-ico { color: var(--green-d); flex-shrink: 0; }
 .nutri-snippet {
   font-size: 11px;
   color: var(--muted);
@@ -736,8 +751,16 @@ onMounted(() => {
   align-items: center;
   gap: 2px;
 }
-.tray-col span {
-  font-size: 24px;
+.tray-col .tray-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--green-tint);
+  color: var(--green-d);
+  margin-bottom: 4px;
 }
 .tray-col b {
   font-size: 12.5px;

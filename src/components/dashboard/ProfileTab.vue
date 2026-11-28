@@ -1,5 +1,14 @@
 <template>
-  <form v-if="form" class="profile" @submit.prevent="save">
+  <section v-if="loadingProfile" class="pl-card box state-card" aria-busy="true" aria-live="polite">
+    <p class="pl-note">Đang tải hồ sơ gia đình của bạn…</p>
+  </section>
+
+  <section v-else-if="loadError" class="pl-card box state-card" role="alert">
+    <p class="pl-error">{{ loadError }}</p>
+    <button type="button" class="pl-btn outline sm" @click="load">Thử tải lại</button>
+  </section>
+
+  <form v-else-if="form" class="profile" @submit.prevent="save">
     <!-- Gắn SĐT xác thực cho tài khoản OAuth (Google/Zalo) chưa có SĐT -->
     <section v-if="store.needsPhoneLink" class="pl-card box phone-link-card" data-testid="profile-phone-link">
       <h2 class="pl-h2">{{ inMiniApp ? 'Liên kết số điện thoại Zalo' : 'Liên kết số điện thoại (OTP)' }}</h2>
@@ -114,10 +123,18 @@
       </div>
       <div class="field">
         <span class="pl-label">Phong cách ẩm thực</span>
-        <div class="chips">
-          <label v-for="cs in CUISINE_STYLES" :key="cs.id" class="chip">
-            <input type="checkbox" :value="cs.id" v-model="safety.cuisines" />
-            <span>{{ cs.name }}</span>
+        <div class="choice-pills">
+          <label
+            v-for="cs in CUISINE_STYLES"
+            :key="cs.id"
+            class="choice-pill"
+            :class="{ on: safety.cuisines.includes(cs.id) }"
+          >
+            <input type="checkbox" class="choice-pill-input" :value="cs.id" v-model="safety.cuisines" />
+            <span class="choice-box" aria-hidden="true">
+              <Check v-if="safety.cuisines.includes(cs.id)" :size="13" :stroke-width="2.8" />
+            </span>
+            <span class="choice-text">{{ cs.name }}</span>
           </label>
         </div>
       </div>
@@ -136,38 +153,68 @@
       </div>
       <div class="field">
         <span class="pl-label">Mục tiêu thể trạng gia đình</span>
-        <div class="chips">
-          <label v-for="n in PROFILE_HEALTH_NEEDS" :key="n.id" class="chip">
-            <input type="checkbox" :value="n.id" v-model="safety.household_needs" />
-            <span>{{ n.label }}</span>
+        <div class="choice-pills">
+          <label
+            v-for="n in PROFILE_HEALTH_NEEDS"
+            :key="n.id"
+            class="choice-pill"
+            :class="{ on: safety.household_needs.includes(n.id) }"
+          >
+            <input type="checkbox" class="choice-pill-input" :value="n.id" v-model="safety.household_needs" />
+            <span class="choice-box" aria-hidden="true">
+              <Check v-if="safety.household_needs.includes(n.id)" :size="13" :stroke-width="2.8" />
+            </span>
+            <span class="choice-text">{{ n.label }}</span>
           </label>
         </div>
       </div>
       <div class="field">
         <span class="pl-label">Dị ứng (loại bỏ hoàn toàn)</span>
-        <div class="chips">
-          <label v-for="a in ALLERGENS" :key="a.code" class="chip">
-            <input type="checkbox" :value="a.code" v-model="safety.allergen_codes" />
-            <span>{{ a.label }}</span>
+        <div class="choice-pills">
+          <label
+            v-for="a in ALLERGENS"
+            :key="a.code"
+            class="choice-pill danger"
+            :class="{ on: safety.allergen_codes.includes(a.code) }"
+          >
+            <input type="checkbox" class="choice-pill-input" :value="a.code" v-model="safety.allergen_codes" />
+            <span class="choice-box" aria-hidden="true">
+              <Check v-if="safety.allergen_codes.includes(a.code)" :size="13" :stroke-width="2.8" />
+            </span>
+            <span class="choice-text">{{ a.label }}</span>
           </label>
         </div>
       </div>
       <div class="field">
         <span class="pl-label">Kiêng cữ</span>
-        <div class="chips">
-          <label v-for="t in AVOIDS" :key="t.code" class="chip">
-            <input type="checkbox" :value="t.code" v-model="safety.avoid_tags" />
-            <span>{{ t.label }}</span>
+        <div class="choice-pills">
+          <label
+            v-for="t in AVOIDS"
+            :key="t.code"
+            class="choice-pill"
+            :class="{ on: safety.avoid_tags.includes(t.code) }"
+          >
+            <input type="checkbox" class="choice-pill-input" :value="t.code" v-model="safety.avoid_tags" />
+            <span class="choice-box" aria-hidden="true">
+              <Check v-if="safety.avoid_tags.includes(t.code)" :size="13" :stroke-width="2.8" />
+            </span>
+            <span class="choice-text">{{ t.label }}</span>
           </label>
-          <label class="chip">
-            <input type="checkbox" v-model="safety.require_vegetarian" />
-            <span>Ăn chay</span>
+          <label
+            class="choice-pill"
+            :class="{ on: safety.require_vegetarian }"
+          >
+            <input type="checkbox" class="choice-pill-input" v-model="safety.require_vegetarian" />
+            <span class="choice-box" aria-hidden="true">
+              <Check v-if="safety.require_vegetarian" :size="13" :stroke-width="2.8" />
+            </span>
+            <span class="choice-text">Ăn chay</span>
           </label>
         </div>
       </div>
       <p v-if="safetyError" class="pl-error" role="alert">{{ safetyError }}</p>
-      <button type="button" class="pl-btn" :disabled="savingSafety" @click="saveSafety">
-        {{ savingSafety ? 'Đang lưu...' : 'Lưu khẩu vị & dị ứng' }}
+      <button type="button" class="pl-btn outline" :disabled="savingSafety" @click="saveSafety">
+        {{ savingSafety ? 'Đang lưu…' : 'Lưu khẩu vị & dị ứng' }}
       </button>
     </section>
 
@@ -185,6 +232,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { Check } from 'lucide-vue-next';
 import { api } from '../../shared/api';
 import { BUSINESS } from '../../shared/config/business';
 import { profileCompleteness } from '../../shared/domain/rewards';
@@ -199,6 +247,8 @@ const inMiniApp = isZaloMiniApp();
 const zaloPhoneBusy = ref(false);
 const reward = BUSINESS.incentives.rewards.profileComplete;
 const form = ref(null);
+const loadingProfile = ref(true);
+const loadError = ref('');
 const claimed = ref(false);
 const error = ref('');
 const safetyError = ref('');
@@ -227,29 +277,40 @@ const safety = ref({
 });
 
 async function load() {
-  const r = await api.customer.findCustomer();
-  if (r.status !== 'success') return;
-  const c = r.data;
-  claimed.value = c.profile_reward_claimed;
-  form.value = { name: c.name || '', phone: c.phone || '', email: c.email || '', address: c.address || '', members: (c.members || []).map((m) => ({ ...m })) };
-  if (c.safety_profile) {
-    const sp = c.safety_profile;
-    const adults = Math.max(1, Math.min(10, Number(sp.adults_count ?? sp.servings_default ?? 2)));
-    const children = Math.max(0, Math.min(10, Number(sp.children_count ?? 0)));
-    safety.value = {
-      living_area: sp.living_area || c.district || '',
-      adults_count: adults,
-      children_count: children,
-      weekly_home_meals_count: Math.max(3, Math.min(21, Number(sp.weekly_home_meals_count ?? 5))),
-      weekly_grocery_budget_vnd: sp.weekly_grocery_budget_vnd || null,
-      allergen_codes: [...(sp.allergen_codes || [])],
-      avoid_tags: [...(sp.avoid_tags || [])],
-      require_vegetarian: Boolean(sp.require_vegetarian),
-      household_needs: [...(sp.household_needs || [])],
-      cuisines: [...(sp.cuisines || [])],
-      protein_prefs: { ...defaultProteinPrefs(), ...(sp.protein_prefs || {}) },
-      servings_default: sp.servings_default || Math.min(10, Math.max(1, adults + children))
-    };
+  loadingProfile.value = true;
+  loadError.value = '';
+  try {
+    const r = await api.customer.findCustomer();
+    if (r.status !== 'success') {
+      loadError.value = r.error?.message || 'Chưa tải được thông tin hồ sơ. Vui lòng thử lại.';
+      return;
+    }
+    const c = r.data;
+    claimed.value = c.profile_reward_claimed;
+    form.value = { name: c.name || '', phone: c.phone || '', email: c.email || '', address: c.address || '', members: (c.members || []).map((m) => ({ ...m })) };
+    if (c.safety_profile) {
+      const sp = c.safety_profile;
+      const adults = Math.max(1, Math.min(10, Number(sp.adults_count ?? sp.servings_default ?? 2)));
+      const children = Math.max(0, Math.min(10, Number(sp.children_count ?? 0)));
+      safety.value = {
+        living_area: sp.living_area || c.district || '',
+        adults_count: adults,
+        children_count: children,
+        weekly_home_meals_count: Math.max(3, Math.min(21, Number(sp.weekly_home_meals_count ?? 5))),
+        weekly_grocery_budget_vnd: sp.weekly_grocery_budget_vnd || null,
+        allergen_codes: [...(sp.allergen_codes || [])],
+        avoid_tags: [...(sp.avoid_tags || [])],
+        require_vegetarian: Boolean(sp.require_vegetarian),
+        household_needs: [...(sp.household_needs || [])],
+        cuisines: [...(sp.cuisines || [])],
+        protein_prefs: { ...defaultProteinPrefs(), ...(sp.protein_prefs || {}) },
+        servings_default: sp.servings_default || Math.min(10, Math.max(1, adults + children))
+      };
+    }
+  } catch {
+    loadError.value = 'Kết nối tạm gián đoạn. Vui lòng thử tải lại hồ sơ.';
+  } finally {
+    loadingProfile.value = false;
   }
 }
 load();
@@ -362,8 +423,87 @@ async function linkPhoneWithZalo() {
 
 <style scoped>
 .profile { display: grid; gap: 16px; max-width: 720px; }
+.state-card { max-width: 720px; align-items: flex-start; }
 .box { display: grid; gap: 12px; }
-.field { display: grid; gap: 6px; }
+.field { display: grid; gap: 8px; }
+
+.choice-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.choice-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  color: var(--ink-dark);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.choice-pill:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-tint);
+}
+.choice-pill.on {
+  border-color: var(--green-d);
+  background: var(--green-tint);
+  color: var(--green-dd);
+}
+.choice-pill.danger.on {
+  border-color: var(--red-orange-d);
+  background: var(--red-soft);
+  color: var(--red-orange-dd);
+}
+.choice-pill-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.choice-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--white);
+  color: var(--text-on-primary);
+  flex-shrink: 0;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.choice-pill.on .choice-box {
+  background: var(--green-d);
+  border-color: var(--green-d);
+}
+.choice-pill.danger.on .choice-box {
+  background: var(--red-orange-d);
+  border-color: var(--red-orange-d);
+}
+.choice-pill-input:focus-visible + .choice-box {
+  outline: 2px solid var(--green-d);
+  outline-offset: 2px;
+}
+.choice-text {
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
 .member { display: grid; gap: 8px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
 .member .pl-btn { justify-self: start; }
 @media (min-width: 641px) {
@@ -372,15 +512,15 @@ async function linkPhoneWithZalo() {
   .field-grid.three { grid-template-columns: 1fr 1fr 1fr; }
 }
 .protein-grid { display: grid; gap: 8px; }
-.protein-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; }
-.sm-select { width: auto; min-width: 140px; padding: 6px 10px; }
+.protein-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 46px; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--r-ctl); background: var(--surface-tint); }
+.sm-select { width: auto; min-width: 150px; padding: 6px 10px; min-height: 40px; }
 .phone-link-card {
   border-color: var(--red-orange);
   border-left: 4px solid var(--red-orange-d);
   background: var(--orange-soft);
 }
-.zalo-btn { background: #0068FF; border-color: #0068FF; color: #fff; }
-.zalo-btn:hover:not(:disabled) { background: #0055d4; border-color: #0055d4; }
+.zalo-btn { background: var(--pay-zalo); border-color: var(--pay-zalo); color: var(--text-on-primary); }
+.zalo-btn:hover:not(:disabled) { background: var(--pay-zalo-d); border-color: var(--pay-zalo-d); }
 .link-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; }
 .link-row .pl-input { flex: 1; min-width: 140px; }
 @media (max-width: 560px) {

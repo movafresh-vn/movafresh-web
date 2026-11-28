@@ -93,7 +93,7 @@
       <Teleport to="body">
         <div v-if="previewImg" class="photo-modal-backdrop" role="dialog" aria-modal="true" @click.self="previewImg = ''">
           <div class="photo-modal-content">
-            <button type="button" class="photo-modal-close" aria-label="Đóng" @click="previewImg = ''">✕</button>
+            <button type="button" class="photo-modal-close" aria-label="Đóng" @click="previewImg = ''"><X :size="18" aria-hidden="true" /></button>
             <img :src="previewImg" alt="Ảnh giao hàng phóng to" />
           </div>
         </div>
@@ -137,6 +137,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 import { api } from '../../shared/api';
+import { X } from 'lucide-vue-next';
 import { newKey } from '../../shared/api/http';
 import { fmt } from '../../shared/utils/formatters';
 import { fmtDay, fmtDeadline } from '../../shared/utils/time';
@@ -266,7 +267,8 @@ const skipHint = computed(() => (props.week.editable && props.week.skip?.code ==
 .photo-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.78);
+  background: var(--overlay-dark);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -288,27 +290,24 @@ const skipHint = computed(() => (props.week.editable && props.week.skip?.code ==
   max-height: 85vh;
   object-fit: contain;
   border-radius: 10px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  background: var(--ink);
+  box-shadow: var(--shadow-sheet);
+  background: var(--ink-dark);
 }
 .photo-modal-close {
   position: absolute;
   top: -16px;
   right: -16px;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--white);
-  color: var(--ink);
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  font-size: 20px;
-  font-weight: bold;
-  line-height: 1;
+  color: var(--ink-dark);
+  border: 1px solid var(--line);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-md);
   transition: background 0.15s ease, transform 0.15s ease;
 }
 .photo-modal-close:hover {

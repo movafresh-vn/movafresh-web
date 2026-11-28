@@ -37,6 +37,9 @@
 
   /* 2. Bề mặt, Chữ trung tính & Đường kẻ */
   --surface: #F4F1E4;
+  --surface-tint: #FBF9F4;
+  --cream-card: #FFFDF8;
+  --footer-dark: #14120E;
   --ink-forest: #18201B;
   --ink-dark: #28251F;
   --ink-2: #543F18;
@@ -46,6 +49,9 @@
   --line: #DBD3C3;
   --line-2: #EAE3D4;
   --line-strong: #C9BFAE;
+  --scrim-dark: rgba(24, 21, 17, .86);
+  --scrim-top: rgba(24, 21, 17, .24);
+  --overlay-dark: rgba(40, 37, 31, .56);
 
   /* 3. Token khóa chặt tương phản chữ (Web & ZMP cssCodeSplit: false) */
   --text-on-primary: #FFFFFF;
@@ -88,6 +94,8 @@
   --pay-momo: #A50064;
   --pay-zalo: #0068FF;
   --pay-zalo-d: #0054D1;
+  --pay-zalo-soft: #EBF3FF;
+  --pay-zalo-line: #B8D4FF;
   --pay-vnpay: #1D6FA5;
   --pay-visa: #1A1F71;
   --pay-mc: #EB001B;
@@ -135,5 +143,6 @@
   --shadow-sm: var(--shadow-1);
   --shadow-md: 0 8px 24px rgba(44, 34, 22, .10);
   --shadow-lg: var(--shadow-hero);
+  --shadow-sheet: 0 24px 64px rgba(40, 37, 22, .22);
   --shadow-primary-hover: 0 7px 17px rgba(11, 156, 99, .18);
 }

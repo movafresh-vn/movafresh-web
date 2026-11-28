@@ -36,21 +36,21 @@
         <!-- 3 Thẻ giá trị cốt lõi -->
         <div class="value-cards">
           <div class="val-card">
-            <span class="val-icon" aria-hidden="true">🍳</span>
+            <span class="val-icon" aria-hidden="true"><Clock :size="20" :stroke-width="2" /></span>
             <div class="val-text">
               <b>Chuẩn 15 phút – 1 chảo</b>
               <p>Sơ chế sạch 100%, định lượng sẵn, không cần đi chợ hay nhặt rau.</p>
             </div>
           </div>
           <div class="val-card">
-            <span class="val-icon" aria-hidden="true">❄️</span>
+            <span class="val-icon" aria-hidden="true"><Snowflake :size="20" :stroke-width="2" /></span>
             <div class="val-text">
               <b>Chuỗi xe lạnh 16 giờ</b>
               <p>Giữ mát 0°C – 4°C xuyên đêm từ Đắk Lắk tận cửa bếp.</p>
             </div>
           </div>
           <div class="val-card">
-            <span class="val-icon" aria-hidden="true">🥣</span>
+            <span class="val-icon" aria-hidden="true"><Sparkles :size="20" :stroke-width="2" /></span>
             <div class="val-text">
               <b>Gói xốt MOVA đặc biệt</b>
               <p>Định lượng chuẩn gram, gia vị độc quyền tách riêng từng món.</p>
@@ -97,7 +97,7 @@
 
             <!-- Layer 2: Top-left 3D chip -->
             <div class="depth-chip chip-cook">
-              <span class="chip-icon" aria-hidden="true">🍳</span>
+              <span class="chip-icon" aria-hidden="true"><Clock :size="18" :stroke-width="2" /></span>
               <div>
                 <strong>Chuẩn 15 phút – 1 chảo</strong>
                 <small>Nấu nhanh, ít rửa dọn</small>
@@ -106,7 +106,7 @@
 
             <!-- Layer 3: Bottom-right cold chain chip -->
             <div class="depth-chip chip-cold">
-              <span class="chip-icon" aria-hidden="true">❄️</span>
+              <span class="chip-icon" aria-hidden="true"><Snowflake :size="18" :stroke-width="2" /></span>
               <div>
                 <strong>Xe lạnh 0–4°C Đắk Lắk</strong>
                 <small>Xuyên đêm 16h về TP.HCM</small>
@@ -122,7 +122,7 @@
                 loading="eager"
                 decoding="async"
               />
-              <span class="depth-pill-clean">✓ Sơ chế sạch 100%</span>
+              <span class="depth-pill-clean"><Check :size="14" :stroke-width="2.6" /> Sơ chế sạch 100%</span>
             </div>
           </div>
         </div>
@@ -152,6 +152,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import { Check, Clock, Snowflake, Sparkles } from 'lucide-vue-next';
 import MealKitVideoHook from './MealKitVideoHook.vue';
 import BaseButton from '../ui/BaseButton.vue';
 import { use3dTilt } from '../../composables/use3dTilt';
@@ -336,9 +337,8 @@ const stageStyle = computed(() => {
 }
 
 .val-icon {
-  font-size: 20px;
-  line-height: 1;
   background: var(--green-soft);
+  color: var(--green-d);
   width: 38px;
   height: 38px;
   border-radius: 11px;
@@ -486,12 +486,11 @@ const stageStyle = computed(() => {
 }
 
 .chip-icon {
-  font-size: 20px;
-  line-height: 1;
   width: 34px;
   height: 34px;
   border-radius: 10px;
   background: var(--green-soft);
+  color: var(--green-d);
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -531,6 +530,9 @@ const stageStyle = computed(() => {
 }
 
 .depth-pill-clean {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: var(--green-d);
   color: var(--text-on-primary);
   border: 2px solid var(--card);

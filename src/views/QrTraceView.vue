@@ -4,8 +4,11 @@
       <section v-if="!loaded" class="pl-card" role="status"><p class="pl-lead">Đang tải thông tin nguồn gốc…</p></section>
 
       <section v-else-if="!lot" class="pl-card">
-        <h1 class="pl-h1">Không tìm thấy mã QR này</h1>
-        <p class="pl-lead">Mã <b class="code">{{ code }}</b> chưa có trong hệ thống. Bạn kiểm tra lại nhãn trên hộp hoặc thử một mã mẫu:</p>
+        <h1 class="pl-h1">{{ isBrowseMode ? 'Tra cứu nguồn gốc lô hàng MOVA' : 'Không tìm thấy mã QR này' }}</h1>
+        <p class="pl-lead">
+          <template v-if="isBrowseMode">Chọn một lô nguyên liệu mẫu bên dưới để xem nhật ký thu hoạch, kiểm định và chuỗi xe lạnh từ Đắk Lắk:</template>
+          <template v-else>Mã <b class="code">{{ code }}</b> chưa có trong hệ thống. Bạn kiểm tra lại nhãn trên hộp hoặc thử một mã mẫu:</template>
+        </p>
         <ul class="samples">
           <li v-for="s in samples" :key="s.qr_code"><router-link :to="`/q/${s.qr_code}`">{{ s.product_name }}<small>{{ s.qr_code }}</small></router-link></li>
         </ul>
@@ -16,7 +19,7 @@
           <p class="kicker">Truy xuất nguồn gốc</p>
           <h1 class="pl-h1">{{ lot.product_name }}</h1>
           <p class="pl-note">Mã lô <b class="code">{{ lot.qr_code }}</b></p>
-          <p v-if="lot.sample" class="pl-panel sample">Đây là dữ liệu mẫu của bản demo. Bản thật lấy từ lô do xưởng Đắk Lắk ghi lúc sơ chế.</p>
+          <p v-if="lot.sample" class="pl-panel sample">Dữ liệu truy xuất minh họa cho lô nguyên liệu mẫu. Trên đơn thật, trang hiện nhật ký trực tiếp do xưởng Đắk Lắk ghi lúc sơ chế.</p>
         </header>
 
         <!-- 1. Công thức nấu 15 phút -->
@@ -96,11 +99,20 @@ const message = ref('');
 const busy = ref(false);
 
 const code = computed(() => String(route.params.code || ''));
+const isBrowseMode = computed(() => !code.value || code.value === 'demo');
 const harvestLabel = computed(() => (lot.value && lot.value.kind === 'rice' ? 'Ngày thu hoạch' : 'Ngày giết mổ'));
 const testText = computed(() => (lot.value.inspector.antibiotic_test === 'NEGATIVE' ? 'âm tính (đạt)' : lot.value.inspector.antibiotic_test || 'chưa có'));
 
 async function load() {
   loaded.value = false;
+  if (isBrowseMode.value) {
+    lot.value = null;
+    samples.value = await api.customer.sampleLotCodes();
+    message.value = '';
+    loaded.value = true;
+    document.title = 'Truy xuất nguồn gốc | MOVA FRESH';
+    return;
+  }
   const res = await api.customer.traceLot(code.value);
   lot.value = res.status === 'success' ? res.data : null;
   samples.value = lot.value ? [] : await api.customer.sampleLotCodes();

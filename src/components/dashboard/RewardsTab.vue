@@ -1,11 +1,20 @@
 <template>
-  <div v-if="data" class="rewards">
+  <section v-if="loading && !data" class="pl-card fc-card" aria-busy="true" aria-live="polite">
+    <p class="pl-note">Đang tải ưu đãi và link giới thiệu…</p>
+  </section>
+
+  <section v-else-if="loadError && !data" class="pl-card fc-card" role="alert">
+    <p class="pl-error">{{ loadError }}</p>
+    <button type="button" class="pl-btn outline sm" @click="load">Thử tải lại</button>
+  </section>
+
+  <div v-else-if="data" class="rewards">
     <!-- Bảng số dư Fresh Credit đa năng -->
     <section v-if="creditSum?.balance" class="pl-card fc-card">
       <p v-if="creditSum.alert_unavailable" class="pl-error" role="alert">Không tải được cảnh báo số dư cho tuần giao. Vui lòng thử lại.</p>
       <div class="fc-head">
         <div>
-          <span class="wallet-badge">TÀI KHOẢN SUẤT ĂN TRẢ TRƯỚC</span>
+          <span class="account-tier-badge">TÀI KHOẢN SUẤT ĂN TRẢ TRƯỚC</span>
           <h2 class="pl-h2">Số dư Fresh Credit của bạn</h2>
         </div>
         <p class="total-amt num">{{ fmt(creditSum.balance.total_vnd) }}</p>
@@ -25,8 +34,9 @@
       </div>
 
       <div class="fc-note">
-        <p>
-          💡 <b>Cơ chế hoạt động linh hoạt:</b> Dù bạn chọn thanh toán định kỳ bằng <b>VietQR</b> hay <b>Thẻ tín dụng / Ví đối tác (MoMo, ZaloPay, VNPAY)</b>, tài khoản <b>Fresh Credit</b> vẫn luôn hoạt động để tích lũy điểm ưu đãi giới thiệu, quà thành viên và tự động khấu trừ làm giảm số tiền khi đổi món hoặc gia hạn chu kỳ tiếp theo.
+        <p class="fc-note-line">
+          <Sparkles :size="16" aria-hidden="true" class="fc-note-ico" />
+          <span><b>Cơ chế hoạt động linh hoạt:</b> Dù bạn chọn thanh toán định kỳ bằng <b>VietQR</b> hay <b>Thẻ tín dụng / Ví đối tác (MoMo, ZaloPay, VNPAY)</b>, tài khoản <b>Fresh Credit</b> vẫn luôn hoạt động để tích lũy điểm ưu đãi giới thiệu, quà thành viên và tự động khấu trừ làm giảm số tiền khi đổi món hoặc gia hạn chu kỳ tiếp theo.</span>
         </p>
       </div>
     </section>
@@ -68,13 +78,14 @@
         </label>
       </div>
       <p v-if="message" class="pl-note" role="status">{{ message }}</p>
-      <p class="pl-note">Ảnh món đã nấu được duyệt tự động trong bản demo. Gắn #MovaFresh #ComNha15Phut khi đăng lên mạng xã hội.</p>
+      <p class="pl-note">Ảnh món đã nấu sẽ được xác nhận cộng thưởng ngay. Gắn #MovaFresh #ComNha15Phut khi đăng lên mạng xã hội.</p>
     </section>
   </div>
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { Sparkles } from 'lucide-vue-next';
 import { api } from '../../shared/api';
 import { fmt } from '../../shared/utils/formatters';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -83,6 +94,8 @@ defineEmits(['tab']);
 const store = useMovaStore();
 const data = ref(null);
 const creditSum = ref(null);
+const loading = ref(true);
+const loadError = ref('');
 const copiedInvite = ref(false);
 const message = ref('');
 const busy = ref(false);
@@ -91,9 +104,18 @@ const r = computed(() => data.value.rewards);
 const inviteUrl = computed(() => `${location.origin}${data.value.invite_path}`);
 
 async function load() {
-  const [res, cRes] = await Promise.all([api.customer.rewards(), api.customer.creditSummary()]);
-  if (res.status === 'success') data.value = res.data;
-  if (cRes.status === 'success') creditSum.value = cRes.data;
+  loading.value = true;
+  loadError.value = '';
+  try {
+    const [res, cRes] = await Promise.all([api.customer.rewards(), api.customer.creditSummary()]);
+    if (res.status === 'success') data.value = res.data;
+    else loadError.value = res.error?.message || 'Không tải được dữ liệu ưu đãi. Vui lòng thử lại.';
+    if (cRes.status === 'success') creditSum.value = cRes.data;
+  } catch {
+    loadError.value = 'Kết nối tạm gián đoạn. Vui lòng thử tải lại.';
+  } finally {
+    loading.value = false;
+  }
 }
 load();
 watch(() => store.version, load);
@@ -158,7 +180,7 @@ async function sharePhoto(e) {
   border: 1px solid var(--line-2);
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-1);
 }
 .fc-head {
   display: flex;
@@ -167,7 +189,7 @@ async function sharePhoto(e) {
   gap: 12px;
   flex-wrap: wrap;
 }
-.wallet-badge {
+.account-tier-badge {
   display: inline-block;
   font-size: 11px;
   font-weight: 800;
@@ -228,6 +250,16 @@ async function sharePhoto(e) {
 }
 .fc-note p {
   margin: 0;
+}
+.fc-note-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.fc-note-ico {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--green-d);
 }
 .link { font-size: 15px; }
 .btns { display: grid; gap: 10px; }
