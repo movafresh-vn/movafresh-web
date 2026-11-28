@@ -337,7 +337,7 @@ onUnmounted(() => {
 
 .box3d-viewport {
   position: relative;
-  min-height: 360px;
+  min-height: 456px;
   display: grid;
   place-items: center;
   perspective: 1150px;
@@ -345,15 +345,15 @@ onUnmounted(() => {
   border-radius: 16px;
   background: radial-gradient(circle at 50% 35%, #FFFDF8 0%, #F4EFE0 72%, #EAE2CF 100%);
   border: 1px solid var(--line-2);
-  padding: 28px 16px;
+  padding: 28px 16px 20px;
   cursor: pointer;
 }
 
 /* Sân khấu CSS 3D */
 .cube-scene {
   position: relative;
-  width: min(420px, 88%);
-  height: 290px;
+  width: min(420px, 92%);
+  height: 404px;
   transform-style: preserve-3d;
   transition: transform .35s cubic-bezier(.22, 1, .36, 1);
   will-change: transform;
@@ -363,8 +363,8 @@ onUnmounted(() => {
   position: absolute;
   left: 8%;
   right: 8%;
-  bottom: 6px;
-  height: 38px;
+  bottom: 4px;
+  height: 36px;
   background: radial-gradient(ellipse at center, rgba(40, 37, 31, .28) 0%, transparent 72%);
   transform: translate3d(0, 0, -40px) rotateX(84deg);
   pointer-events: none;
@@ -373,10 +373,10 @@ onUnmounted(() => {
 .carton-body {
   position: absolute;
   left: 50%;
-  bottom: 24px;
-  width: 280px;
-  height: 122px;
-  margin-left: -140px;
+  bottom: 10px;
+  width: 268px;
+  height: 98px;
+  margin-left: -134px;
   transform-style: preserve-3d;
 }
 
@@ -399,7 +399,7 @@ onUnmounted(() => {
 }
 
 .box-logo {
-  width: 96px;
+  width: 92px;
   height: auto;
 }
 
@@ -419,7 +419,7 @@ onUnmounted(() => {
   right: -72px;
   background: linear-gradient(180deg, #E7DEC8 0%, #D9CEB4 100%);
   border: 2px solid #C8B899;
-  transform: rotateY(90deg) translate3d(0, 0, 140px);
+  transform: rotateY(90deg) translate3d(0, 0, 134px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -446,16 +446,16 @@ onUnmounted(() => {
   transform: translate3d(0, 0, -72px);
 }
 
-/* Nắp hộp quay mở theo biến --open-p (0 -> 1) */
+/* Nắp hộp quay mở từ bản lề sau theo biến --open-p (0 -> 1) */
 .carton-lid {
   position: absolute;
   left: 50%;
-  bottom: 142px;
-  width: 288px;
-  height: 146px;
-  margin-left: -144px;
-  transform-origin: center top;
-  transform: translate3d(0, 0, -72px) rotateX(calc(90deg - var(--open-p, 0.5) * 118deg));
+  bottom: 108px;
+  width: 276px;
+  height: 136px;
+  margin-left: -138px;
+  transform-origin: center bottom;
+  transform: translate3d(0, 0, -72px) rotateX(calc(-90deg + var(--open-p, 0.5) * 116deg));
   transform-style: preserve-3d;
   transition: transform .42s cubic-bezier(.22, 1, .36, 1);
   pointer-events: none;
@@ -468,71 +468,75 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #087A4D 0%, #0B9C63 100%);
   border: 2px solid #065F3C;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 10px;
   box-shadow: 0 12px 24px rgba(6, 95, 60, .2);
 }
 
 .lid-tape {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--text-on-primary);
   background: rgba(255, 255, 255, 0.16);
   border: 1px solid rgba(255, 255, 255, 0.32);
-  padding: 5px 12px;
+  padding: 4px 11px;
   border-radius: 999px;
 }
 
-/* Các tầng nguyên liệu bung độ sâu khi mở hộp */
+/* Các tầng nguyên liệu bung độ sâu gọn gàng phía trên miệng hộp khi mở */
 .exploded-stack {
   position: absolute;
   left: 50%;
-  bottom: 66px;
-  width: 310px;
-  margin-left: -155px;
+  bottom: 114px;
+  width: 264px;
+  margin-left: -132px;
   display: grid;
-  gap: 8px;
+  gap: 6px;
   transform-style: preserve-3d;
+  opacity: calc(min(1, var(--open-p, 0.5) * 1.8));
+  transition: opacity .28s ease;
   pointer-events: none;
 }
 
 .stack-layer {
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.98);
   border: 1.5px solid var(--line-strong);
-  border-radius: 12px;
-  padding: 8px 12px;
+  border-radius: 11px;
+  padding: 6px 10px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 8px 20px rgba(40, 37, 31, 0.12);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  box-shadow: 0 6px 16px rgba(40, 37, 31, 0.11);
   transition: transform .45s cubic-bezier(.22, 1, .36, 1), opacity .35s ease;
 }
 
 .stack-layer.layer-0 {
-  transform: translate3d(0, calc(var(--open-p, 0.5) * -118px), calc(var(--open-p, 0.5) * 64px));
+  transform: translate3d(0, calc((1 - var(--open-p, 0.5)) * 72px), calc(var(--open-p, 0.5) * 44px));
   border-left: 5px solid #C43A14;
 }
 .stack-layer.layer-1 {
-  transform: translate3d(0, calc(var(--open-p, 0.5) * -80px), calc(var(--open-p, 0.5) * 44px));
+  transform: translate3d(0, calc((1 - var(--open-p, 0.5)) * 52px), calc(var(--open-p, 0.5) * 38px));
   border-left: 5px solid #087A4D;
 }
 .stack-layer.layer-2 {
-  transform: translate3d(0, calc(var(--open-p, 0.5) * -42px), calc(var(--open-p, 0.5) * 26px));
+  transform: translate3d(0, calc((1 - var(--open-p, 0.5)) * 32px), calc(var(--open-p, 0.5) * 32px));
   border-left: 5px solid #F89122;
 }
 .stack-layer.layer-3 {
-  transform: translate3d(0, calc(var(--open-p, 0.5) * -6px), calc(var(--open-p, 0.5) * 10px));
+  transform: translate3d(0, calc((1 - var(--open-p, 0.5)) * 12px), calc(var(--open-p, 0.5) * 26px));
   border-left: 5px solid #1D6FA5;
 }
 
 .layer-pill {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
   color: var(--ink-dark);
   background: var(--cream);
   border: 1px solid var(--line);
-  padding: 3px 7px;
+  padding: 1px 7px;
   border-radius: 999px;
   white-space: nowrap;
 }
@@ -541,15 +545,18 @@ onUnmounted(() => {
   display: grid;
   gap: 1px;
   min-width: 0;
+  width: 100%;
 }
 
 .layer-copy b {
-  font-size: 12.5px;
+  font-size: 12px;
+  line-height: 1.2;
   color: var(--ink-dark);
 }
 
 .layer-copy small {
-  font-size: 11px;
+  font-size: 10.5px;
+  line-height: 1.25;
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;

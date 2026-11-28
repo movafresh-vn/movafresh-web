@@ -16,8 +16,23 @@
       </div>
 
       <label class="pl-label" for="first-date">Ngày bắt đầu sớm nhất (không bắt buộc)</label>
-      <div class="date-field-wrap" :class="{ 'has-value': Boolean(c.startDate) }">
-        <span class="date-ico" aria-hidden="true">
+      <div class="date-field-wrap" :class="{ 'is-date-active': isDateMode }">
+        <input
+          id="first-date"
+          ref="firstDateRef"
+          v-model="c.startDate"
+          class="pl-input date-input"
+          :type="isDateMode ? 'date' : 'text'"
+          :readonly="!isDateMode"
+          placeholder="Chọn ngày (MOVA tự chọn sớm nhất)"
+          :min="earliestCycleDate || undefined"
+          :disabled="loadingDates"
+          @focus="activateDatePicker"
+          @click="activateDatePicker"
+          @blur="onDateBlur"
+          @change="changeStartDate"
+        />
+        <span v-if="!isDateMode" class="date-ico-right" aria-hidden="true">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="3" />
             <line x1="16" y1="2" x2="16" y2="6" />
@@ -25,8 +40,6 @@
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
         </span>
-        <span v-if="!c.startDate" class="date-placeholder" aria-hidden="true">dd/mm/yyyy — MOVA tự chọn sớm nhất</span>
-        <input id="first-date" v-model="c.startDate" class="pl-input date-input" type="date" :min="earliestCycleDate || undefined" :disabled="loadingDates" @change="changeStartDate" />
       </div>
       <p class="pl-note">MOVA sẽ tìm ngày giao phù hợp từ ngày bạn chọn<template v-if="availDatesMeta.min_lead_hours"> (đặt trước tối thiểu {{ availDatesMeta.min_lead_hours }} giờ theo khu vực)</template>.</p>
 
@@ -496,12 +509,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import ExpressPanel from './ExpressPanel.vue';
 import DialSelect from '../modals/DialSelect.vue';
 import LinkCardSheet from '../dashboard/LinkCardSheet.vue';
 import { usePlanFlowStore } from '../../stores/usePlanFlowStore';
 import { useMovaStore } from '../../stores/useMovaStore';
+import { api } from '../../shared/api';
 import { isZaloMiniApp } from '../../services/zaloMiniApp';
 import { BUSINESS } from '../../shared/config/business';
 import { INSTRUCTION_MODES, payTodayInfo } from '../../shared/api/adapters/checkout';
@@ -846,6 +860,29 @@ async function refresh() {
 }
 
 const loadingDates = ref(false);
+const firstDateRef = ref(null);
+const datePickerActive = ref(false);
+const isDateMode = computed(() => Boolean(datePickerActive.value || c.startDate));
+
+async function activateDatePicker() {
+  if (loadingDates.value) return;
+  datePickerActive.value = true;
+  await nextTick();
+  const el = firstDateRef.value;
+  if (!el) return;
+  try {
+    el.showPicker?.();
+  } catch {
+    // Bỏ qua nếu trình duyệt không hỗ trợ showPicker()
+  }
+}
+
+function onDateBlur() {
+  if (!c.startDate) {
+    datePickerActive.value = false;
+  }
+}
+
 async function changeStartDate() {
   loadingDates.value = true;
   c.optionIndex = 0;
@@ -1043,13 +1080,10 @@ watch(() => c.packId, save);
 .co { display: grid; gap: 16px; max-width: 760px; margin: 0 auto; width: 100%; min-width: 0; }
 .sec { display: grid; gap: 14px; min-width: 0; }
 .date-field-wrap { position: relative; display: flex; align-items: center; min-width: 0; }
-.date-ico { position: absolute; left: 14px; color: var(--green-d); display: grid; place-items: center; pointer-events: none; z-index: 2; }
-.date-placeholder {
-  position: absolute; left: 42px; right: 42px; color: var(--muted); font-size: 14.5px; font-weight: 500;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; z-index: 1;
-}
-.date-input { padding-left: 42px !important; color-scheme: light; min-height: 48px; position: relative; }
-.date-field-wrap:not(.has-value) .date-input::-webkit-datetime-edit { color: transparent; }
+.date-ico-right { position: absolute; right: 14px; color: var(--green-d); display: grid; place-items: center; pointer-events: none; z-index: 2; }
+.date-input { color-scheme: light; min-height: 48px; padding-right: 42px; cursor: pointer; }
+.date-input::placeholder { font-size: 14.5px; }
+.date-field-wrap.is-date-active .date-input { padding-right: 14px; }
 .freq-chips { display: flex; gap: 10px; flex-wrap: wrap; }
 .freq-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 14px; text-align: left; max-width: 100%; }
 .freq-title { font-weight: 700; font-size: 16px; }
@@ -1265,11 +1299,12 @@ fieldset.delivery-instruct-wrap { border: 0; padding: 0; margin: 0; display: gri
   margin: 6px 0 0;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 768px) {
   .phone-row .sm-btn { width: 100%; justify-content: center; min-height: 44px; }
   .pay-line, .pay-sum { flex-wrap: wrap; gap: 4px 10px; }
   .cap-list li, .charges li { flex-wrap: wrap; }
   .bank { grid-template-columns: 1fr; justify-items: center; }
   .pay-bar { margin: 0 -16px; padding: 10px 16px max(12px, var(--zmp-safe-bottom, env(safe-area-inset-bottom, 0px))); }
+  .pay-bar .pl-btn { width: 100%; }
 }
 </style>

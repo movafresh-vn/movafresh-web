@@ -543,7 +543,7 @@ const stageStyle = computed(() => {
 }
 
 @supports ((animation-timeline: view()) and (animation-range: entry)) {
-  @media (prefers-reduced-motion: no-preference) and (max-width: 767px) {
+  @media (prefers-reduced-motion: no-preference) and (min-width: 769px) {
     .hero:not(.is-lite) .cutout-layer {
       animation: hero-parallax-float linear both;
       animation-timeline: view();
@@ -551,10 +551,10 @@ const stageStyle = computed(() => {
     }
     @keyframes hero-parallax-float {
       from {
-        transform: translate3d(0, 8px, 0);
+        transform: translate3d(0, 8px, 68px);
       }
       to {
-        transform: translate3d(0, -10px, 0);
+        transform: translate3d(0, -10px, 68px);
       }
     }
   }
@@ -644,7 +644,7 @@ const stageStyle = computed(() => {
     gap: 28px;
   }
   .hero-stage-perspective {
-    padding: 14px 4px 20px;
+    padding: 14px 4px 12px;
   }
   .chip-cook {
     left: 6px;
@@ -664,6 +664,57 @@ const stageStyle = computed(() => {
   }
 }
 
+@media (max-width: 768px) {
+  .hero-stage-perspective {
+    perspective: none;
+    padding: 12px 0 4px;
+  }
+  .hero-stage-3d {
+    transform-style: flat;
+    transform: none !important;
+  }
+  .stage-main {
+    position: relative;
+    z-index: 1;
+    transform: none;
+  }
+  .depth-chip {
+    display: none;
+  }
+  .depth-seal {
+    z-index: 10;
+    top: -10px;
+    right: 4px;
+    width: 82px;
+    height: 82px;
+    transform: rotate(-6deg);
+  }
+  .depth-seal strong {
+    font-size: 14px;
+  }
+  .seal-sub {
+    display: none;
+  }
+  .cutout-layer {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    z-index: 10;
+    transform: none !important;
+    animation: none !important;
+    margin-top: 10px;
+    padding-left: 4px;
+    align-items: center;
+    gap: 10px;
+  }
+  .basket-cutout {
+    width: 70px;
+  }
+  .depth-pill-clean {
+    margin-bottom: 0;
+  }
+}
+
 @media (max-width: 560px) {
   .hero {
     padding: 20px 0 28px;
@@ -680,24 +731,6 @@ const stageStyle = computed(() => {
   }
   .stat-num {
     font-size: 19px;
-  }
-  .depth-chip {
-    display: none;
-  }
-  .basket-cutout {
-    width: 82px;
-  }
-  .depth-seal {
-    width: 84px;
-    height: 84px;
-    top: -12px;
-    right: 4px;
-  }
-  .depth-seal strong {
-    font-size: 14px;
-  }
-  .seal-sub {
-    display: none;
   }
 }
 

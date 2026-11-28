@@ -304,9 +304,31 @@ const staples = computed(() => {
   .m-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'people' 'side' 'meals'; }
   .side { position: static; }
 }
-@media (max-width: 560px) {
-  .cta { margin-left: -16px; margin-right: -16px; padding: 10px 16px; }
-  .cta .pl-btn { flex: 1; padding: 12px 10px; font-size: 16px; }
-  .cta-sum b { font-size: 19px; }
+@media (max-width: 768px) {
+  .cta {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-inline: -16px;
+    padding: 12px 16px max(12px, var(--zmp-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+  .cta-sum {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 10px;
+    line-height: 1.3;
+  }
+  .cta-sum small { font-size: 13px; }
+  .cta-sum b { font-size: 18px; }
+  .cta .pl-btn {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 15.5px;
+    white-space: normal;
+    line-height: 1.25;
+  }
 }
 </style>

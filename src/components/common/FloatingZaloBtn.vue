@@ -1,14 +1,16 @@
 <template>
   <button
     v-if="!inMiniApp && !isCheckoutStep"
+    type="button"
     class="float-help"
     @click="openZaloHelp"
     aria-label="Chat Zalo hỗ trợ"
+    title="Chat Zalo hỗ trợ"
   >
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M12 2C6.48 2 2 6.03 2 11c0 2.75 1.38 5.21 3.55 6.86L4.5 22l4.46-1.78C9.92 20.47 10.94 20.6 12 20.6c5.52 0 10-4.03 10-9.6S17.52 2 12 2zm1 13H7.5v-1.8l3.78-4.6H7.8V7h5.2v1.8l-3.78 4.6H13V15zm4.5 0h-2V7h2v8z"/>
     </svg>
-    <span>Chat Zalo</span>
+    <span class="float-help-label">Chat Zalo</span>
   </button>
 </template>
 
@@ -65,10 +67,32 @@ const openZaloHelp = () => {
 
 @media (max-width: 980px) {
   .float-help {
-    bottom: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
     right: 14px;
     padding: 8px 13px;
     font-size: 13px;
+  }
+}
+
+@media (max-width: 640px) {
+  .float-help {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    min-height: 46px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+    right: 14px;
+    bottom: max(18px, env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 6px 16px rgba(0, 104, 255, .34);
+  }
+  .float-help svg {
+    width: 22px;
+    height: 22px;
+  }
+  .float-help-label {
+    display: none;
   }
 }
 </style>

@@ -132,12 +132,41 @@ export function resolveGoogleRedirectTo(redirectTo, loc = typeof window !== 'und
 }
 
 /**
+ * Kiểm tra cấu hình Supabase Auth (/auth/v1/settings) xem provider OAuth (vd: 'google') đã bật chưa,
+ * tránh đẩy trình duyệt sang trang JSON lỗi thô `Unsupported provider: provider is not enabled` ở môi trường local.
+ * Trả `true` | `false`, hoặc `null` nếu không kiểm tra được để fallback về hành vi mặc định.
+ */
+export async function isOAuthProviderEnabled(provider) {
+  if (!supabaseUrl || !supabaseAnonKey || typeof fetch !== 'function') return null;
+  try {
+    const base = supabaseUrl.replace(/\/+$/, '');
+    const res = await fetch(`${base}/auth/v1/settings`, {
+      method: 'GET',
+      headers: { apikey: supabaseAnonKey },
+      signal: typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(2500) : undefined
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json && json.external && typeof json.external[provider] === 'boolean') {
+      return json.external[provider];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Đăng nhập khách bằng Google (OAuth). Trình duyệt chuyển sang Google rồi quay lại `redirectTo` (mặc định trang hiện tại,
  * riêng các route `/auth/*` luôn ép về `/dashboard`); phiên được Supabase nhận từ URL khi quay về.
  * Khách Google chưa có số điện thoại đã xác thực vẫn vào được, nhưng thanh toán sẽ bắt xác thực số (PHONE_NOT_VERIFIED).
  */
 export async function signInWithGoogle(redirectTo) {
   if (!supabase) throw new Error('Thiếu cấu hình Supabase Auth trong biến môi trường VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY.');
+  const enabled = await isOAuthProviderEnabled('google');
+  if (enabled === false) {
+    throw new Error('Đăng nhập Google chưa được kích hoạt trên môi trường local này. Vui lòng đăng nhập bằng số điện thoại (OTP) hoặc Zalo.');
+  }
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: resolveGoogleRedirectTo(redirectTo) }

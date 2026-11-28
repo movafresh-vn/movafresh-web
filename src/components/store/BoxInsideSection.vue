@@ -15,28 +15,40 @@
           <MovaBox3D />
         </div>
 
-        <!-- 4 lớp nguyên liệu với icon vector trích xuất từ Figma -->
+        <!-- 4 lớp nguyên liệu với hình ảnh thực tế sắc nét -->
         <div class="boxgrid">
           <div class="bx">
-            <img :src="iconProtein" alt="" class="bx-icon" aria-hidden="true" loading="lazy" />
+            <div class="bx-media">
+              <img :src="imgProtein" alt="Đạm sơ chế sạch định lượng chuẩn" class="bx-photo" loading="lazy" decoding="async" />
+              <span class="bx-tag">Hút chân không</span>
+            </div>
             <b>Đạm sơ chế sạch</b>
             <p>Thịt, cá cắt miếng chuẩn cỡ, định lượng đúng số người ăn. Mở hộp ra là nấu.</p>
           </div>
 
           <div class="bx">
-            <img :src="iconGreens" alt="" class="bx-icon" aria-hidden="true" loading="lazy" />
+            <div class="bx-media is-cutout">
+              <img :src="imgGreens" alt="Rau củ sơ chế và trái cây theo mùa" class="bx-photo" loading="lazy" decoding="async" />
+              <span class="bx-tag">Rửa sạch 100%</span>
+            </div>
             <b>Rau củ và trái cây</b>
             <p>Rau củ rửa sạch, cắt sẵn; trái cây theo mùa. Nấu xong là có mâm cơm đủ sắc.</p>
           </div>
 
           <div class="bx">
-            <img :src="iconSauce" alt="" class="bx-icon" aria-hidden="true" loading="lazy" />
+            <div class="bx-media">
+              <img :src="imgSauce" alt="Gói xốt MOVA đặc biệt chuẩn vị" class="bx-photo" loading="lazy" decoding="async" />
+              <span class="bx-tag">Độc quyền MOVA</span>
+            </div>
             <b>Gói xốt MOVA đặc biệt</b>
             <p>Mỗi món một gói xốt đặc biệt của MOVA. Mắm, muối, đường, dầu ăn bếp nhà bạn đã có nên MOVA không đóng kèm.</p>
           </div>
 
           <div class="bx">
-            <img :src="iconColdbox" alt="" class="bx-icon" aria-hidden="true" loading="lazy" />
+            <div class="bx-media">
+              <img :src="imgColdbox" alt="Nông sản giữ lạnh 0-4°C với đá gel -18°C" class="bx-photo" loading="lazy" decoding="async" />
+              <span class="bx-tag cold">❄️ -18°C · 0–4°C</span>
+            </div>
             <b>Thùng giữ nhiệt &amp; đá gel -18°C</b>
             <p>Đá gel cấp đông −18°C giữ thực phẩm trong khoảng 0–4°C suốt 16 giờ xuyên đêm.</p>
           </div>
@@ -50,10 +62,10 @@
 import MovaBox3D from './MovaBox3D.vue';
 import { figmaImg } from '../../shared/utils/assets';
 
-const iconProtein = figmaImg('box-protein.svg');
-const iconGreens = figmaImg('box-greens.svg');
-const iconSauce = figmaImg('box-sauce.svg');
-const iconColdbox = figmaImg('box-coldbox.svg');
+const imgProtein = figmaImg('brand-salmon-plate.webp');
+const imgGreens = figmaImg('produce-basket-cutout.png');
+const imgSauce = figmaImg('brand-chef-bowls.webp');
+const imgColdbox = figmaImg('brand-farm-harvest.webp');
 </script>
 
 <style scoped>
@@ -121,7 +133,7 @@ const iconColdbox = figmaImg('box-coldbox.svg');
 .bx {
   border: 1px solid rgba(40, 37, 31, 0.14);
   border-radius: 20px;
-  padding: 18px;
+  padding: 14px 16px 18px;
   background: var(--card);
   color: var(--ink);
   box-shadow: var(--shadow-sm);
@@ -136,12 +148,54 @@ const iconColdbox = figmaImg('box-coldbox.svg');
   box-shadow: var(--shadow-md);
 }
 
-.bx-icon {
-  width: 50px;
-  height: 50px;
+.bx-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--cream-warm);
+  border: 1px solid var(--line-2);
+  margin-bottom: 13px;
+}
+
+.bx-media.is-cutout {
+  background: linear-gradient(145deg, var(--green-tint) 0%, var(--cream-warm) 100%);
+  padding: 8px;
+}
+
+.bx-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
-  margin-bottom: 12px;
-  border-radius: 12px;
+  transition: transform 0.3s ease;
+}
+
+.bx-media.is-cutout .bx-photo {
+  object-fit: contain;
+}
+
+.bx:hover .bx-photo {
+  transform: scale(1.03);
+}
+
+.bx-tag {
+  position: absolute;
+  left: 9px;
+  bottom: 9px;
+  background: rgba(24, 32, 27, 0.84);
+  color: var(--text-on-dark);
+  backdrop-filter: blur(6px);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.bx-tag.cold {
+  background: rgba(29, 111, 165, 0.92);
 }
 
 .bx b {
@@ -174,7 +228,8 @@ const iconColdbox = figmaImg('box-coldbox.svg');
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bx {
+  .bx,
+  .bx-photo {
     transition: none;
   }
 }

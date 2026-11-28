@@ -302,7 +302,7 @@ function submitNewsletter() {
 
 /* Main Footer Grid */
 .footer-main-body {
-  padding: 40px 0 36px;
+  padding-block: 40px 36px;
 }
 
 .footer-grid {
@@ -524,5 +524,17 @@ function submitNewsletter() {
 
 .bottom-quick-links a:hover {
   color: var(--red-orange-d);
+}
+
+@media (max-width: 768px) {
+  .site-footer .wrap {
+    padding-inline: 20px;
+  }
+  .footer-main-body {
+    padding-block: 32px 28px;
+  }
+  .footer-bottom {
+    padding-block: 16px 84px;
+  }
 }
 </style>

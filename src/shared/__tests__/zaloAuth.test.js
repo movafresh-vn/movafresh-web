@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
-import { resolveGoogleRedirectTo } from '../../services/supabase';
+import { isOAuthProviderEnabled, resolveGoogleRedirectTo } from '../../services/supabase';
 import { computeCodeChallenge, consumeZaloPkce, generateCodeVerifier, signInWithZalo } from '../../services/zaloAuth';
 import { useMovaStore } from '../../stores/useMovaStore';
 
@@ -76,5 +76,26 @@ describe('Zalo OAuth v4 PKCE helper', () => {
     expect(cbView).toContain("router.replace('/dashboard')");
     expect(cbView).toContain('getAccessToken');
     expect(cbView).toContain('store.isAuthenticated');
+  });
+
+  it('isOAuthProviderEnabled đọc /auth/v1/settings và signInWithGoogle báo lỗi tiếng Việt thay vì redirect khi google=false', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_SUPABASE_URL', 'http://127.0.0.1:55441');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'anon-key-test');
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ external: { google: false } })
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      const mod = await import('../../services/supabase');
+      expect(await mod.isOAuthProviderEnabled('google')).toBe(false);
+      await expect(mod.signInWithGoogle('http://localhost:5173/')).rejects.toThrow(/chưa được kích hoạt/i);
+      expect(fetchMock).toHaveBeenCalledWith('http://127.0.0.1:55441/auth/v1/settings', expect.objectContaining({ method: 'GET' }));
+    } finally {
+      vi.unstubAllEnvs();
+      vi.unstubAllGlobals();
+      vi.resetModules();
+    }
   });
 });
