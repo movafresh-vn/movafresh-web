@@ -112,15 +112,35 @@ export async function refreshAuthSession() {
 }
 
 /**
- * Đăng nhập khách bằng Google (OAuth). Trình duyệt chuyển sang Google rồi quay lại `redirectTo` (mặc định trang hiện tại);
- * phiên được Supabase nhận từ URL khi quay về. Khối Google trong supabase/config.toml mặc định tắt, môi trường thật bật ở dashboard.
+ * Chuẩn hóa `redirectTo` cho Google OAuth: nếu đang đứng ở `/auth/zalo/callback` hoặc bất kỳ route `/auth/*` nào
+ * (hoặc `redirectTo` trỏ về `/auth/*`), ép quay về `${origin}/dashboard` để tránh Google redirect nhầm về trang callback Zalo.
+ */
+export function resolveGoogleRedirectTo(redirectTo, loc = typeof window !== 'undefined' ? window.location : globalThis.location) {
+  const origin = loc?.origin || '';
+  const raw = redirectTo || (loc ? `${origin}${loc.pathname || '/'}` : '');
+  if (!raw) return '/dashboard';
+  try {
+    const base = origin || 'http://localhost';
+    const parsed = new URL(raw, base);
+    if (parsed.pathname === '/auth' || parsed.pathname.startsWith('/auth/')) {
+      return `${parsed.origin}/dashboard`;
+    }
+    return redirectTo ? raw : `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return origin ? `${origin}/dashboard` : '/dashboard';
+  }
+}
+
+/**
+ * Đăng nhập khách bằng Google (OAuth). Trình duyệt chuyển sang Google rồi quay lại `redirectTo` (mặc định trang hiện tại,
+ * riêng các route `/auth/*` luôn ép về `/dashboard`); phiên được Supabase nhận từ URL khi quay về.
  * Khách Google chưa có số điện thoại đã xác thực vẫn vào được, nhưng thanh toán sẽ bắt xác thực số (PHONE_NOT_VERIFIED).
  */
 export async function signInWithGoogle(redirectTo) {
   if (!supabase) throw new Error('Thiếu cấu hình Supabase Auth trong biến môi trường VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY.');
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: redirectTo || `${location.origin}${location.pathname}` }
+    options: { redirectTo: resolveGoogleRedirectTo(redirectTo) }
   });
   if (error) throw error;
 }

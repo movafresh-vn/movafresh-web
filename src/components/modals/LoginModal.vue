@@ -76,7 +76,7 @@
 import { computed, ref } from 'vue';
 import DialSelect from './DialSelect.vue';
 import BrandLogo from '../common/BrandLogo.vue';
-import { signInWithGoogle, supabase } from '../../services/supabase';
+import { supabase } from '../../services/supabase';
 import { signInWithZalo } from '../../services/zaloAuth';
 import { isZaloMiniApp } from '../../services/zaloMiniApp';
 import { useMovaStore } from '../../stores/useMovaStore';
@@ -118,7 +118,7 @@ async function google() {
   busy.value = true;
   error.value = '';
   try {
-    await signInWithGoogle();
+    await store.loginWithGoogle();
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Chưa đăng nhập được bằng Google.';
     busy.value = false;

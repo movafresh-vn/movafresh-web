@@ -7,6 +7,8 @@ import {
   refreshAuthSession,
   requestOtp,
   requestPhoneLinkOtp,
+  resolveGoogleRedirectTo,
+  signInWithGoogle,
   signOut,
   verifyMagicLinkToken,
   verifyOtp,
@@ -43,6 +45,7 @@ export const useMovaStore = defineStore('mova', {
   getters: {
     isLoggedIn: (s) => Boolean(s.customerId && s.account),
     hasMovaSession: (s) => Boolean((s.customerId && s.account) || s.authUser),
+    isAuthenticated: (s) => Boolean((s.customerId && s.account) || s.authUser),
     hasVerifiedPhone: (s) => Boolean(s.account?.customer?.phone_verified || s.authUser?.phone_confirmed_at),
     needsPhoneLink: (s) => Boolean(((s.customerId && s.account) || s.authUser) && !(s.account?.customer?.phone_verified || s.authUser?.phone_confirmed_at)),
     userName: (s) => (s.account ? s.account.customer.name : ''),
@@ -205,6 +208,11 @@ export const useMovaStore = defineStore('mova', {
         this.toast('Đã liên kết và xác thực số điện thoại thành công.');
       }
       return '';
+    },
+
+    /** Đăng nhập bằng Google OAuth, luôn chuẩn hóa redirectTo (tránh quay về /auth/*). */
+    async loginWithGoogle(redirectTo) {
+      return signInWithGoogle(resolveGoogleRedirectTo(redirectTo));
     },
 
     /** Đăng nhập / hợp nhất tài khoản từ Zalo Mini App (zmp-sdk). Chỉ gửi phone_token khi người dùng bấm xác nhận chia sẻ SĐT. */

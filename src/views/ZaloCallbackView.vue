@@ -20,7 +20,7 @@
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../shared/api';
-import { verifyMagicLinkToken } from '../services/supabase';
+import { getAccessToken, verifyMagicLinkToken } from '../services/supabase';
 import { consumeZaloPkce } from '../services/zaloAuth';
 import { useMovaStore } from '../stores/useMovaStore';
 
@@ -41,6 +41,11 @@ onMounted(async () => {
   const code = typeof route.query.code === 'string' ? route.query.code : '';
   const state = typeof route.query.state === 'string' ? route.query.state : '';
   if (!code) {
+    const token = await getAccessToken().catch(() => null);
+    if (store.isAuthenticated || store.hasMovaSession || store.isLoggedIn || token) {
+      await router.replace('/dashboard');
+      return;
+    }
     error.value = 'Thiếu mã xác thực từ Zalo. Vui lòng thử đăng nhập lại.';
     return;
   }

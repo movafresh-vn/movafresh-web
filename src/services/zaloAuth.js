@@ -35,14 +35,14 @@ export function isZaloLoginConfigured() {
 }
 
 export function resolveZaloRedirectUri(override) {
-  if (override) return override;
-  if (import.meta.env?.VITE_ZALO_REDIRECT_URI) return import.meta.env.VITE_ZALO_REDIRECT_URI;
+  if (override) return String(override).trim();
+  if (import.meta.env?.VITE_ZALO_REDIRECT_URI) return String(import.meta.env.VITE_ZALO_REDIRECT_URI).trim();
   return typeof location !== 'undefined' ? `${location.origin}/auth/zalo/callback` : '';
 }
 
 /** Lưu state + code_verifier vào sessionStorage và chuyển trình duyệt sang trang cấp quyền Zalo OAuth v4. */
 export async function signInWithZalo(opts = {}) {
-  const appId = opts.appId || import.meta.env?.VITE_ZALO_APP_ID;
+  const appId = String(opts.appId || import.meta.env?.VITE_ZALO_APP_ID || '').trim();
   if (!appId) {
     throw new Error('Chưa cấu hình đăng nhập Zalo (VITE_ZALO_APP_ID).');
   }
@@ -53,7 +53,9 @@ export async function signInWithZalo(opts = {}) {
   const state = generateState();
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = await computeCodeChallenge(codeVerifier);
-  const returnTo = opts.returnTo || (typeof location !== 'undefined' ? `${location.pathname}${location.search}` : '/account');
+  const currentPath = typeof location !== 'undefined' ? `${location.pathname}${location.search}` : '/account';
+  const defaultReturnTo = currentPath.startsWith('/auth/') || currentPath === '/auth' ? '/account' : currentPath;
+  const returnTo = opts.returnTo || defaultReturnTo;
 
   const payload = { state, code_verifier: codeVerifier, redirect_uri: redirectUri, return_to: returnTo, created_at: Date.now() };
   if (typeof sessionStorage !== 'undefined') {
